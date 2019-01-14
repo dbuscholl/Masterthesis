@@ -6,6 +6,7 @@ public class Settings {
     private static String dbuser;
     private static String dbpass;
     private static String dbname;
+    private static String nextTripsTimeAmount;
 
     public static String getDbhost() {
         return dbhost;
@@ -45,5 +46,13 @@ public class Settings {
 
     public static void setDbname(String dbname) {
         Settings.dbname = dbname;
+    }
+
+    public static String getNextTripsTimeAmount() {
+        return nextTripsTimeAmount;
+    }
+
+    public static void setNextTripsTimeAmount(String nextTripsTimeAmount) {
+        Settings.nextTripsTimeAmount = nextTripsTimeAmount;
     }
 }

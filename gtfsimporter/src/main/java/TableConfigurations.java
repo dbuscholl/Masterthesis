@@ -36,7 +36,6 @@ public class TableConfigurations {
         tableMap.put("frequencies.txt", new HashMap<>());
         tableMap.put("transfers.txt", new HashMap<>());
         tableMap.put("feed_info.txt", new HashMap<>());
-        tableMap.put(".txt", new HashMap<>());
 
         tableMap.get("agency.txt").put("agency_id", "varchar(255)");
         tableMap.get("agency.txt").put("agency_name", "varchar(255)");
@@ -83,8 +82,8 @@ public class TableConfigurations {
         tableMap.get("trips.txt").put("bikes_allowed", "varchar(255)");
 
         tableMap.get("stop_times.txt").put("trip_id", "varchar(255)");
-        tableMap.get("stop_times.txt").put("arrival_time", "varchar(255)");
-        tableMap.get("stop_times.txt").put("departure_time", "varchar(255)");
+        tableMap.get("stop_times.txt").put("arrival_time", "time");
+        tableMap.get("stop_times.txt").put("departure_time", "time");
         tableMap.get("stop_times.txt").put("stop_id", "varchar(255)");
         tableMap.get("stop_times.txt").put("stop_sequence", "varchar(255)");
         tableMap.get("stop_times.txt").put("stop_headsign", "varchar(255)");
@@ -94,19 +93,19 @@ public class TableConfigurations {
         tableMap.get("stop_times.txt").put("timepoint", "varchar(255)");
 
         tableMap.get("calendar.txt").put("service_id", "varchar(255)");
-        tableMap.get("calendar.txt").put("monday", "varchar(255)");
-        tableMap.get("calendar.txt").put("tuesday", "varchar(255)");
-        tableMap.get("calendar.txt").put("wednesday", "varchar(255)");
-        tableMap.get("calendar.txt").put("thursday", "varchar(255)");
-        tableMap.get("calendar.txt").put("friday", "varchar(255)");
-        tableMap.get("calendar.txt").put("saturday", "varchar(255)");
-        tableMap.get("calendar.txt").put("sunday", "varchar(255)");
+        tableMap.get("calendar.txt").put("monday", "boolean");
+        tableMap.get("calendar.txt").put("tuesday", "boolean");
+        tableMap.get("calendar.txt").put("wednesday", "boolean");
+        tableMap.get("calendar.txt").put("thursday", "boolean");
+        tableMap.get("calendar.txt").put("friday", "boolean");
+        tableMap.get("calendar.txt").put("saturday", "boolean");
+        tableMap.get("calendar.txt").put("sunday", "boolean");
         tableMap.get("calendar.txt").put("start_date", "varchar(255)");
         tableMap.get("calendar.txt").put("end_date", "varchar(255)");
 
         tableMap.get("calendar_dates.txt").put("service_id", "varchar(255)");
         tableMap.get("calendar_dates.txt").put("date", "varchar(255)");
-        tableMap.get("calendar_dates.txt").put("exception_type", "varchar(255)");
+        tableMap.get("calendar_dates.txt").put("exception_type", "integer");
 
         tableMap.get("fare_attributes.txt").put("fare_id", "varchar(255)");
         tableMap.get("fare_attributes.txt").put("price", "varchar(255)");

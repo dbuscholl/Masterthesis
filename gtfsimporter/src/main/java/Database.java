@@ -16,7 +16,7 @@ public class Database {
             try {
                 Class.forName("com.mysql.jdbc.Driver");
                 con = DriverManager.getConnection("jdbc:mysql://" + Configuration.getMysqlHost() + ":" + Configuration.getMysqlPort() + "/"
-                        + Configuration.getMysqlDatabase() + "?" + "user=" + Configuration.getMysqlUsername() + "&password=" + Configuration.getMysqlPassword());
+                        + Configuration.getMysqlDatabase() + "?user=" + Configuration.getMysqlUsername() + "&password=" + Configuration.getMysqlPassword());
                 isConnected = true;
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
