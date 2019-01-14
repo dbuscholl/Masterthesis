@@ -6,9 +6,9 @@ import javafx.scene.control.TextField;
 import javafx.stage.FileChooser;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URL;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.ResourceBundle;
 
@@ -53,7 +53,7 @@ public class StartupWindowController implements Initializable {
         });
 
         startButton.setOnAction(event -> {
-            if(portTextfield.getText().equals("")) {
+            if (portTextfield.getText().equals("")) {
                 portTextfield.setText("3306");
             }
             Configuration.setSelectedFile(selectedFile);
@@ -64,12 +64,23 @@ public class StartupWindowController implements Initializable {
             Configuration.setMysqlDatabase(databaseTextField.getText());
 
             Importer importer = new Importer();
-            importer.setOnSuccess(() -> {
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("Fertig!");
-                alert.setHeaderText(null);
-                alert.setContentText("Der Import wurde erfolgreich abgeschlossen.");
-                alert.showAndWait();
+            importer.setOnSuccess((ArrayList<String> warnings) -> {
+                if (warnings.size() == 0) {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Fertig!");
+                    alert.setHeaderText(null);
+                    alert.setContentText("Der Import wurde erfolgreich abgeschlossen.");
+                    alert.showAndWait();
+                } else {
+                    StringBuffer text = new StringBuffer("Mit Fehlern abgeschlossen:\n");
+                    Alert alert = new Alert(Alert.AlertType.WARNING);
+                    alert.setTitle("Fertig!");
+                    alert.setHeaderText(null);
+                    for (String warning : warnings)
+                        text.append(warning + "\n");
+                    alert.setContentText(text.toString());
+                    alert.showAndWait();
+                }
             });
             try {
                 importer.process();
