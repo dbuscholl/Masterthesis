@@ -85,7 +85,7 @@ public class TableConfigurations {
         tableMap.get("stop_times.txt").put("arrival_time", "time");
         tableMap.get("stop_times.txt").put("departure_time", "time");
         tableMap.get("stop_times.txt").put("stop_id", "varchar(255)");
-        tableMap.get("stop_times.txt").put("stop_sequence", "varchar(255)");
+        tableMap.get("stop_times.txt").put("stop_sequence", "integer");
         tableMap.get("stop_times.txt").put("stop_headsign", "varchar(255)");
         tableMap.get("stop_times.txt").put("pickup_type", "varchar(255)");
         tableMap.get("stop_times.txt").put("drop_off_type", "varchar(255)");

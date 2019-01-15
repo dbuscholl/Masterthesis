@@ -1,6 +1,6 @@
 package Database;
 
-public class ScheduledTrips {
+public class ScheduledTrip {
     private String route_id;
     private String trip_id;
     private String service_id;
@@ -11,9 +11,9 @@ public class ScheduledTrips {
     private String arrival_time;
     private String departure_time;
 
-    public ScheduledTrips(){}
+    public ScheduledTrip(){}
 
-    public ScheduledTrips(String route_id, String trip_id, String service_id, String stop_id, String stop_name, String route_short_name, String trip_headsign, String arrival_time, String departure_time) {
+    public ScheduledTrip(String route_id, String trip_id, String service_id, String stop_id, String stop_name, String route_short_name, String trip_headsign, String arrival_time, String departure_time) {
         this.route_id = route_id;
         this.trip_id = trip_id;
         this.service_id = service_id;
