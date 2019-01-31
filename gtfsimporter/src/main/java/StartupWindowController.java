@@ -6,6 +6,7 @@ import javafx.scene.control.TextField;
 import javafx.stage.FileChooser;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -88,6 +89,8 @@ public class StartupWindowController implements Initializable {
                 ErrorDialog.make("Spaltennamen sind unzulässig. Bitte mit der GTFS Dokumentation prüfen! Spalte: " + e.getMessage());
             } catch (SQLException e) {
                 ErrorDialog.make("Datenbankverbindung konnte nicht hergestellt werden. Bitte Verbindungsdaten überprüfen!");
+            } catch (IOException e) {
+                ErrorDialog.make("Fehler bei der Ermittlung der Dateilänge");
             }
         });
     }

@@ -88,7 +88,7 @@ public class TableConfigurations {
         tableMap.get("stop_times.txt").put("stop_sequence", "integer");
         tableMap.get("stop_times.txt").put("stop_headsign", "varchar(255)");
         tableMap.get("stop_times.txt").put("pickup_type", "varchar(255)");
-        tableMap.get("stop_times.txt").put("drop_off_type", "varchar(255)");
+        tableMap.get("stop_times.txt").put("drop_off_type", "integer");
         tableMap.get("stop_times.txt").put("shape_dist_traveled", "varchar(255)");
         tableMap.get("stop_times.txt").put("timepoint", "varchar(255)");
 
@@ -100,8 +100,8 @@ public class TableConfigurations {
         tableMap.get("calendar.txt").put("friday", "boolean");
         tableMap.get("calendar.txt").put("saturday", "boolean");
         tableMap.get("calendar.txt").put("sunday", "boolean");
-        tableMap.get("calendar.txt").put("start_date", "varchar(255)");
-        tableMap.get("calendar.txt").put("end_date", "varchar(255)");
+        tableMap.get("calendar.txt").put("start_date", "date");
+        tableMap.get("calendar.txt").put("end_date", "date");
 
         tableMap.get("calendar_dates.txt").put("service_id", "varchar(255)");
         tableMap.get("calendar_dates.txt").put("date", "varchar(255)");

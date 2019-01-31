@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Trias xmlns="http://www.vdv.de/trias" xmlns:siri="http://www.siri.org.uk/siri" version="1.1">
+    <ServiceRequest>
+        <siri:RequestTimestamp>2019-01-31T10:14:48Z</siri:RequestTimestamp>
+        <siri:RequestorRef>kleinanfrager</siri:RequestorRef>
+        <RequestPayload>
+            <TripInfoRequest>
+                <OperatingDayRef>2019-01-31T</OperatingDayRef>
+                <JourneyRef>vvs:20034::H:j19:57</JourneyRef>
+            </TripInfoRequest>
+        </RequestPayload>
+    </ServiceRequest>
+</Trias>

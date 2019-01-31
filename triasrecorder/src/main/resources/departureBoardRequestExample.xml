@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Trias xmlns="http://www.vdv.de/trias" xmlns:siri="http://www.siri.org.uk/siri" version="1.2">
+    <ServiceRequest>
+        <siri:RequestTimestamp>2019-01-31T10:12:02Z</siri:RequestTimestamp>
+        <siri:RequestorRef>kleinanfrager</siri:RequestorRef>
+        <RequestPayload>
+            <StopEventRequest>
+                <Location>
+                    <LocationRef>
+                        <StopPointRef>de:08111:13:2:2</StopPointRef>
+                    </LocationRef>
+                    <DepArrTime>2019-01-31T10:13:00Z</DepArrTime>
+                </Location>
+                <Params>
+                    <NumberOfResults>5</NumberOfResults>
+                    <StopEventType>departure</StopEventType>
+                    <IncludeRealtimeData>true</IncludeRealtimeData>
+                </Params>
+            </StopEventRequest>
+        </RequestPayload>
+    </ServiceRequest>
+</Trias>

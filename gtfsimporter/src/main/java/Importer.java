@@ -1,7 +1,4 @@
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -19,9 +16,11 @@ public class Importer {
         this.event = event;
     }
 
-    public void process() throws ColumnNameException, SQLException {
+    public void process() throws ColumnNameException, SQLException, IOException {
         con = Database.getInstancce();
         warnings = new ArrayList<>();
+        String filename = Configuration.getSelectedFile().getName();
+        int linesTotal = countLines(Configuration.getSelectedFile().getAbsolutePath());
 
         try (BufferedReader br = new BufferedReader(new FileReader(Configuration.getSelectedFile()))) {
             //first line with columnnames
@@ -31,10 +30,28 @@ public class Importer {
             processColumnNamesLine(line);
 
             //Other lines
+
+
+            String tablename = filename.substring(0, filename.length() - 4);
+            StringBuffer query = new StringBuffer("INSERT INTO " + tablename + " (" + String.join(", ", columns) + ") VALUES (");
+            for (int i = 0; i < columns.length; i++) {
+                if (i == columns.length - 1) {
+                    query.append("?)");
+                } else {
+                    query.append("?,");
+                }
+            }
+            PreparedStatement s = con.prepareStatement(query.toString());
+
             int linenumber = 2;
             while ((line = br.readLine()) != null) {
-                processLine(line, linenumber);
+                processLine(line, linenumber, s);
                 linenumber++;
+                if (linenumber % 250 == 0 || linenumber == linesTotal) {
+                    s.executeBatch();
+                    // TODO: show in JavaFX Window
+                    System.out.println("Done: " + (((double) (int) (((double) linenumber / (double) linesTotal) * 10000) / 100)) + "%");
+                }
             }
 
             event.onSuccess(warnings);
@@ -72,7 +89,7 @@ public class Importer {
             sql.append(" " + types.get(columns[i]));
 
             // Checks if it is a required field
-            if (!optionals.contains(columns[i])) {      //TODO: Check if it checks object identity
+            if (!optionals.contains(columns[i])) {
                 sql.append(" NOT NULL");
             }
             // Comma if there is more, ")" if not
@@ -89,31 +106,20 @@ public class Importer {
         this.columns = columns;
     }
 
-    private void processLine(String line, int linenumber) throws SQLException {
+    private void processLine(String line, int linenumber, PreparedStatement s) throws SQLException {
         ArrayList<String> optionals = TableConfigurations.getOptionals();
         StringBuffer value = new StringBuffer();
-        String filename = Configuration.getSelectedFile().getName();
-        String tablename = filename.substring(0, filename.length() - 4);
 
-        StringBuffer query = new StringBuffer("INSERT INTO " + tablename + " (" + String.join(", ", columns) + ") VALUES (");
-        for (int i = 0; i < columns.length; i++) {
-            if (i == columns.length - 1) {
-                query.append("?)");
-            } else {
-                query.append("?,");
-            }
-        }
 
-        PreparedStatement s = con.prepareStatement(query.toString());
         int item = 1;
 
         for (int i = 0; i < line.length(); i++) {
             // if a " was escaped
             if (line.charAt(i) == '"') {
                 // if value end
-                if (i == line.length() -1 || line.charAt(i + 1) == ',') {
+                if (i == line.length() - 1 || line.charAt(i + 1) == ',') {
                     // type dependent assignment
-                    String type = TableConfigurations.getMap().get(filename).get(columns[item - 1]);
+                    String type = TableConfigurations.getMap().get(Configuration.getSelectedFile().getName()).get(columns[item - 1]);
                     switch (type) {
                         case "integer":
                             try {
@@ -146,9 +152,28 @@ public class Importer {
             }
         }
         // run query
-        s.executeUpdate();
-        s.close();
-        System.out.println("Added line " + linenumber + ": " + line);
+        s.addBatch();
+    }
+
+    public static int countLines(String filename) throws IOException {
+        InputStream is = new BufferedInputStream(new FileInputStream(filename));
+        try {
+            byte[] c = new byte[1024];
+            int count = 0;
+            int readChars = 0;
+            boolean empty = true;
+            while ((readChars = is.read(c)) != -1) {
+                empty = false;
+                for (int i = 0; i < readChars; ++i) {
+                    if (c[i] == '\n') {
+                        ++count;
+                    }
+                }
+            }
+            return (count == 0 && !empty) ? 1 : count;
+        } finally {
+            is.close();
+        }
     }
 
     public interface SuccessEvent {

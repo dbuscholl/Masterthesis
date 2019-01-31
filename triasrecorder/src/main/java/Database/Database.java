@@ -100,7 +100,7 @@ public class Database {
             if (!skip) {
                 trips.add(new ScheduledTrip(rs.getString("route_id"), rs.getString("trip_id"), rs.getString("service_id"), rs.getString("stop_id"), rs.getString("stop_name"), rs.getString("route_short_name"), rs.getString("trip_headsign"), rs.getString("arrival_time"), rs.getString("departure_time")));
             } else {
-                log.info("Skipping " + rs.getString("route_short_name") + " " + rs.getString("trip_headsign") + " schedules at " + rs.getString("arrival_time") + " (S: " + rs.getString("service_id") + ", T: " + rs.getString("trip_id") + ")");
+                log.info("Skipping " + rs.getString("route_short_name") + " " + rs.getString("trip_headsign") + " scheduled at " + rs.getString("arrival_time") + " (S: " + rs.getString("service_id") + ", T: " + rs.getString("trip_id") + ")");
             }
         }
         rs.close();
@@ -116,7 +116,7 @@ public class Database {
         ResultSet rs = s.executeQuery();
 
         while(rs.next()) {
-            stops.add(new TripStop(rs.getString("arrival_time"),rs.getString("departure_time"),rs.getString("stop_id"),rs.getString("stop_name"),rs.getInt("stop_sequence"),rs.getInt("pickup_type"),rs.getInt("drop_off_type")));
+            stops.add(new TripStop(rs.getString("arrival_time"),rs.getString("departure_time"),rs.getString("stop_id"),rs.getString("stop_name"),rs.getInt("stop_sequence"),rs.getInt("pickup_type"),rs.getInt("drop_off_type"), TripStop.Type.GTFS));
         }
 
         rs.close();
