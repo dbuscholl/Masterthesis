@@ -38,6 +38,7 @@ public class Connection {
 
         writer.close();
         reader.close();
+        http.disconnect();
 
         return s.toString();
     }
