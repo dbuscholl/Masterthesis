@@ -9,26 +9,31 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
 
 public class WorkerManager {
     private Logger log = Logger.getLogger(this.getClass().getName());
     private Timer timer;
+    private TimerTask task;
     private ArrayList<TripWorker> workers;
 
     public WorkerManager() {
-        timer = new Timer();
-        workers = new ArrayList<>();
-        TimerTask task = new TimerTask() {
+
+    }
+
+    public void start() {
+        task = new TimerTask() {
             @Override
             public void run() {
+                log.debug("Starting task...");
                 synchronized (workers) {
                     for (TripWorker w : workers) {
                         try {
-                            w.getNewDelay();
-                            if(w.isStopRecording()) {
-                                w.addToDatabase();
-                                workers.remove(w);
+                            if (w.isDeparted() && w.isMoreThanAfterLastDelay(180)) {
+                                w.getNewDelay();
+                                if (w.isStopRecording()) {
+                                    w.addToDatabase();
+                                    workers.remove(w);
+                                }
                             }
                         } catch (IOException e) {
                             log.error("IO Exception", e);
@@ -46,6 +51,10 @@ public class WorkerManager {
             }
         };
         timer.schedule(task, 5000);
+    }
+
+    public synchronized void add(ArrayList<TripWorker> workers) {
+        this.workers.addAll(workers);
     }
 
 }

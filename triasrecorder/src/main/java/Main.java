@@ -2,6 +2,7 @@ import Database.Database;
 import Database.ScheduledTrip;
 import Database.IgnoreService;
 import Processes.TripWorker;
+import Processes.WorkerManager;
 import Static.Settings;
 import com.mysql.jdbc.exceptions.jdbc4.CommunicationsException;
 import org.apache.log4j.Logger;
@@ -33,13 +34,16 @@ public class Main {
             ArrayList<ScheduledTrip> trips = Database.getNextScheduledTrips(ignoringServices);
 
 
-
+            log.debug("Parsing new Trips");
             for(ScheduledTrip t : trips) {
                 TripWorker tw = new TripWorker(t);
                 tw.prepare();
                 workers.add(tw);
-                break;
             }
+            log.debug("Parsing done");
+
+            WorkerManager workerManager = new WorkerManager();
+            //workerManager.add(workers);
 
         } catch (CommunicationsException e) {
             log.error("Could not establish database connection. Did you provide wrong credentials? Is your database up and running?");

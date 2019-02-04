@@ -16,10 +16,11 @@ public class Database {
 
     private static Logger log = Logger.getLogger(Database.class);
 
-    private Database(){}
+    private Database() {
+    }
 
-    private static Connection getDataSource() throws SQLException {
-        if(ds == null) {
+    public static Connection getDataSource() throws SQLException {
+        if (ds == null) {
             ds = new BasicDataSource();
             ds.setUrl("jdbc:mysql://" + Settings.getDbhost() + ":" + Settings.getDbport() + "/" + Settings.getDbname());
             ds.setUsername(Settings.getDbuser());
@@ -51,7 +52,9 @@ public class Database {
                     }
                 }
             } else {
-                missingTables.add(table);
+                if (!table.equals("delays")) {
+                    missingTables.add(table);
+                }
             }
         }
 
@@ -140,4 +143,23 @@ public class Database {
     }
 
 
+    public static void addDelays(ScheduledTrip tripInfo, ArrayList<Delay> delays) throws SQLException {
+        Connection ds = getDataSource();
+
+        PreparedStatement s = ds.prepareStatement("INSERT INTO `delays`(`tripId`, `delay`, `timestamp`,`stop_sequence`) VALUES (?,?,?,?)");
+        for (Delay d : delays) {
+            s.setString(1, tripInfo.getTrip_id());
+            s.setInt(2, d.getSeconds());
+            s.setString(3, FormatTools.sqlDatetimeFormat.format(d.getTimestamp()));
+            s.setInt(4, d.getGtfsStop().getStop_sequence());
+            s.addBatch();
+        }
+        s.executeBatch();
+        s.close();
+        ds.close();
+    }
+
+    public static void stop() throws SQLException {
+        ds.close();
+    }
 }

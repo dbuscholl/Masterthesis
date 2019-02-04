@@ -18,6 +18,7 @@ import org.jdom2.filter.ElementFilter;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.text.ParseException;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -40,11 +41,16 @@ public class TripWorker {
     public void prepare() {
         try {
             XMLDocument departureBoard = getDepartureBoardXml();
+            if (checkForError(departureBoard)) {
+                return;
+            }
 
             ArrayList<TripStop> gtfsStops = Database.getTripDetails(tripInfo.getTrip_id());
 
             ArrayList<Element> stopEventResults = departureBoard.findElementsByName("StopEventResult");
             ArrayList<TripStop> triasStops = null;
+
+            StringBuffer triasStopsForErrorLog = new StringBuffer();
             boolean foundInTrias = false;
             for (Element result : stopEventResults) {
                 XMLDocument response = getTripInfoFromDepartureBoardItem(result);
@@ -53,10 +59,10 @@ public class TripWorker {
                     log.error("Error while creating Stops from TRIAS EKAP Result");
                     return;
                 }
+                triasStopsForErrorLog.append(triasStops.get(0).getDeparture_time()).append(": ").append(triasStops.get(0).getStop_name()).append("\n");
 
                 boolean equal = TripStop.checkEquality(gtfsStops, triasStops);
                 if (equal) {
-                    log.debug(tripInfo.getRoute_short_name() + ": " + tripInfo.getTrip_headsign() + " was found in TRIAS! Departure GTFS: " + tripInfo.getDeparture_time() + ", Departure TRIAS: " + triasStops.get(0).getDeparture_time());
                     foundInTrias = true;
                     break;
                 } else {
@@ -69,7 +75,8 @@ public class TripWorker {
                 this.gtfsStops = gtfsStops;
                 delays = new ArrayList<Delay>();
             } else {
-                log.error("Cannot record delay for :" + tripInfo.getRoute_short_name() + ": " + tripInfo.getTrip_headsign() + " because it was not found in TRIAS Real World");
+                log.warn("Cannot record delay for " + tripInfo.getRoute_short_name() + ": " + tripInfo.getTrip_headsign() + " because it was not found in TRIAS Real World");
+                log.debug("We had a gtfs departure at " + gtfsStops.get(0).getDeparture_time() + ": " + gtfsStops.get(0).getStop_name() + ", but trias offered\n" + triasStopsForErrorLog);
                 stopRecording = true;
             }
         } catch (JDOMException e) {
@@ -91,7 +98,9 @@ public class TripWorker {
     }
 
     public void addToDatabase() throws SQLException, ClassNotFoundException {
-        // TODO: implement
+        if (delays.size() > 0) {
+            Database.addDelays(tripInfo, delays);
+        }
     }
 
     private XMLDocument getDepartureBoardXml() throws IOException, JDOMException, ParseException {
@@ -147,6 +156,27 @@ public class TripWorker {
         return triasStops;
     }
 
+    public boolean checkForError(XMLDocument document) {
+        for (Element e : document.getDocument().getDescendants(new ElementFilter("ErrorMessage"))) {
+            String text = e.getChild("Text", namespace).getTextNormalize();
+            switch (text) {
+                case "STOPEVENT_LOCATIONUNSERVED":
+                    log.error("Die Haltestelle " + tripInfo.getStop_name() + "  wird überhaupt nicht von öffentlichen Verkehrsmitteln bedient.");
+                    return true;
+                case "STOPEVENT_DATEOUTOFRANGE":
+                    log.error("Für das angefragte Datum liegen keine Fahrplandaten vor");
+                    return true;
+                case "STOPEVENT_LOCATIONUNKNOWN":
+                    log.error("Die Haltestelle " + tripInfo.getStop_name() + "  ist unbekannt.");
+                    return true;
+                case "STOPEVENT_NOEVENTFOUND":
+                    log.error("Im fraglichen Zeitraum wurde keine Abfahrt/Ankunft unter Einhaltung der gegebenen Optionen gefunden.");
+                    return true;
+            }
+        }
+        return false;
+    }
+
     private Delay getDelayFromResponse(XMLDocument tripInfo) throws ParseException {
         ArrayList<Element> stopElements = new ArrayList<>();
 
@@ -176,6 +206,31 @@ public class TripWorker {
             stopElements.add(e);
         }
         return stopElements.size() > 0;
+    }
+
+    public Date getStartDate() throws ParseException {
+        String time = tripInfo.getDeparture_time().equals("") ? tripInfo.getArrival_time() : tripInfo.getDeparture_time();
+        Date now = new Date();
+        String departureString = FormatTools.sqlDateFormat.format(now) + " " + time;
+        Date departure = FormatTools.sqlDatetimeFormat.parse(departureString);
+        return departure;
+    }
+
+    public boolean isMoreThanAfterDeparture(int seconds) throws ParseException {
+        return (new Date().getTime() - getStartDate().getTime()) / 1000 > seconds;
+    }
+
+    public boolean isDeparted() throws ParseException {
+        return isMoreThanAfterDeparture(0);
+    }
+
+    public boolean isMoreThanAfterLastDelay(int seconds) {
+        if (delays.isEmpty()) {
+            return true;
+        }
+
+        Date last = Date.from(delays.get(delays.size() - 1).getTimestamp().atZone(ZoneId.of("Europe/Berlin")).toInstant());
+        return (new Date().getTime() - last.getTime()) / 1000 > seconds;
     }
 
     public boolean isStopRecording() {

@@ -2,10 +2,12 @@ package Database;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.similarity.JaroWinklerDistance;
+import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
 
 public class TripStop {
+    private Logger log = Logger.getLogger(this.getClass().getName());
     private String arrival_time;
     private String arrival_time_estimated;
     private String departure_time;
@@ -45,14 +47,16 @@ public class TripStop {
     }
 
     public static boolean checkEquality(ArrayList<TripStop> gtfsStops, ArrayList<TripStop> triasStops) {
-        for (int i = 0, gtfsStopsSize = gtfsStops.size(); i < gtfsStopsSize; i++) {
+        int equalStops = 0;
+        int maxValue = gtfsStops.size() > triasStops.size() ? triasStops.size() : gtfsStops.size(); // get the smaller value as maximum for the loop
+        for (int i = 0; i < maxValue; i++) {
             TripStop gs = gtfsStops.get(i);
             TripStop ts = triasStops.get(i);
-            if (!gs.equals(ts)) {
-                return false;
+            if (gs.equals(ts)) {
+                equalStops++;
             }
         }
-        return true;
+        return (double) equalStops / gtfsStops.size() > 0.9; // a little tolerance because sometimes stop sequence differs but it's still the same trip;
     }
 
     public String getArrival_time() {
@@ -143,18 +147,23 @@ public class TripStop {
         TripStop otherTripStop = (TripStop) other;
         JaroWinklerDistance jwd = new JaroWinklerDistance();
 
-        boolean sameStopId = stop_id.equals(otherTripStop.stop_id);
-        boolean sameName = jwd.apply(getStop_name(), otherTripStop.getStop_name()) > 0.7; // 70% of String is same as the other one (Waiblingen Bf. vs Waiblingen Bahnhof)
-        boolean sameStopPosition = stop_sequence == otherTripStop.stop_sequence;
+        try {
+            boolean sameStopId = stop_id.equals(otherTripStop.stop_id);
+            boolean sameName = jwd.apply(getStop_name(), otherTripStop.getStop_name()) > 0.7; // 70% of String is same as the other one (Waiblingen Bf. vs Waiblingen Bahnhof)
+            boolean sameStopPosition = stop_sequence == otherTripStop.stop_sequence;
 
-        boolean sameStop = (sameStopId || sameName) && sameStopPosition;
+            boolean sameStop = (sameStopId || sameName) && sameStopPosition;
 
-        boolean sameArrivalTime = arrival_time.equals(otherTripStop.arrival_time);
-        boolean sameDepartureTime = departure_time.equals(otherTripStop.departure_time);
+            boolean sameArrivalTime = arrival_time.equals(otherTripStop.arrival_time);
+            boolean sameDepartureTime = departure_time.equals(otherTripStop.departure_time);
 
-        boolean sameTime = sameArrivalTime || sameDepartureTime;
+            boolean sameTime = sameArrivalTime || sameDepartureTime;
 
-        return sameStop && sameTime;
+            return sameStop && sameTime;
+        } catch (Exception e) {
+            log.warn("We got an exception over there", e);
+            return false;
+        }
     }
 
     public enum Type {
