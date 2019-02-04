@@ -7,10 +7,7 @@ import org.jdom2.Namespace;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.TimeZone;
+import java.util.*;
 
 public class FormatTools {
     private static Logger log = Logger.getLogger(FormatTools.class);
@@ -71,7 +68,7 @@ public class FormatTools {
         return timeFormat.format(d);
     }
 
-    public static ArrayList<TripStop> xmlToTripStop(ArrayList<Element> stopElements, Namespace namespace) throws NullPointerException, ParseException {
+    public static ArrayList<TripStop> xmlToTripStop(List<Element> stopElements, Namespace namespace) throws NullPointerException, ParseException {
         ArrayList<TripStop> tsarray = new ArrayList<>();
 
         for (int i = 0; i < stopElements.size(); i++) {
@@ -82,13 +79,17 @@ public class FormatTools {
             String stopName = e.getChild("StopPointName", namespace).getChild("Text", namespace).getTextNormalize();
 
             String arrivalTime = null;
+            String arrivalTimeEstimated = null;
             try {
                 arrivalTime = e.getChild("ServiceArrival", namespace).getChild("TimetabledTime", namespace).getTextNormalize();
+                arrivalTimeEstimated = e.getChild("ServiceArrival", namespace).getChild("EstimatedTime", namespace).getTextNormalize();
             } catch (NullPointerException exception) {
             }
             String departureTime = null;
+            String departureTimeEstimated = null;
             try {
                 departureTime = e.getChild("ServiceDeparture", namespace).getChild("TimetabledTime", namespace).getTextNormalize();
+                departureTimeEstimated = e.getChild("ServiceDeparture", namespace).getChild("EstimatedTime", namespace).getTextNormalize();
             } catch (NullPointerException exception) {
             }
 
@@ -97,15 +98,24 @@ public class FormatTools {
                 throw new NullPointerException("Neither Arrival time nor departure time defined for \" + stopName + \" - \" + stopId");
             }
 
+            if (arrivalTimeEstimated == null && departureTimeEstimated == null) {
+                log.error("Neither Arrival time nor departure time defined for " + stopName + " - " + stopId);
+                throw new NullPointerException("Neither Arrival time nor departure time defined for \" + stopName + \" - \" + stopId");
+            }
+
             ts.setStop_id(stopId);
             ts.setStop_name(stopName);
             ts.setArrival_time(arrivalTime == null ? departureTime : arrivalTime);
             ts.setDeparture_time(departureTime == null ? arrivalTime : departureTime);
+            ts.setArrival_time_estimated(arrivalTimeEstimated == null ? departureTimeEstimated : arrivalTimeEstimated);
+            ts.setDeparture_time_estimated(departureTimeEstimated == null ? arrivalTimeEstimated : departureTimeEstimated);
             ts.setStop_sequence(i + 1);
             ts.setType(TripStop.Type.TRIAS);
 
             ts.setArrival_time(makeTimeForGtfs(ts.getArrival_time()));
             ts.setDeparture_time(makeTimeForGtfs(ts.getDeparture_time()));
+            ts.setArrival_time_estimated(makeTimeForGtfs(ts.getArrival_time_estimated()));
+            ts.setDeparture_time_estimated(makeTimeForGtfs(ts.getDeparture_time_estimated()));
 
             tsarray.add(ts);
         }

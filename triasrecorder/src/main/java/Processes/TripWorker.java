@@ -4,6 +4,7 @@ import Database.Database;
 import Database.FormatTools;
 import Database.ScheduledTrip;
 import Database.TripStop;
+import Database.Delay;
 import Network.Connection;
 import Network.DepartureBoardRequest;
 import Network.TripInfoRequest;
@@ -18,47 +19,58 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Date;
 
-public class TripWorker extends Thread {
-    private ScheduledTrip trip;
+public class TripWorker {
     private Logger log = Logger.getLogger(this.getClass().getName());
-    private Namespace namespace = Namespace.getNamespace("http://www.vdv.de/trias");
-    private TripInfoRequest tripInfoRequest;
 
-    public TripWorker(ScheduledTrip trip) {
-        this.trip = trip;
+    private ScheduledTrip tripInfo;
+    private ArrayList<TripStop> triasStops;
+    private ArrayList<TripStop> gtfsStops;
+    private ArrayList<Delay> delays;
+    private TripInfoRequest tripInfoRequest;
+    private boolean stopRecording = false;
+
+    private Namespace namespace = Namespace.getNamespace("http://www.vdv.de/trias");
+
+    public TripWorker(ScheduledTrip tripInfo) {
+        this.tripInfo = tripInfo;
     }
 
-    @Override
-    public void run() {
+    public void prepare() {
         try {
             XMLDocument departureBoard = getDepartureBoardXml();
 
-            Database database = new Database();
-            ArrayList<TripStop> gtfsStops = database.getTripDetails(trip.getTrip_id());
+            ArrayList<TripStop> gtfsStops = Database.getTripDetails(tripInfo.getTrip_id());
 
             ArrayList<Element> stopEventResults = departureBoard.findElementsByName("StopEventResult");
-            ArrayList<TripStop> triasStops;
+            ArrayList<TripStop> triasStops = null;
             boolean foundInTrias = false;
             for (Element result : stopEventResults) {
-                triasStops = getTripInfoFromDepartureBoardItem(result);
-                if(triasStops == null) {
+                XMLDocument response = getTripInfoFromDepartureBoardItem(result);
+                triasStops = createTriasStopsFromResponse(response);
+                if (triasStops == null) {
                     log.error("Error while creating Stops from TRIAS EKAP Result");
                     return;
                 }
 
                 boolean equal = TripStop.checkEquality(gtfsStops, triasStops);
                 if (equal) {
-                    log.debug(trip.getRoute_short_name() + ": " + trip.getTrip_headsign() + " was found in TRIAS! Departure GTFS: " + trip.getDeparture_time() + ", Departure TRIAS: " + triasStops.get(0).getDeparture_time());
+                    log.debug(tripInfo.getRoute_short_name() + ": " + tripInfo.getTrip_headsign() + " was found in TRIAS! Departure GTFS: " + tripInfo.getDeparture_time() + ", Departure TRIAS: " + triasStops.get(0).getDeparture_time());
                     foundInTrias = true;
                     break;
                 } else {
-                    log.debug(trip.getRoute_short_name() + ": " + trip.getTrip_headsign() + " was NOT found in TRIAS! Departure GTFS: " + trip.getDeparture_time() + ", Departure TRIAS: " + triasStops.get(0).getDeparture_time());
+                    log.debug(tripInfo.getRoute_short_name() + ": " + tripInfo.getTrip_headsign() + " was NOT found in TRIAS! Departure GTFS: " + tripInfo.getDeparture_time() + ", Departure TRIAS: " + triasStops.get(0).getDeparture_time());
                 }
             }
 
-            if(foundInTrias) {
-                //TODO: Start a Scheduler (TimerTask) which records the trip
+            if (foundInTrias) {
+                this.triasStops = triasStops;
+                this.gtfsStops = gtfsStops;
+                delays = new ArrayList<Delay>();
+            } else {
+                log.error("Cannot record delay for :" + tripInfo.getRoute_short_name() + ": " + tripInfo.getTrip_headsign() + " because it was not found in TRIAS Real World");
+                stopRecording = true;
             }
         } catch (JDOMException e) {
             e.printStackTrace();
@@ -68,21 +80,30 @@ public class TripWorker extends Thread {
             e.printStackTrace();
         } catch (SQLException e) {
             e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
         }
+    }
+
+    public void getNewDelay() throws IOException, JDOMException, ParseException {
+        Connection c = new Connection();
+        XMLDocument tripInfo = XMLDocument.documentFromString(c.sendPostXML(tripInfoRequest.toString()));
+        delays.add(getDelayFromResponse(tripInfo));
+        stopRecording = checkTripEnding(tripInfo);
+    }
+
+    public void addToDatabase() throws SQLException, ClassNotFoundException {
+        // TODO: implement
     }
 
     private XMLDocument getDepartureBoardXml() throws IOException, JDOMException, ParseException {
         Connection c = new Connection();
         DepartureBoardRequest dbr = new DepartureBoardRequest();
 
-        dbr.buildRequest(trip.getStop_id(), FormatTools.makeTimeForTrias(trip.getDeparture_time()));
+        dbr.buildRequest(tripInfo.getStop_id(), FormatTools.makeTimeForTrias(tripInfo.getDeparture_time()));
         String departureBoardResult = c.sendPostXML(dbr.toString());
         return XMLDocument.documentFromString(departureBoardResult);
     }
 
-    private ArrayList<TripStop> getTripInfoFromDepartureBoardItem(Element result) throws IOException, JDOMException, ParseException {
+    private XMLDocument getTripInfoFromDepartureBoardItem(Element result) throws IOException, JDOMException, ParseException {
         String journeyRef = "";
         String operatingDayRef = "";
 
@@ -98,7 +119,7 @@ public class TripWorker extends Thread {
         Connection c = new Connection();
         XMLDocument tripInfo = XMLDocument.documentFromString(c.sendPostXML(tripInfoRequest.toString()));
 
-        return createTriasStopsFromResponse(tripInfo);
+        return tripInfo;
     }
 
     private ArrayList<TripStop> createTriasStopsFromResponse(XMLDocument tripInfo) throws ParseException {
@@ -118,7 +139,7 @@ public class TripWorker extends Thread {
         try {
             triasStops = FormatTools.xmlToTripStop(stopElements, namespace);
         } catch (NullPointerException e) {
-            log.error("Stopping analysis for Trip " + trip.getRoute_short_name() + ": " + trip.getTrip_headsign() + " because of errors");
+            log.error("Stopping analysis for Trip " + this.tripInfo.getRoute_short_name() + ": " + this.tripInfo.getTrip_headsign() + " because of errors");
             return triasStops;
         } catch (ParseException e) {
             return null;
@@ -126,4 +147,38 @@ public class TripWorker extends Thread {
         return triasStops;
     }
 
+    private Delay getDelayFromResponse(XMLDocument tripInfo) throws ParseException {
+        ArrayList<Element> stopElements = new ArrayList<>();
+
+        for (Element e : tripInfo.getDocument().getDescendants(new ElementFilter("PreviousCall"))) {
+            stopElements.add(e);
+        }
+        TripStop gtfsStop = null;
+        for (int i = 0; i < gtfsStops.size(); i++) {
+            TripStop t = gtfsStops.get(i);
+            if (t.getStop_sequence() - 1 == i) {
+                gtfsStop = t;
+                break;
+            }
+        }
+
+        TripStop triasStop = FormatTools.xmlToTripStop(stopElements.subList(stopElements.size() - 1, stopElements.size() - 1), namespace).get(0);
+        Date timetabled = FormatTools.timeFormat.parse(triasStop.getArrival_time());
+        Date estimated = FormatTools.timeFormat.parse(triasStop.getArrival_time_estimated());
+        long seconds = (estimated.getTime() - timetabled.getTime()) / 1000;
+        return new Delay(gtfsStop, Math.toIntExact(seconds));
+    }
+
+    private boolean checkTripEnding(XMLDocument tripInfo) {
+        ArrayList<Element> stopElements = new ArrayList<>();
+
+        for (Element e : tripInfo.getDocument().getDescendants(new ElementFilter("OnwardCall"))) {
+            stopElements.add(e);
+        }
+        return stopElements.size() > 0;
+    }
+
+    public boolean isStopRecording() {
+        return stopRecording;
+    }
 }

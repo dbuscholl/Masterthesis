@@ -1,6 +1,8 @@
 package Database;
 
 import Static.Settings;
+import com.mysql.jdbc.exceptions.jdbc4.CommunicationsException;
+import org.apache.commons.dbcp.BasicDataSource;
 import org.apache.log4j.Logger;
 
 import java.sql.*;
@@ -10,28 +12,32 @@ import java.util.HashMap;
 import java.util.TimeZone;
 
 public class Database {
-    private static Connection con;
+    private static BasicDataSource ds;
+
     private static Logger log = Logger.getLogger(Database.class);
-    ArrayList<IgnoreService> ignoringServices = new ArrayList<>();
-    ArrayList<ScheduledTrip> trips = new ArrayList<>();
 
+    private Database(){}
 
-    public Database() throws SQLException, ClassNotFoundException {
-        if (con == null || con.isClosed()) {
-            Class.forName("com.mysql.jdbc.Driver");
-            con = DriverManager.getConnection("jdbc:mysql://" + Settings.getDbhost() + ":" + Settings.getDbport() + "/" + Settings.getDbname() + "?user=" + Settings.getDbuser() + "&password=" + Settings.getDbpass());
-            log.debug("Connected to: " + Settings.getDbhost() + ":" + Settings.getDbport() + "/" + Settings.getDbname());
+    private static Connection getDataSource() throws SQLException {
+        if(ds == null) {
+            ds = new BasicDataSource();
+            ds.setUrl("jdbc:mysql://" + Settings.getDbhost() + ":" + Settings.getDbport() + "/" + Settings.getDbname());
+            ds.setUsername(Settings.getDbuser());
+            ds.setPassword(Settings.getDbpass());
+            ds.setMinIdle(2);
+            ds.setMaxIdle(5);
+            ds.setMaxOpenPreparedStatements(100);
         }
-        ignoringServices.clear();
-        trips.clear();
+        return ds.getConnection();
     }
 
-    public String checkValidDatabaseStructure() throws SQLException {
+    public static String checkValidDatabaseStructure() throws SQLException {
         ArrayList<String> missingTables = new ArrayList<>();
         ArrayList<String> missingColumns = new ArrayList<>();
 
         HashMap<String, HashMap<String, String>> map = TableConfigurations.getMap();
-        DatabaseMetaData meta = con.getMetaData();
+        Connection ds = getDataSource();
+        DatabaseMetaData meta = ds.getMetaData();
         ResultSet tables = meta.getTables(null, null, "%", null);
 
         while (tables.next()) {
@@ -54,17 +60,21 @@ public class Database {
             missing.append(String.join(", ", missingTables));
             missing.append("\n");
             missing.append(String.join(", ", missingColumns));
+            ds.close();
             return missing.toString();
         } else {
+            // TODO: Check delays table
             return "";
         }
     }
 
-    public ArrayList<IgnoreService> getIgnoringServiceIds() throws SQLException {
+    public static ArrayList<IgnoreService> getIgnoringServiceIds() throws SQLException {
+        ArrayList<IgnoreService> ignoringServices = new ArrayList<IgnoreService>();
         Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("Europe/Berlin"));
         String dowColumn = FormatTools.getColumnStringDayOfWeek(cal.get(Calendar.DAY_OF_WEEK));
 
-        PreparedStatement s = con.prepareStatement("SELECT DISTINCT calendar_dates.service_id, exception_type FROM `calendar_dates` LEFT JOIN calendar ON calendar_dates.service_id = calendar.service_id where `date` = CURDATE() OR (date != CURDATE() AND exception_type = 1) and start_date <= ? AND end_date >= ? AND " + dowColumn + " = 1 ORDER BY `date` ASC");
+        Connection ds = getDataSource();
+        PreparedStatement s = ds.prepareStatement("SELECT DISTINCT calendar_dates.service_id, exception_type FROM `calendar_dates` LEFT JOIN calendar ON calendar_dates.service_id = calendar.service_id where `date` = CURDATE() OR (date != CURDATE() AND exception_type = 1) and start_date <= ? AND end_date >= ? AND " + dowColumn + " = 1 ORDER BY `date` ASC");
         s.setString(1, FormatTools.sqlDateFormat.format(cal.getTime()));
         s.setString(2, FormatTools.sqlDateFormat.format(cal.getTime()));
         ResultSet rs = s.executeQuery();
@@ -73,15 +83,17 @@ public class Database {
         }
         rs.close();
         s.close();
+        ds.close();
         return ignoringServices;
     }
 
-    public ArrayList<ScheduledTrip> getNextScheduledTrips() throws SQLException {
-        trips = new ArrayList<>();
+    public static ArrayList<ScheduledTrip> getNextScheduledTrips(ArrayList<IgnoreService> ignoringServices) throws SQLException {
+        ArrayList<ScheduledTrip> trips = new ArrayList<>();
         String timeAddition = Settings.getNextTripsTimeAmount();
         Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("Europe/Berlin"));
 
-        PreparedStatement s = con.prepareStatement("SELECT trips.route_id, trips.trip_id, trips.service_id, stops.stop_id, stops.stop_name, route_short_name, trip_headsign, arrival_time, departure_time FROM `trips` LEFT JOIN calendar ON calendar.service_id = trips.service_id LEFT JOIN routes ON trips.route_id = routes.route_id LEFT JOIN stop_times ON stop_times.trip_id = trips.trip_id LEFT JOIN stops ON stop_times.stop_id = stops.stop_id WHERE `start_date` <= ? and `end_date` >= ? and " + FormatTools.getColumnStringDayOfWeek(cal.get(Calendar.DAY_OF_WEEK)) + " = 1 and stop_sequence = 1 and arrival_time BETWEEN ? AND AddTime(?, ?) ORDER BY departure_time");
+        Connection ds = getDataSource();
+        PreparedStatement s = ds.prepareStatement("SELECT trips.route_id, trips.trip_id, trips.service_id, stops.stop_id, stops.stop_name, route_short_name, trip_headsign, arrival_time, departure_time FROM `trips` LEFT JOIN calendar ON calendar.service_id = trips.service_id LEFT JOIN routes ON trips.route_id = routes.route_id LEFT JOIN stop_times ON stop_times.trip_id = trips.trip_id LEFT JOIN stops ON stop_times.stop_id = stops.stop_id WHERE `start_date` <= ? and `end_date` >= ? and " + FormatTools.getColumnStringDayOfWeek(cal.get(Calendar.DAY_OF_WEEK)) + " = 1 and stop_sequence = 1 and arrival_time BETWEEN ? AND AddTime(?, ?) ORDER BY departure_time");
         s.setString(1, FormatTools.sqlDateFormat.format(cal.getTime()));
         s.setString(2, FormatTools.sqlDateFormat.format(cal.getTime()));
         s.setString(3, FormatTools.timeFormat.format(cal.getTime()));
@@ -105,31 +117,27 @@ public class Database {
         }
         rs.close();
         s.close();
+        ds.close();
         return trips;
     }
 
-    public ArrayList<TripStop> getTripDetails(String trip_id) throws SQLException {
+    public static ArrayList<TripStop> getTripDetails(String trip_id) throws SQLException {
         ArrayList<TripStop> stops = new ArrayList<>();
 
-        PreparedStatement s = con.prepareStatement("SELECT arrival_time, departure_time, stops.stop_id, stop_name, stop_sequence, pickup_type, drop_off_type FROM `stop_times` LEFT JOIN stops ON stop_times.stop_id = stops.stop_id WHERE `trip_id` = ? ORDER BY stop_sequence");
+        Connection ds = getDataSource();
+        PreparedStatement s = ds.prepareStatement("SELECT arrival_time, departure_time, stops.stop_id, stop_name, stop_sequence, pickup_type, drop_off_type FROM `stop_times` LEFT JOIN stops ON stop_times.stop_id = stops.stop_id WHERE `trip_id` = ? ORDER BY stop_sequence");
         s.setString(1, trip_id);
         ResultSet rs = s.executeQuery();
 
-        while(rs.next()) {
-            stops.add(new TripStop(rs.getString("arrival_time"),rs.getString("departure_time"),rs.getString("stop_id"),rs.getString("stop_name"),rs.getInt("stop_sequence"),rs.getInt("pickup_type"),rs.getInt("drop_off_type"), TripStop.Type.GTFS));
+        while (rs.next()) {
+            stops.add(new TripStop(rs.getString("arrival_time"), rs.getString("departure_time"), rs.getString("stop_id"), rs.getString("stop_name"), rs.getInt("stop_sequence"), rs.getInt("pickup_type"), rs.getInt("drop_off_type"), TripStop.Type.GTFS));
         }
 
         rs.close();
         s.close();
+        ds.close();
         return stops;
     }
 
 
-    public void close() {
-        try {
-            con.close();
-        } catch (SQLException e) {
-            log.warn("Could not close database connection", e);
-        }
-    }
 }

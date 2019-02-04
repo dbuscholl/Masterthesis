@@ -1,19 +1,15 @@
 import Database.Database;
 import Database.ScheduledTrip;
-import Database.FormatTools;
-import Network.DepartureBoardRequest;
-import Network.XMLDocument;
+import Database.IgnoreService;
 import Processes.TripWorker;
 import Static.Settings;
+import com.mysql.jdbc.exceptions.jdbc4.CommunicationsException;
 import org.apache.log4j.Logger;
-import org.jdom2.Element;
-import org.jdom2.JDOMException;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
-import java.text.ParseException;
 import java.util.*;
 
 public class Main {
@@ -26,26 +22,28 @@ public class Main {
         log.debug("Config file successfully read");
 
         try {
-            Database db = new Database();
-            String s = db.checkValidDatabaseStructure();
+            String s = Database.checkValidDatabaseStructure();
             if (!s.isEmpty()) {
                 log.error(s);
                 return;
             }
             log.debug("No Columns or tables missing");
 
-            db.getIgnoringServiceIds();
-            ArrayList<ScheduledTrip> trips = db.getNextScheduledTrips();
+            ArrayList<IgnoreService> ignoringServices = Database.getIgnoringServiceIds();
+            ArrayList<ScheduledTrip> trips = Database.getNextScheduledTrips(ignoringServices);
+
+
 
             for(ScheduledTrip t : trips) {
                 TripWorker tw = new TripWorker(t);
-                tw.run();
+                tw.prepare();
                 workers.add(tw);
                 break;
             }
+
+        } catch (CommunicationsException e) {
+            log.error("Could not establish database connection. Did you provide wrong credentials? Is your database up and running?");
         } catch (SQLException e) {
-            log.error("", e);
-        } catch (ClassNotFoundException e) {
             log.error("", e);
         }
 

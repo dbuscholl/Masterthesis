@@ -7,7 +7,9 @@ import java.util.ArrayList;
 
 public class TripStop {
     private String arrival_time;
+    private String arrival_time_estimated;
     private String departure_time;
+    private String departure_time_estimated;
     private String stop_id;
     private String stop_name;
     private int stop_sequence;
@@ -27,6 +29,19 @@ public class TripStop {
         this.pickup_type = pickup_type;
         this.drop_off_type = drop_off_type;
         this.type = type;
+    }
+
+    public TripStop(TripStop gtfsStop) {
+        this.arrival_time = gtfsStop.arrival_time;
+        this.arrival_time_estimated = gtfsStop.arrival_time_estimated;
+        this.departure_time = gtfsStop.departure_time;
+        this.departure_time_estimated = gtfsStop.departure_time_estimated;
+        this.stop_id = gtfsStop.stop_id;
+        this.stop_name = gtfsStop.stop_name;
+        this.stop_sequence = gtfsStop.stop_sequence;
+        this.pickup_type = gtfsStop.pickup_type;
+        this.drop_off_type = gtfsStop.drop_off_type;
+        this.type = gtfsStop.type;
     }
 
     public static boolean checkEquality(ArrayList<TripStop> gtfsStops, ArrayList<TripStop> triasStops) {
@@ -102,6 +117,22 @@ public class TripStop {
 
     public void setType(Type type) {
         this.type = type;
+    }
+
+    public String getArrival_time_estimated() {
+        return arrival_time_estimated;
+    }
+
+    public void setArrival_time_estimated(String arrival_time_estimated) {
+        this.arrival_time_estimated = arrival_time_estimated;
+    }
+
+    public String getDeparture_time_estimated() {
+        return departure_time_estimated;
+    }
+
+    public void setDeparture_time_estimated(String departure_time_estimated) {
+        this.departure_time_estimated = departure_time_estimated;
     }
 
     @Override
