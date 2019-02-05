@@ -194,14 +194,6 @@ public class TripWorker {
         for (Element e : tripInfo.getDocument().getDescendants(new ElementFilter("PreviousCall"))) {
             stopElements.add(e);
         }
-        TripStop gtfsStop = null;
-        for (int i = 0; i < gtfsStops.size(); i++) {
-            TripStop t = gtfsStops.get(i);
-            if (t.getStop_sequence() - 1 == i) {
-                gtfsStop = t;
-                break;
-            }
-        }
 
         TripStop triasStop = FormatTools.xmlToTripStop(stopElements.subList(stopElements.size() - 1, stopElements.size()), namespace).get(0);
         if (triasStop.getArrival_time_estimated() == null) {
@@ -209,6 +201,18 @@ public class TripWorker {
             log.debug(getFriendlyName() + " has still no realtime");
             return null;
         } else {
+            TripStop gtfsStop = null;
+            for(TripStop t : gtfsStops) {
+                if(t.getStop_id().equals(triasStop.getStop_id())) {
+                    gtfsStop = t;
+                    break;
+                }
+            }
+            if(gtfsStop==null) {
+                log.debug(getFriendlyName() + " could not match to corresponding GTFS-Station");
+                return null;
+            }
+
             Date timetabled = FormatTools.timeFormat.parse(triasStop.getArrival_time());
             Date estimated = FormatTools.timeFormat.parse(triasStop.getArrival_time_estimated());
             long seconds = (estimated.getTime() - timetabled.getTime()) / 1000;

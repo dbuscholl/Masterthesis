@@ -41,7 +41,7 @@ public class WorkerManager {
                                 w.getNewDelay();
                                 if (w.isStopRecording()) {
                                     ScheduledTrip t = w.getGtfsTripInfo();
-                                    if(w.getDelays().size()>0) {
+                                    if (w.getDelays().size() > 0) {
                                         w.addToDatabase();
                                     } else {
                                         log.error(t.getFriendlyName() + " didn't record any realtime data.");
@@ -64,7 +64,10 @@ public class WorkerManager {
                     }
                 }
                 chronometer.addNow();
-                log.info("Done in " + (double) chronometer.getLastDifferece() / 1000 + "s");
+                double t = (double) chronometer.getLastDifferece() / 1000;
+                if (t > 1) {
+                    log.info("Done in " + t + "s");
+                }
                 chronometer.clear();
             }
         };
