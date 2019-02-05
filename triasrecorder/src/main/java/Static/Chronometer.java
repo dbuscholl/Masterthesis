@@ -31,8 +31,6 @@ public class Chronometer {
     }
 
     public void clear() {
-        List<Long> temp = times.subList(times.size() - 1, times.size() - 1);
-        times.clear();
-        times.addAll(temp);
+        times.subList(times.size() - 1, times.size()).clear();
     }
 }

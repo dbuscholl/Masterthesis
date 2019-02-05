@@ -11,7 +11,8 @@ public class ScheduledTrip {
     private String arrival_time;
     private String departure_time;
 
-    public ScheduledTrip(){}
+    public ScheduledTrip() {
+    }
 
     public ScheduledTrip(String route_id, String trip_id, String service_id, String stop_id, String stop_name, String route_short_name, String trip_headsign, String arrival_time, String departure_time) {
         this.route_id = route_id;
@@ -95,5 +96,9 @@ public class ScheduledTrip {
 
     public void setDeparture_time(String departure_time) {
         this.departure_time = departure_time;
+    }
+
+    public String getFriendlyName() {
+        return getRoute_short_name() + ": " + getStop_name() + " -> " + getTrip_headsign();
     }
 }

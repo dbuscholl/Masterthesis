@@ -6,6 +6,7 @@ import org.apache.commons.dbcp.BasicDataSource;
 import org.apache.log4j.Logger;
 
 import java.sql.*;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -171,7 +172,7 @@ public class Database {
         for (Delay d : delays) {
             s.setString(1, tripInfo.getTrip_id());
             s.setInt(2, d.getSeconds());
-            s.setString(3, FormatTools.sqlDatetimeFormat.format(d.getTimestamp()));
+            s.setString(3, FormatTools.sqlDatetimeFormat.format(Date.from(d.getTimestamp().atZone(ZoneId.of("Europe/Berlin")).toInstant())));
             s.setInt(4, d.getGtfsStop().getStop_sequence());
             s.addBatch();
         }

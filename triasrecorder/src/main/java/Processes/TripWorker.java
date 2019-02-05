@@ -9,6 +9,7 @@ import Network.Connection;
 import Network.DepartureBoardRequest;
 import Network.TripInfoRequest;
 import Network.XMLDocument;
+import com.mysql.jdbc.util.TimezoneDump;
 import org.apache.log4j.Logger;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
@@ -17,10 +18,16 @@ import org.jdom2.filter.ElementFilter;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.text.Normalizer;
 import java.text.ParseException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Map;
+import java.util.TimeZone;
 
 public class TripWorker {
     private Logger log = Logger.getLogger(this.getClass().getName());
@@ -31,11 +38,14 @@ public class TripWorker {
     private ArrayList<Delay> delays;
     private TripInfoRequest tripInfoRequest;
     private boolean stopRecording = false;
+    private boolean brokenWorker = false;
 
     private Namespace namespace = Namespace.getNamespace("http://www.vdv.de/trias");
+    private Date lastDelayCheck;
 
     public TripWorker(ScheduledTrip tripInfo) {
         this.gtfsTripInfo = tripInfo;
+        lastDelayCheck = new Date(0);
     }
 
     public void prepare() {
@@ -65,7 +75,7 @@ public class TripWorker {
                     //TODO: gtfsTripInfo TRIAS Edition from Result
                     break;
                 } else {
-                    log.debug(gtfsTripInfo.getRoute_short_name() + ": " + gtfsTripInfo.getStop_name() + " -> " +  gtfsTripInfo.getTrip_headsign() + " was NOT found in TRIAS! Departure GTFS: " + gtfsTripInfo.getStop_name() + ", " + gtfsTripInfo.getDeparture_time() + ", Departure TRIAS: " + triasStops.get(0).getStop_name() + ", " + triasStops.get(0).getDeparture_time());
+                    log.debug(getFriendlyName() + " was NOT found in TRIAS! Departure GTFS: " + gtfsTripInfo.getStop_name() + ", " + gtfsTripInfo.getDeparture_time() + ", Departure TRIAS: " + triasStops.get(0).getStop_name() + ", " + triasStops.get(0).getDeparture_time());
                 }
             }
 
@@ -74,8 +84,8 @@ public class TripWorker {
                 this.gtfsStops = gtfsStops;
                 delays = new ArrayList<Delay>();
             } else {
-                log.warn("Cannot record delay for " + gtfsTripInfo.getRoute_short_name() + ": " + gtfsTripInfo.getStop_name() + " -> " + gtfsTripInfo.getTrip_headsign() + " because it was not found in TRIAS Real World");
-                stopRecording = true;
+                log.warn("Cannot record delay for " + getFriendlyName() + " because it was not found in TRIAS Real World");
+                brokenWorker = true;
             }
         } catch (JDOMException e) {
             e.printStackTrace();
@@ -91,7 +101,10 @@ public class TripWorker {
     public void getNewDelay() throws IOException, JDOMException, ParseException {
         Connection c = new Connection();
         XMLDocument tripInfo = XMLDocument.documentFromString(c.sendPostXML(tripInfoRequest.toString()));
-        delays.add(getDelayFromResponse(tripInfo));
+        Delay d = getDelayFromResponse(tripInfo);
+        if (d != null) {
+            delays.add(d);
+        }
         stopRecording = checkTripEnding(tripInfo);
     }
 
@@ -190,11 +203,17 @@ public class TripWorker {
             }
         }
 
-        TripStop triasStop = FormatTools.xmlToTripStop(stopElements.subList(stopElements.size() - 1, stopElements.size() - 1), namespace).get(0);
-        Date timetabled = FormatTools.timeFormat.parse(triasStop.getArrival_time());
-        Date estimated = FormatTools.timeFormat.parse(triasStop.getArrival_time_estimated());
-        long seconds = (estimated.getTime() - timetabled.getTime()) / 1000;
-        return new Delay(gtfsStop, Math.toIntExact(seconds));
+        TripStop triasStop = FormatTools.xmlToTripStop(stopElements.subList(stopElements.size() - 1, stopElements.size()), namespace).get(0);
+        if (triasStop.getArrival_time_estimated() == null) {
+            lastDelayCheck = new Date();
+            log.debug(getFriendlyName() + " has still no realtime");
+            return null;
+        } else {
+            Date timetabled = FormatTools.timeFormat.parse(triasStop.getArrival_time());
+            Date estimated = FormatTools.timeFormat.parse(triasStop.getArrival_time_estimated());
+            long seconds = (estimated.getTime() - timetabled.getTime()) / 1000;
+            return new Delay(gtfsStop, Math.toIntExact(seconds));
+        }
     }
 
     private boolean checkTripEnding(XMLDocument tripInfo) {
@@ -203,13 +222,14 @@ public class TripWorker {
         for (Element e : tripInfo.getDocument().getDescendants(new ElementFilter("OnwardCall"))) {
             stopElements.add(e);
         }
-        return stopElements.size() > 0;
+        return stopElements.size() < 1;
     }
 
     public Date getStartDate() throws ParseException {
         String time = gtfsTripInfo.getDeparture_time().equals("") ? gtfsTripInfo.getArrival_time() : gtfsTripInfo.getDeparture_time();
         Date now = new Date();
         String departureString = FormatTools.sqlDateFormat.format(now) + " " + time;
+        FormatTools.sqlDatetimeFormat.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
         Date departure = FormatTools.sqlDatetimeFormat.parse(departureString);
         return departure;
     }
@@ -223,15 +243,36 @@ public class TripWorker {
     }
 
     public boolean isMoreThanAfterLastDelay(int seconds) {
-        if (delays.isEmpty()) {
-            return true;
+        try {
+            if (delays.isEmpty()) {
+                Date now = new Date();
+                return (now.getTime() - lastDelayCheck.getTime()) / 1000 > seconds;
+            }
+        } catch (NullPointerException e) {
+            log.error("");
         }
 
         Date last = Date.from(delays.get(delays.size() - 1).getTimestamp().atZone(ZoneId.of("Europe/Berlin")).toInstant());
         return (new Date().getTime() - last.getTime()) / 1000 > seconds;
     }
 
+    public String getFriendlyName() {
+        return gtfsTripInfo.getFriendlyName();
+    }
+
+    public boolean isBrokenWorker() {
+        return brokenWorker;
+    }
+
     public boolean isStopRecording() {
         return stopRecording;
+    }
+
+    public ScheduledTrip getGtfsTripInfo() {
+        return gtfsTripInfo;
+    }
+
+    public ArrayList<Delay> getDelays() {
+        return delays;
     }
 }

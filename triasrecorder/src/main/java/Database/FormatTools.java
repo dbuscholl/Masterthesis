@@ -53,7 +53,7 @@ public class FormatTools {
 
     public static String makeTimeForTrias(String time) throws ParseException {
         Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.SECOND,0);
+        cal.set(Calendar.SECOND, 0);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         sdf.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
         SimpleDateFormat d = new SimpleDateFormat("yyyy-MM-dd");
@@ -75,6 +75,7 @@ public class FormatTools {
         for (int i = 0; i < stopElements.size(); i++) {
             Element e = stopElements.get(i);
             TripStop ts = new TripStop();
+            boolean noRealtime = false;
 
             String stopId = e.getChild("StopPointRef", namespace).getTextNormalize();
             String stopName = e.getChild("StopPointName", namespace).getChild("Text", namespace).getTextNormalize();
@@ -96,12 +97,11 @@ public class FormatTools {
 
             if (arrivalTime == null && departureTime == null) {
                 log.error("Neither Arrival time nor departure time defined for " + stopName + " - " + stopId);
-                throw new NullPointerException("Neither Arrival time nor departure time defined for \" + stopName + \" - \" + stopId");
+                //throw new NullPointerException("Neither Arrival time nor departure time defined for " + stopName + " - " + stopId);
             }
 
             if (arrivalTimeEstimated == null && departureTimeEstimated == null) {
-                log.error("Neither Arrival time nor departure time defined for " + stopName + " - " + stopId);
-                throw new NullPointerException("Neither Arrival time nor departure time defined for \" + stopName + \" - \" + stopId");
+                noRealtime = true;
             }
 
             ts.setStop_id(stopId);
@@ -115,8 +115,13 @@ public class FormatTools {
 
             ts.setArrival_time(makeTimeForGtfs(ts.getArrival_time()));
             ts.setDeparture_time(makeTimeForGtfs(ts.getDeparture_time()));
-            ts.setArrival_time_estimated(makeTimeForGtfs(ts.getArrival_time_estimated()));
-            ts.setDeparture_time_estimated(makeTimeForGtfs(ts.getDeparture_time_estimated()));
+            if (noRealtime) {
+                ts.setArrival_time_estimated(null);
+                ts.setDeparture_time_estimated(null);
+            } else {
+                ts.setArrival_time_estimated(makeTimeForGtfs(ts.getArrival_time_estimated()));
+                ts.setDeparture_time_estimated(makeTimeForGtfs(ts.getDeparture_time_estimated()));
+            }
 
             tsarray.add(ts);
         }

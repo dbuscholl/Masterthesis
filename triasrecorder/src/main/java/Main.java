@@ -50,6 +50,7 @@ public class Main {
 
             WorkerManager workerManager = new WorkerManager();
             workerManager.add(workers);
+            workerManager.start();
 
         } catch (CommunicationsException e) {
             log.error("Could not establish database connection. Did you provide wrong credentials? Is your database up and running?");

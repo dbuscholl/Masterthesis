@@ -1,5 +1,7 @@
 package Processes;
 
+import Database.ScheduledTrip;
+import Static.Chronometer;
 import org.apache.log4j.Logger;
 import org.jdom2.JDOMException;
 
@@ -7,6 +9,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -15,11 +18,12 @@ public class WorkerManager {
     private Timer timer;
     private TimerTask task;
     private ArrayList<TripWorker> workers;
+    private Chronometer chronometer;
 
     public WorkerManager() {
         timer = new Timer();
         workers = new ArrayList<>();
-        timer.cancel();
+        chronometer = new Chronometer();
     }
 
     public void start() {
@@ -27,14 +31,23 @@ public class WorkerManager {
             @Override
             public void run() {
                 log.debug("Starting task...");
+                chronometer.addNow();
                 synchronized (workers) {
-                    for (TripWorker w : workers) {
+                    for (Iterator<TripWorker> iterator = workers.iterator(); iterator.hasNext(); ) {
+                        TripWorker w = iterator.next();
+
                         try {
                             if (w.isDeparted() && w.isMoreThanAfterLastDelay(180)) {
                                 w.getNewDelay();
                                 if (w.isStopRecording()) {
-                                    w.addToDatabase();
-                                    workers.remove(w);
+                                    ScheduledTrip t = w.getGtfsTripInfo();
+                                    if(w.getDelays().size()>0) {
+                                        w.addToDatabase();
+                                    } else {
+                                        log.error(t.getFriendlyName() + " didn't record any realtime data.");
+                                    }
+                                    iterator.remove();
+                                    log.debug(t.getFriendlyName() + " is done recordings!");
                                 }
                             }
                         } catch (IOException e) {
@@ -50,13 +63,25 @@ public class WorkerManager {
                         }
                     }
                 }
+                chronometer.addNow();
+                log.info("Done in " + (double) chronometer.getLastDifferece() / 1000 + "s");
+                chronometer.clear();
             }
         };
-        timer.schedule(task, 5000);
+        timer.schedule(task, 0, 10000);
+    }
+
+    public void stop() {
+        timer.cancel();
     }
 
     public synchronized void add(ArrayList<TripWorker> workers) {
+        for (Iterator<TripWorker> iterator = workers.iterator(); iterator.hasNext(); ) {
+            TripWorker w = iterator.next();
+            if (w.isBrokenWorker()) {
+                iterator.remove();
+            }
+        }
         this.workers.addAll(workers);
     }
-
 }

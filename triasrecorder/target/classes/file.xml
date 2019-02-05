@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Trias xmlns="http://www.vdv.de/trias" version="1.1">
+    <ServiceDelivery>
+        <ResponseTimestamp xmlns="http://www.siri.org.uk/siri">2019-02-05T09:49:54Z</ResponseTimestamp>
+        <ProducerRef xmlns="http://www.siri.org.uk/siri">EFAController10.3.3.101-EFA-STATIC04</ProducerRef>
+        <Status xmlns="http://www.siri.org.uk/siri">true</Status>
+        <MoreData>false</MoreData>
+        <Language>de</Language>
+        <DeliveryPayload>
+            <TripInfoResponse>
+                <TripInfoResult>
+                    <PreviousCall>
+                        <StopPointRef>de:08119:7604:7:9</StopPointRef>
+                        <StopPointName>
+                            <Text>Waiblingen Bf</Text>
+                            <Language>de</Language>
+                        </StopPointName>
+                        <PlannedBay>
+                            <Text>Bstg. 9</Text>
+                            <Language>de</Language>
+                        </PlannedBay>
+                        <ServiceDeparture>
+                            <TimetabledTime>2019-02-05T09:49:00Z</TimetabledTime>
+                        </ServiceDeparture>
+                        <StopSeqNumber>1</StopSeqNumber>
+                    </PreviousCall>
+                    <OnwardCall>
+                        <StopPointRef>de:08119:4878:0:3</StopPointRef>
+                        <StopPointName>
+                            <Text>Hegnach Neckarstraße</Text>
+                            <Language>de</Language>
+                        </StopPointName>
+                        <ServiceArrival>
+                            <TimetabledTime>2019-02-05T09:53:00Z</TimetabledTime>
+                        </ServiceArrival>
+                        <ServiceDeparture>
+                            <TimetabledTime>2019-02-05T09:53:00Z</TimetabledTime>
+                        </ServiceDeparture>
+                        <StopSeqNumber>2</StopSeqNumber>
+                        <NotServicedStop>true</NotServicedStop>
+                    </OnwardCall>
+                    <OnwardCall>
+                        <StopPointRef>de:08118:3573:2:2</StopPointRef>
+                        <StopPointName>
+                            <Text>Neckargr. Stadtbahn</Text>
+                            <Language>de</Language>
+                        </StopPointName>
+                        <PlannedBay>
+                            <Text>Bstg. 2</Text>
+                            <Language>de</Language>
+                        </PlannedBay>
+                        <ServiceArrival>
+                            <TimetabledTime>2019-02-05T10:01:00Z</TimetabledTime>
+                        </ServiceArrival>
+                        <ServiceDeparture>
+                            <TimetabledTime>2019-02-05T10:04:00Z</TimetabledTime>
+                        </ServiceDeparture>
+                        <StopSeqNumber>3</StopSeqNumber>
+                        <NotServicedStop>true</NotServicedStop>
+                    </OnwardCall>
+                    <OnwardCall>
+                        <StopPointRef>de:08118:7436:0:4</StopPointRef>
+                        <StopPointName>
+                            <Text>Ludwigsburg Friedrichstraße</Text>
+                            <Language>de</Language>
+                        </StopPointName>
+                        <ServiceArrival>
+                            <TimetabledTime>2019-02-05T10:12:00Z</TimetabledTime>
+                        </ServiceArrival>
+                        <ServiceDeparture>
+                            <TimetabledTime>2019-02-05T10:12:00Z</TimetabledTime>
+                        </ServiceDeparture>
+                        <StopSeqNumber>4</StopSeqNumber>
+                        <NotServicedStop>true</NotServicedStop>
+                    </OnwardCall>
+                    <OnwardCall>
+                        <StopPointRef>de:08118:7402:5:20</StopPointRef>
+                        <StopPointName>
+                            <Text>Ludwigsburg ZOB</Text>
+                            <Language>de</Language>
+                        </StopPointName>
+                        <ServiceArrival>
+                            <TimetabledTime>2019-02-05T10:17:00Z</TimetabledTime>
+                        </ServiceArrival>
+                        <StopSeqNumber>5</StopSeqNumber>
+                    </OnwardCall>
+                    <Service>
+                        <OperatingDayRef>2019-02-05T</OperatingDayRef>
+                        <JourneyRef>vvs:31432::R:j19:34</JourneyRef>
+                        <LineRef>vvs:31432::R</LineRef>
+                        <DirectionRef>return</DirectionRef>
+                        <Mode>
+                            <PtMode>bus</PtMode>
+                            <BusSubmode>localBus</BusSubmode>
+                            <Name>
+                                <Text>Bus</Text>
+                                <Language>de</Language>
+                            </Name>
+                        </Mode>
+                        <PublishedLineName>
+                            <Text>432</Text>
+                            <Language>de</Language>
+                        </PublishedLineName>
+                        <OperatorRef>vvs:82</OperatorRef>
+                        <RouteDescription>
+                            <Text>Waiblingen - Hegnach - Neckargröningen - Ludwigsburg</Text>
+                            <Language>de</Language>
+                        </RouteDescription>
+                        <OriginStopPointRef>de:08119:7604:7:9</OriginStopPointRef>
+                        <OriginText>
+                            <Text>Waiblingen Bf</Text>
+                            <Language>de</Language>
+                        </OriginText>
+                        <DestinationStopPointRef>de:08118:7402:5:20</DestinationStopPointRef>
+                        <DestinationText>
+                            <Text>Ludwigsburg ZOB</Text>
+                            <Language>de</Language>
+                        </DestinationText>
+                    </Service>
+                </TripInfoResult>
+            </TripInfoResponse>
+        </DeliveryPayload>
+    </ServiceDelivery>
+</Trias>

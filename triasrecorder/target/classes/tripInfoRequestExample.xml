@@ -7,6 +7,10 @@
             <TripInfoRequest>
                 <OperatingDayRef>2019-01-31T</OperatingDayRef>
                 <JourneyRef>vvs:20034::H:j19:57</JourneyRef>
+                <Params>
+                    <IncludeRealtimeData>true</IncludeRealtimeData>
+                    <IncludePosition>true</IncludePosition>
+                </Params>
             </TripInfoRequest>
         </RequestPayload>
     </ServiceRequest>
