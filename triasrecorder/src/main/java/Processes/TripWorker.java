@@ -25,7 +25,7 @@ import java.util.Date;
 public class TripWorker {
     private Logger log = Logger.getLogger(this.getClass().getName());
 
-    private ScheduledTrip tripInfo;
+    private ScheduledTrip gtfsTripInfo;
     private ArrayList<TripStop> triasStops;
     private ArrayList<TripStop> gtfsStops;
     private ArrayList<Delay> delays;
@@ -35,7 +35,7 @@ public class TripWorker {
     private Namespace namespace = Namespace.getNamespace("http://www.vdv.de/trias");
 
     public TripWorker(ScheduledTrip tripInfo) {
-        this.tripInfo = tripInfo;
+        this.gtfsTripInfo = tripInfo;
     }
 
     public void prepare() {
@@ -45,12 +45,11 @@ public class TripWorker {
                 return;
             }
 
-            ArrayList<TripStop> gtfsStops = Database.getTripDetails(tripInfo.getTrip_id());
+            ArrayList<TripStop> gtfsStops = Database.getTripDetails(gtfsTripInfo.getTrip_id());
 
             ArrayList<Element> stopEventResults = departureBoard.findElementsByName("StopEventResult");
             ArrayList<TripStop> triasStops = null;
 
-            StringBuffer triasStopsForErrorLog = new StringBuffer();
             boolean foundInTrias = false;
             for (Element result : stopEventResults) {
                 XMLDocument response = getTripInfoFromDepartureBoardItem(result);
@@ -59,14 +58,14 @@ public class TripWorker {
                     log.error("Error while creating Stops from TRIAS EKAP Result");
                     return;
                 }
-                triasStopsForErrorLog.append(triasStops.get(0).getDeparture_time()).append(": ").append(triasStops.get(0).getStop_name()).append("\n");
 
                 boolean equal = TripStop.checkEquality(gtfsStops, triasStops);
                 if (equal) {
                     foundInTrias = true;
+                    //TODO: gtfsTripInfo TRIAS Edition from Result
                     break;
                 } else {
-                    log.debug(tripInfo.getRoute_short_name() + ": " + tripInfo.getTrip_headsign() + " was NOT found in TRIAS! Departure GTFS: " + tripInfo.getDeparture_time() + ", Departure TRIAS: " + triasStops.get(0).getDeparture_time());
+                    log.debug(gtfsTripInfo.getRoute_short_name() + ": " + gtfsTripInfo.getStop_name() + " -> " +  gtfsTripInfo.getTrip_headsign() + " was NOT found in TRIAS! Departure GTFS: " + gtfsTripInfo.getStop_name() + ", " + gtfsTripInfo.getDeparture_time() + ", Departure TRIAS: " + triasStops.get(0).getStop_name() + ", " + triasStops.get(0).getDeparture_time());
                 }
             }
 
@@ -75,8 +74,7 @@ public class TripWorker {
                 this.gtfsStops = gtfsStops;
                 delays = new ArrayList<Delay>();
             } else {
-                log.warn("Cannot record delay for " + tripInfo.getRoute_short_name() + ": " + tripInfo.getTrip_headsign() + " because it was not found in TRIAS Real World");
-                log.debug("We had a gtfs departure at " + gtfsStops.get(0).getDeparture_time() + ": " + gtfsStops.get(0).getStop_name() + ", but trias offered\n" + triasStopsForErrorLog);
+                log.warn("Cannot record delay for " + gtfsTripInfo.getRoute_short_name() + ": " + gtfsTripInfo.getStop_name() + " -> " + gtfsTripInfo.getTrip_headsign() + " because it was not found in TRIAS Real World");
                 stopRecording = true;
             }
         } catch (JDOMException e) {
@@ -99,7 +97,7 @@ public class TripWorker {
 
     public void addToDatabase() throws SQLException, ClassNotFoundException {
         if (delays.size() > 0) {
-            Database.addDelays(tripInfo, delays);
+            Database.addDelays(gtfsTripInfo, delays);
         }
     }
 
@@ -107,7 +105,7 @@ public class TripWorker {
         Connection c = new Connection();
         DepartureBoardRequest dbr = new DepartureBoardRequest();
 
-        dbr.buildRequest(tripInfo.getStop_id(), FormatTools.makeTimeForTrias(tripInfo.getDeparture_time()));
+        dbr.buildRequest(gtfsTripInfo.getStop_id(), FormatTools.makeTimeForTrias(gtfsTripInfo.getDeparture_time()));
         String departureBoardResult = c.sendPostXML(dbr.toString());
         return XMLDocument.documentFromString(departureBoardResult);
     }
@@ -148,7 +146,7 @@ public class TripWorker {
         try {
             triasStops = FormatTools.xmlToTripStop(stopElements, namespace);
         } catch (NullPointerException e) {
-            log.error("Stopping analysis for Trip " + this.tripInfo.getRoute_short_name() + ": " + this.tripInfo.getTrip_headsign() + " because of errors");
+            log.error("Stopping analysis for Trip " + this.gtfsTripInfo.getRoute_short_name() + ": " + this.gtfsTripInfo.getTrip_headsign() + " because of errors");
             return triasStops;
         } catch (ParseException e) {
             return null;
@@ -161,13 +159,13 @@ public class TripWorker {
             String text = e.getChild("Text", namespace).getTextNormalize();
             switch (text) {
                 case "STOPEVENT_LOCATIONUNSERVED":
-                    log.error("Die Haltestelle " + tripInfo.getStop_name() + "  wird überhaupt nicht von öffentlichen Verkehrsmitteln bedient.");
+                    log.error("Die Haltestelle " + gtfsTripInfo.getStop_name() + "  wird überhaupt nicht von öffentlichen Verkehrsmitteln bedient.");
                     return true;
                 case "STOPEVENT_DATEOUTOFRANGE":
                     log.error("Für das angefragte Datum liegen keine Fahrplandaten vor");
                     return true;
                 case "STOPEVENT_LOCATIONUNKNOWN":
-                    log.error("Die Haltestelle " + tripInfo.getStop_name() + "  ist unbekannt.");
+                    log.error("Die Haltestelle " + gtfsTripInfo.getStop_name() + "  ist unbekannt.");
                     return true;
                 case "STOPEVENT_NOEVENTFOUND":
                     log.error("Im fraglichen Zeitraum wurde keine Abfahrt/Ankunft unter Einhaltung der gegebenen Optionen gefunden.");
@@ -209,7 +207,7 @@ public class TripWorker {
     }
 
     public Date getStartDate() throws ParseException {
-        String time = tripInfo.getDeparture_time().equals("") ? tripInfo.getArrival_time() : tripInfo.getDeparture_time();
+        String time = gtfsTripInfo.getDeparture_time().equals("") ? gtfsTripInfo.getArrival_time() : gtfsTripInfo.getDeparture_time();
         Date now = new Date();
         String departureString = FormatTools.sqlDateFormat.format(now) + " " + time;
         Date departure = FormatTools.sqlDatetimeFormat.parse(departureString);

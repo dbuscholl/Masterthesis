@@ -3,6 +3,7 @@ import Database.ScheduledTrip;
 import Database.IgnoreService;
 import Processes.TripWorker;
 import Processes.WorkerManager;
+import Static.Chronometer;
 import Static.Settings;
 import com.mysql.jdbc.exceptions.jdbc4.CommunicationsException;
 import org.apache.log4j.Logger;
@@ -15,6 +16,7 @@ import java.util.*;
 
 public class Main {
     private static ArrayList<TripWorker> workers = new ArrayList<>();
+    private static Chronometer chronometer = new Chronometer();
 
     public static void main(String[] args) {
         Logger log = Logger.getLogger(Main.class);
@@ -23,27 +25,31 @@ public class Main {
         log.debug("Config file successfully read");
 
         try {
+            chronometer.addNow();
             String s = Database.checkValidDatabaseStructure();
             if (!s.isEmpty()) {
                 log.error(s);
                 return;
             }
-            log.debug("No Columns or tables missing");
+            chronometer.addNow();
+            log.debug("No Columns or tables missing. Done in " + (double) chronometer.getLastDifferece() / 1000 + "s");
 
             ArrayList<IgnoreService> ignoringServices = Database.getIgnoringServiceIds();
             ArrayList<ScheduledTrip> trips = Database.getNextScheduledTrips(ignoringServices);
-
+            chronometer.addNow();
+            log.debug("Got next scheduled trips in " + (double) chronometer.getLastDifferece() / 1000 + "s");
 
             log.debug("Parsing new Trips");
-            for(ScheduledTrip t : trips) {
+            for (ScheduledTrip t : trips) {
                 TripWorker tw = new TripWorker(t);
                 tw.prepare();
                 workers.add(tw);
             }
-            log.debug("Parsing done");
+            chronometer.addNow();
+            log.debug("Parsing done in " + (double) chronometer.getLastDifferece() / 1000 + "s");
 
             WorkerManager workerManager = new WorkerManager();
-            //workerManager.add(workers);
+            workerManager.add(workers);
 
         } catch (CommunicationsException e) {
             log.error("Could not establish database connection. Did you provide wrong credentials? Is your database up and running?");

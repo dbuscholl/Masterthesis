@@ -53,6 +53,7 @@ public class FormatTools {
 
     public static String makeTimeForTrias(String time) throws ParseException {
         Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.SECOND,0);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         sdf.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
         SimpleDateFormat d = new SimpleDateFormat("yyyy-MM-dd");

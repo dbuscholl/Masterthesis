@@ -17,7 +17,9 @@ public class WorkerManager {
     private ArrayList<TripWorker> workers;
 
     public WorkerManager() {
-
+        timer = new Timer();
+        workers = new ArrayList<>();
+        timer.cancel();
     }
 
     public void start() {
