@@ -56,7 +56,7 @@ public class TripStop {
                 equalStops++;
             }
         }
-        return (double) equalStops / gtfsStops.size() > 0.9; // a little tolerance because sometimes stop sequence differs but it's still the same trip;
+        return (double) equalStops / gtfsStops.size() > 0.85; // a little tolerance because sometimes stop sequence differs but it's still the same trip;
     }
 
     public String getArrival_time() {
@@ -160,6 +160,9 @@ public class TripStop {
             boolean sameTime = sameArrivalTime || sameDepartureTime;
 
             return sameStop && sameTime;
+        } catch (NullPointerException e) {
+            log.warn("Could not check stop equality. Some parameters are missing.");
+            return false;
         } catch (Exception e) {
             log.warn("We got an exception over there", e);
             return false;

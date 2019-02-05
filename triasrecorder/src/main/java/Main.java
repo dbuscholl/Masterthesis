@@ -1,6 +1,7 @@
 import Database.Database;
 import Database.ScheduledTrip;
 import Database.IgnoreService;
+import Processes.Scheduler;
 import Processes.TripWorker;
 import Processes.WorkerManager;
 import Static.Chronometer;
@@ -34,28 +35,17 @@ public class Main {
             chronometer.addNow();
             log.debug("No Columns or tables missing. Done in " + (double) chronometer.getLastDifferece() / 1000 + "s");
 
-            ArrayList<IgnoreService> ignoringServices = Database.getIgnoringServiceIds();
-            ArrayList<ScheduledTrip> trips = Database.getNextScheduledTrips(ignoringServices);
-            chronometer.addNow();
-            log.debug("Got next scheduled trips in " + (double) chronometer.getLastDifferece() / 1000 + "s");
+            Timer t = new Timer();
+            Scheduler tt = new Scheduler();
+            t.schedule(tt, 0, 300000);
 
-            log.debug("Parsing new Trips");
-            for (ScheduledTrip t : trips) {
-                TripWorker tw = new TripWorker(t);
-                tw.prepare();
-                workers.add(tw);
-            }
-            chronometer.addNow();
-            log.debug("Parsing done in " + (double) chronometer.getLastDifferece() / 1000 + "s");
-
-            WorkerManager workerManager = new WorkerManager();
-            workerManager.add(workers);
-            workerManager.start();
 
         } catch (CommunicationsException e) {
             log.error("Could not establish database connection. Did you provide wrong credentials? Is your database up and running?");
         } catch (SQLException e) {
             log.error("", e);
+        } catch (ConcurrentModificationException e) {
+            log.error("Big problem with Scheduler", e);
         }
 
     }

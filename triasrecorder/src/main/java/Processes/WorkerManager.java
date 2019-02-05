@@ -30,15 +30,16 @@ public class WorkerManager {
         task = new TimerTask() {
             @Override
             public void run() {
-                log.debug("Starting task...");
+                Thread.currentThread().setName("WorkerManager");
+                int affected = 0;
                 chronometer.addNow();
                 synchronized (workers) {
                     for (Iterator<TripWorker> iterator = workers.iterator(); iterator.hasNext(); ) {
                         TripWorker w = iterator.next();
-
                         try {
                             if (w.isDeparted() && w.isMoreThanAfterLastDelay(180)) {
                                 w.getNewDelay();
+                                affected++;
                                 if (w.isStopRecording()) {
                                     ScheduledTrip t = w.getGtfsTripInfo();
                                     if (w.getDelays().size() > 0) {
@@ -65,8 +66,8 @@ public class WorkerManager {
                 }
                 chronometer.addNow();
                 double t = (double) chronometer.getLastDifferece() / 1000;
-                if (t > 1) {
-                    log.info("Done in " + t + "s");
+                if (affected > 0) {
+                    log.debug("Got " + affected + " new Delays! Processed them in " + t + "s.");
                 }
                 chronometer.clear();
             }
@@ -86,5 +87,10 @@ public class WorkerManager {
             }
         }
         this.workers.addAll(workers);
+        log.info("We have " + this.workers.size() + " trips to record now");
+    }
+
+    public ArrayList<TripWorker> getWorkers() {
+        return workers;
     }
 }
