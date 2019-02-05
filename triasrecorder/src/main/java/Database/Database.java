@@ -40,9 +40,13 @@ public class Database {
         Connection ds = getDataSource();
         DatabaseMetaData meta = ds.getMetaData();
         ResultSet tables = meta.getTables(null, null, "%", null);
+        boolean delaysMissing = true;
 
         while (tables.next()) {
             String table = tables.getString(3);
+            if (table.equals("delays")) {
+                delaysMissing = false;
+            }
             if (map.containsKey(table)) {
                 ResultSet cols = meta.getColumns(null, null, table, "%");
                 while (cols.next()) {
@@ -65,10 +69,27 @@ public class Database {
             missing.append(String.join(", ", missingColumns));
             ds.close();
             return missing.toString();
-        } else {
-            // TODO: Check delays table
-            return "";
         }
+        if (delaysMissing) {
+            PreparedStatement s = ds.prepareStatement("CREATE TABLE IF NOT EXISTS `delays` (`id` int(10) UNSIGNED NOT NULL, `tripId` varchar(255) NOT NULL, `delay` int(11) NOT NULL, `timestamp` datetime NOT NULL, `stop_sequence` int(11) NOT NULL, PRIMARY KEY  (`id`))");
+            int execute = s.executeUpdate();
+            s.close();
+            if (execute != 0) {
+                log.error("Could not create table delays!");
+                ds.close();
+                return "delays";
+            }
+            s = ds.prepareStatement("ALTER TABLE `delays` MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT");
+            execute = s.executeUpdate();
+            s.close();
+            if (execute != 0) {
+                log.error("Could not alter table delays!");
+                ds.close();
+                return "delays";
+            }
+        }
+        ds.close();
+        return "";
     }
 
     public static ArrayList<IgnoreService> getIgnoringServiceIds() throws SQLException {
