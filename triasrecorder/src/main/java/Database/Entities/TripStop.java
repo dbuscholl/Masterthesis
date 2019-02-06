@@ -291,6 +291,16 @@ public class TripStop {
         }
     }
 
+    @Override
+    public String toString() {
+        StringBuffer s = new StringBuffer();
+        s.append(stop_id + ": " + stop_name + " | ");
+        s.append( "TT: ->" + arrival_time + ", " + departure_time + " -> | ");
+        s.append( "ET: ->" + arrival_time_estimated + ", " + departure_time_estimated + " -> | ");
+        s.append(type);
+        return s.toString();
+    }
+
     /**
      * Is this stop from GTFS Database or from TRIAS interface?
      */

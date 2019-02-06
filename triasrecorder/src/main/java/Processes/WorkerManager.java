@@ -60,10 +60,23 @@ public class WorkerManager {
                             log.error("JDOM Exception", e);
                         } catch (ParseException e) {
                             log.error("ParseException", e);
+                            log.error(w.getFriendlyName() + " (S: " + w.getGtfsTripInfo().getService_id() + ", T: " + w.getGtfsTripInfo().getTrip_id() + ")");
+                            log.error("GTFS Stops: \n" + w.printGtfsTour());
+                            log.error("TRIAS Stops: \n" + w.printTriasTour());
+                            iterator.remove();
                         } catch (SQLException e) {
                             e.printStackTrace();
                         } catch (NumberFormatException e) {
                             log.error("NumberFormatException", e);
+                            log.error(w.getFriendlyName() + " (S: " + w.getGtfsTripInfo().getService_id() + ", T: " + w.getGtfsTripInfo().getTrip_id() + ")");
+                            log.error("GTFS Stops: \n" + w.printGtfsTour());
+                            log.error("TRIAS Stops: \n" + w.printTriasTour());
+                            iterator.remove();
+                        } catch (NullPointerException e) {
+                            log.error("NullPointerException", e);
+                            log.error(w.getFriendlyName() + " (S: " + w.getGtfsTripInfo().getService_id() + ", T: " + w.getGtfsTripInfo().getTrip_id() + ")");
+                            log.error("GTFS Stops: \n" + w.printGtfsTour());
+                            log.error("TRIAS Stops: \n" + w.printTriasTour());
                             iterator.remove();
                         } catch (ClassNotFoundException e) {
                             e.printStackTrace();

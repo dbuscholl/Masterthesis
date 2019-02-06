@@ -365,7 +365,6 @@ public class TripWorker {
         }
 
         Date last = Date.from(delays.get(delays.size() - 1).getTimestamp().atZone(ZoneId.of("Europe/Berlin")).toInstant());
-        Instant.now();
         return (new Date().getTime() - last.getTime()) / 1000 > seconds;
     }
 
@@ -407,5 +406,21 @@ public class TripWorker {
      */
     public ArrayList<Delay> getDelays() {
         return delays;
+    }
+
+    public String printGtfsTour() {
+        StringBuffer s = new StringBuffer();
+        for(TripStop t : gtfsStops) {
+            s.append(t.toString()).append("\n");
+        }
+        return s.toString();
+    }
+
+    public String printTriasTour() {
+        StringBuffer s = new StringBuffer();
+        for(TripStop t : triasStops) {
+            s.append(t.toString()).append("\n");
+        }
+        return s.toString();
     }
 }
