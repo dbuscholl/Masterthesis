@@ -1,9 +1,7 @@
-import Database.Database;
-import Database.ScheduledTrip;
-import Database.IgnoreService;
-import Processes.Scheduler;
-import Processes.TripWorker;
-import Processes.WorkerManager;
+package Main;
+
+import Database.DataSource;
+import Processes.RecorderProcess;
 import Static.Chronometer;
 import Static.Settings;
 import com.mysql.jdbc.exceptions.jdbc4.CommunicationsException;
@@ -16,7 +14,6 @@ import java.sql.SQLException;
 import java.util.*;
 
 public class Main {
-    private static ArrayList<TripWorker> workers = new ArrayList<>();
     private static Chronometer chronometer = new Chronometer();
 
     public static void main(String[] args) {
@@ -27,7 +24,7 @@ public class Main {
 
         try {
             chronometer.addNow();
-            String s = Database.checkValidDatabaseStructure();
+            String s = DataSource.checkValidDatabaseStructure();
             if (!s.isEmpty()) {
                 log.error(s);
                 return;
@@ -35,9 +32,9 @@ public class Main {
             chronometer.addNow();
             log.debug("No Columns or tables missing. Done in " + (double) chronometer.getLastDifferece() / 1000 + "s");
 
-            Timer t = new Timer();
-            Scheduler tt = new Scheduler();
-            t.schedule(tt, 0, 300000);
+            Timer recorderProcess = new Timer();
+            RecorderProcess tt = new RecorderProcess();
+            recorderProcess.schedule(tt, 0, 300000);
 
 
         } catch (CommunicationsException e) {
@@ -45,7 +42,7 @@ public class Main {
         } catch (SQLException e) {
             log.error("", e);
         } catch (ConcurrentModificationException e) {
-            log.error("Big problem with Scheduler", e);
+            log.error("Big problem with RecorderProcess", e);
         }
 
     }

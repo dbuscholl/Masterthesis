@@ -26,3 +26,4 @@ triasrecorder/.idea
 hs_err_pid*
 *.DS_Store
 *.iml
+triasrecorder/target/

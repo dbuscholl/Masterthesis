@@ -1,6 +1,6 @@
 package Processes;
 
-import Database.ScheduledTrip;
+import Database.Entities.ScheduledTrip;
 import Static.Chronometer;
 import org.apache.log4j.Logger;
 import org.jdom2.JDOMException;
@@ -13,6 +13,10 @@ import java.util.Iterator;
 import java.util.Timer;
 import java.util.TimerTask;
 
+/**
+ * This process takes care of the delay recording for trips. This means it checks for every trip if it's about time to
+ * add a new Delay and removes trips which are done.
+ */
 public class WorkerManager {
     private Logger log = Logger.getLogger(this.getClass().getName());
     private Timer timer;
@@ -43,7 +47,7 @@ public class WorkerManager {
                                 if (w.isStopRecording()) {
                                     ScheduledTrip t = w.getGtfsTripInfo();
                                     if (w.getDelays().size() > 0) {
-                                        w.addToDatabase();
+                                        w.addDelaysToDatabase();
                                     } else {
                                         log.error(t.getFriendlyName() + " didn't record any realtime data.");
                                     }
@@ -79,6 +83,10 @@ public class WorkerManager {
         timer.cancel();
     }
 
+    /**
+     * add new Trips to the workers queue
+     * @param workers
+     */
     public synchronized void add(ArrayList<TripWorker> workers) {
         for (Iterator<TripWorker> iterator = workers.iterator(); iterator.hasNext(); ) {
             TripWorker w = iterator.next();

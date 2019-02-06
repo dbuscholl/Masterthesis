@@ -1,5 +1,8 @@
 package Static;
 
+/**
+ * Structural representation of the Settings
+ */
 public class Settings {
     private static String dbhost;
     private static String dbport;

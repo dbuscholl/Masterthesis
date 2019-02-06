@@ -1,14 +1,28 @@
-package Database;
+package Database.Entities;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
+/**
+ * This class is used for validating the database structures for GTFS Times. It contains all tablenames and fields.
+ * It also indicates which of them are required and which datatype in SQL is used. The representations is like follows:
+ * <p><code>HashMap<Tablename-String><HashMap<Columnname-String><SQL-Datatype-String>></code></p>
+ * It also contains an ArrayList with column names which are optional and can be nulled.<br>
+ */
 public class TableConfigurations {
     private static final HashMap<String, HashMap<String, String>> tableMap = new HashMap<>();
     private static final ArrayList<String> optionals = new ArrayList<>();
 
+    /**
+     * Static Class, so no constructors needed
+     */
     private TableConfigurations(){}
 
+    /**
+     * returns the entire tablemap.
+     * @return the hashmap containing the tablename as String for the key. It's value is another hashmap containing the
+     * columnname as String for the key and the Datatype used in SQL for the value.
+     */
     public static HashMap<String, HashMap<String, String>> getMap() {
         if(tableMap.isEmpty()) {
             initializeTableMap();
@@ -16,6 +30,10 @@ public class TableConfigurations {
         return tableMap;
     }
 
+    /**
+     *
+     * @return the arraylist containing String representations of the column names which are optional and can be nulled
+     */
     public static ArrayList<String> getOptionals() {
         if(optionals.size() == 0) {
             initializeOptionals();
@@ -23,6 +41,9 @@ public class TableConfigurations {
         return optionals;
     }
 
+    /**
+     * The Main initializer for the class.
+     */
     private static void initializeTableMap() {
         tableMap.put("agency", new HashMap<>());
         tableMap.put("stops", new HashMap<>());
@@ -149,6 +170,9 @@ public class TableConfigurations {
         tableMap.get("feed_info").put("feed_contact_url","varchar(255)");
     }
 
+    /**
+     * initalizes the optionals arraylist
+     */
     public static void initializeOptionals() {
         optionals.add("calendar_dates");
         optionals.add("fare_attributes");

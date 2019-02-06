@@ -4,16 +4,29 @@ import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 
-public class Connection {
+/**
+ * A Class responsible for all Network Connections which are send to trias (VVS)
+ */
+public class TriasConnection {
     private static String urlString = "http://efastatic.vvs.de/kleinanfrager/trias";
     private HttpURLConnection http;
 
-    public Connection() throws IOException {
+    /**
+     * Building the URL and already opening the connection
+     * @throws IOException
+     */
+    public TriasConnection() throws IOException {
         URL url = new URL(urlString);
         URLConnection con = url.openConnection();
         http = (HttpURLConnection) con;
     }
 
+    /**
+     * sends an XML-String to the TRIAS interface. Check resources for Example Files. For actual requesting themplates are used.
+     * @param xml XML-String to be send
+     * @return String response from the server
+     * @throws IOException
+     */
     public String sendPostXML(String xml) throws IOException {
         http.setRequestMethod("POST");
         http.setDoOutput(true);
