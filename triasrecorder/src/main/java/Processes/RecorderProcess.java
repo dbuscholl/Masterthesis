@@ -4,6 +4,7 @@ import Database.DataSource;
 import Database.Entities.IgnoreService;
 import Database.Entities.ScheduledTrip;
 import Static.Chronometer;
+import Static.UncaughtExceptionHandler;
 import org.apache.log4j.Logger;
 
 import java.sql.SQLException;
@@ -33,7 +34,8 @@ public class RecorderProcess extends TimerTask {
     @Override
     public void run() {
         try {
-            Thread.currentThread().setName("TripScheduler");
+            Thread.currentThread().setName("RecorderProcess");
+            Thread.currentThread().setUncaughtExceptionHandler(new UncaughtExceptionHandler());
             log.info("Getting next Trips");
             chronometer.addNow();
 

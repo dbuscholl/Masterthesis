@@ -202,7 +202,7 @@ public class DataSource {
      *
      * @param ignoringServices list of Ignored Services which should be ignored in the result. If null provided, no trips
      *                         will be ignored, but that should not be used, because this doesn't happen in reality
-     * @param datetime string representating the datetime in <i>yyyy-MM-dd HH:mm:ss</i>
+     * @param datetime         string representating the datetime in <i>yyyy-MM-dd HH:mm:ss</i>
      * @return list of next scheduled trips
      * @throws SQLException
      */
@@ -230,7 +230,7 @@ public class DataSource {
         ResultSet rs = s.executeQuery();
 
         // some fail safe
-        if(ignoringServices == null) {
+        if (ignoringServices == null) {
             ignoringServices = new ArrayList<>();
         }
 
@@ -244,7 +244,21 @@ public class DataSource {
                 }
             }
             if (!skip) {
-                trips.add(new ScheduledTrip(rs.getString("route_id"), rs.getString("trip_id"), rs.getString("service_id"), rs.getString("stop_id"), rs.getString("stop_name"), rs.getString("route_short_name"), rs.getString("trip_headsign"), rs.getString("arrival_time"), rs.getString("departure_time")));
+                ScheduledTrip trip = new ScheduledTrip(rs.getString("route_id"), rs.getString("trip_id"), rs.getString("service_id"), rs.getString("stop_id"), rs.getString("stop_name"), rs.getString("route_short_name"), rs.getString("trip_headsign"), rs.getString("arrival_time"), rs.getString("departure_time"));
+                String at = trip.getArrival_time();
+                String dt = trip.getDeparture_time();
+                if ((at == null && dt == null) && (at.equals("") && dt.equals(""))) {
+                    log.info("Skipping " + trip.getFriendlyName() + " because of invalid arrival / departure time. (S: " + trip.getService_id() + ", T: " + trip.getTrip_id() + ")");
+                    continue;
+                } else if ((at == null || at.equals("")) && !dt.equals("")) {
+                    trip.setArrival_time(dt);
+                    trips.add(trip);
+                } else if ((dt == null || dt.equals("")) && !at.equals("")) {
+                    trip.setDeparture_time(at);
+                    trips.add(trip);
+                } else {
+                    trips.add(trip);
+                }
             } else {
                 log.info("Skipping " + rs.getString("route_short_name") + " " + rs.getString("trip_headsign") + " scheduled at " + rs.getString("arrival_time") + " (S: " + rs.getString("service_id") + ", T: " + rs.getString("trip_id") + ")");
             }
@@ -257,6 +271,7 @@ public class DataSource {
 
     /**
      * This gives you a full trip with all stops and times from the GTFS-Database
+     *
      * @param trip_id the GTFS-TripId of the trip you want to obtain
      * @return a full trip with all stops and times from the GTFS-Database as an ArrayList of TripStops
      * @throws SQLException
@@ -282,8 +297,9 @@ public class DataSource {
 
     /**
      * Inserts an array of delays into the database
+     *
      * @param tripInfo ScheduledTrip object for which it should be stored in the database. Important to reference a delay with a trip.
-     * @param delays ArrayList of Delay objects
+     * @param delays   ArrayList of Delay objects
      * @throws SQLException
      */
     public static void addDelays(ScheduledTrip tripInfo, ArrayList<Delay> delays) throws SQLException {

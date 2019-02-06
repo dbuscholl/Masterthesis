@@ -23,6 +23,7 @@ public class Main {
         log.debug("Config file successfully read");
 
         try {
+            log.info(new Date());
             chronometer.addNow();
             String s = DataSource.checkValidDatabaseStructure();
             if (!s.isEmpty()) {

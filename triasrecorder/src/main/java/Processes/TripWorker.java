@@ -15,6 +15,7 @@ import org.jdom2.filter.ElementFilter;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.text.ParseException;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
@@ -45,6 +46,7 @@ public class TripWorker {
 
     /**
      * Constructor
+     *
      * @param tripInfo taking the Trip which should be recorded
      */
     public TripWorker(ScheduledTrip tripInfo) {
@@ -112,6 +114,7 @@ public class TripWorker {
 
     /**
      * Getting new delay information for the Trip and adding it into our Delays array
+     *
      * @throws IOException
      * @throws JDOMException
      * @throws ParseException
@@ -128,6 +131,7 @@ public class TripWorker {
 
     /**
      * adding all Delays collected during recording into our database
+     *
      * @throws SQLException
      * @throws ClassNotFoundException
      */
@@ -140,6 +144,7 @@ public class TripWorker {
     /**
      * firing a Request to the TRIAS interface to get the departure board for the first stop of the trip so we can match
      * the trips together
+     *
      * @return
      * @throws IOException
      * @throws JDOMException
@@ -156,6 +161,7 @@ public class TripWorker {
 
     /**
      * Firing a Reuqest to TRIAS interface to get the trip details for a trip from the departure board item
+     *
      * @param result departure board request result item. A single one, not all of them!
      * @return
      * @throws IOException
@@ -184,6 +190,7 @@ public class TripWorker {
 
     /**
      * Building the TripStop Array for better comparison and legibility
+     *
      * @param tripInfo trip info request result as xml document to be parsed
      * @return TripStop Array containing all TripStops ordered by stop sequence
      * @throws ParseException
@@ -209,6 +216,10 @@ public class TripWorker {
             log.error("Stopping analysis for Trip " + this.gtfsTripInfo.getRoute_short_name() + ": " + this.gtfsTripInfo.getTrip_headsign() + " because of errors");
             return triasStops;
         } catch (ParseException e) {
+            log.warn("Parsing Problem (" + e.getMessage() + ") for " + gtfsTripInfo.getFriendlyName());
+            return null;
+        } catch (NumberFormatException e) {
+            log.warn("Wrong number format (" + e.getMessage() + ") for " + gtfsTripInfo.getFriendlyName());
             return null;
         }
         return triasStops;
@@ -216,6 +227,7 @@ public class TripWorker {
 
     /**
      * checks the result of the Departure Board for errors
+     *
      * @param document departure board request result xml document
      * @return true if error occured, false if not
      */
@@ -242,6 +254,7 @@ public class TripWorker {
 
     /**
      * Extracts the part of the xml where the delay is stored and creates new Delay object with this information
+     *
      * @param tripInfo trias trip info request result as xml document
      * @return Delay item
      * @throws ParseException
@@ -264,14 +277,14 @@ public class TripWorker {
             return null;
         } else {
             TripStop gtfsStop = null;
-            for(TripStop t : gtfsStops) {
-                if(t.getStop_id().equals(triasStop.getStop_id())) {
+            for (TripStop t : gtfsStops) {
+                if (t.getStop_id().equals(triasStop.getStop_id())) {
                     gtfsStop = t;
                     break;
                 }
             }
             // if stop was not found in gtfs datastore
-            if(gtfsStop==null) {
+            if (gtfsStop == null) {
                 log.debug(getFriendlyName() + " could not match to corresponding GTFS-Station");
                 return null;
             }
@@ -288,6 +301,7 @@ public class TripWorker {
      * check wheter the last stop was arrived or not. <b>Note:</b> This must not be the actual ending of the trip.
      * It is entirely possible that the vehicle didn't reach the last stop yet. This depends on the implementation inside TRIAS.
      * So therefore it could be that it only returns whether the timetabled time of the stop is passed!
+     *
      * @param tripInfo trias trip info request result as xml document
      * @return true wheter trip is done, false if still on tour or not yet departed
      */
@@ -301,7 +315,6 @@ public class TripWorker {
     }
 
     /**
-     *
      * @return the startdate of a trip as readable datetime string in Europe/Berlin Timezone
      * @throws ParseException
      */
@@ -316,6 +329,7 @@ public class TripWorker {
 
     /**
      * Checks if the amount of given seconds have passed since departure
+     *
      * @param seconds
      * @return true if current time is later than x seconds after departure, false if not
      * @throws ParseException
@@ -326,6 +340,7 @@ public class TripWorker {
 
     /**
      * checks wheter the trip has already startet (time > departure time)
+     *
      * @return true or false
      * @throws ParseException
      */
@@ -335,6 +350,7 @@ public class TripWorker {
 
     /**
      * Checks if the amount of given seconds have passed since last delay insertion
+     *
      * @param seconds
      * @return true if time is later than x seconds after last delay insertion or no delay recorded yet, false if not
      */
@@ -349,12 +365,14 @@ public class TripWorker {
         }
 
         Date last = Date.from(delays.get(delays.size() - 1).getTimestamp().atZone(ZoneId.of("Europe/Berlin")).toInstant());
+        Instant.now();
         return (new Date().getTime() - last.getTime()) / 1000 > seconds;
     }
 
     /**
      * This method returns a friendly string which can be used for logging. It uses the pattern <i>route_short_name: stop_name -> trip_headsign</i>.
      * See Constructor or class doc for more Details on the patterns variables.
+     *
      * @return a friendly string which can be used for logging
      */
     public String getFriendlyName() {
@@ -362,7 +380,6 @@ public class TripWorker {
     }
 
     /**
-     *
      * @return true if worker is broken (e.g. not found in TRIAS), false if everything okay
      */
     public boolean isBrokenWorker() {
@@ -371,6 +388,7 @@ public class TripWorker {
 
     /**
      * Can be set by the <i>checkTripEnding</i> function
+     *
      * @return true if recording should be stopped, false if not
      */
     public boolean isStopRecording() {
@@ -378,7 +396,6 @@ public class TripWorker {
     }
 
     /**
-     *
      * @return more detailed information about the trip on which we are working
      */
     public ScheduledTrip getGtfsTripInfo() {
@@ -386,7 +403,6 @@ public class TripWorker {
     }
 
     /**
-     *
      * @return all delays collected so far
      */
     public ArrayList<Delay> getDelays() {

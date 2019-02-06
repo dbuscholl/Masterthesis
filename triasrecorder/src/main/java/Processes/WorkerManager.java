@@ -2,16 +2,14 @@ package Processes;
 
 import Database.Entities.ScheduledTrip;
 import Static.Chronometer;
+import Static.UncaughtExceptionHandler;
 import org.apache.log4j.Logger;
 import org.jdom2.JDOMException;
 
 import java.io.IOException;
 import java.sql.SQLException;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 /**
  * This process takes care of the delay recording for trips. This means it checks for every trip if it's about time to
@@ -21,12 +19,12 @@ public class WorkerManager {
     private Logger log = Logger.getLogger(this.getClass().getName());
     private Timer timer;
     private TimerTask task;
-    private ArrayList<TripWorker> workers;
+    private List<TripWorker> workers;
     private Chronometer chronometer;
 
     public WorkerManager() {
         timer = new Timer();
-        workers = new ArrayList<>();
+        workers = Collections.synchronizedList(new ArrayList<>());
         chronometer = new Chronometer();
     }
 
@@ -35,6 +33,7 @@ public class WorkerManager {
             @Override
             public void run() {
                 Thread.currentThread().setName("WorkerManager");
+                Thread.currentThread().setUncaughtExceptionHandler(new UncaughtExceptionHandler());
                 int affected = 0;
                 chronometer.addNow();
                 synchronized (workers) {
@@ -63,6 +62,9 @@ public class WorkerManager {
                             log.error("ParseException", e);
                         } catch (SQLException e) {
                             e.printStackTrace();
+                        } catch (NumberFormatException e) {
+                            log.error("NumberFormatException", e);
+                            iterator.remove();
                         } catch (ClassNotFoundException e) {
                             e.printStackTrace();
                         }
@@ -85,6 +87,7 @@ public class WorkerManager {
 
     /**
      * add new Trips to the workers queue
+     *
      * @param workers
      */
     public synchronized void add(ArrayList<TripWorker> workers) {
@@ -98,7 +101,7 @@ public class WorkerManager {
         log.info("We have " + this.workers.size() + " trips to record now");
     }
 
-    public ArrayList<TripWorker> getWorkers() {
+    public List<TripWorker> getWorkers() {
         return workers;
     }
 }
