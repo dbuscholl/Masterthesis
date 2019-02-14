@@ -36,7 +36,7 @@ public class RecorderProcess extends TimerTask {
         try {
             Thread.currentThread().setName("RecorderProcess");
             Thread.currentThread().setUncaughtExceptionHandler(new UncaughtExceptionHandler());
-            log.info("Getting next Trips");
+            log.debug("Getting next Trips");
             chronometer.addNow();
 
             ArrayList<TripWorker> workers = new ArrayList<>();

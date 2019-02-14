@@ -272,9 +272,8 @@ public class TripStop {
         try {
             boolean sameStopId = stop_id.equals(otherTripStop.stop_id);
             boolean sameName = jwd.apply(getStop_name(), otherTripStop.getStop_name()) > 0.7; // 70% of String is same as the other one (Waiblingen Bf. vs Waiblingen Bahnhof)
-            boolean sameStopPosition = stop_sequence == otherTripStop.stop_sequence;
 
-            boolean sameStop = (sameStopId || sameName) && sameStopPosition;
+            boolean sameStop = sameStopId || sameName;
 
             boolean sameArrivalTime = arrival_time.equals(otherTripStop.arrival_time);
             boolean sameDepartureTime = departure_time.equals(otherTripStop.departure_time);
@@ -295,8 +294,8 @@ public class TripStop {
     public String toString() {
         StringBuffer s = new StringBuffer();
         s.append(stop_id + ": " + stop_name + " | ");
-        s.append( "TT: ->" + arrival_time + ", " + departure_time + " -> | ");
-        s.append( "ET: ->" + arrival_time_estimated + ", " + departure_time_estimated + " -> | ");
+        s.append( "TT: ->" + arrival_time + ", " + departure_time + "-> | ");
+        s.append( "ET: ->" + arrival_time_estimated + ", " + departure_time_estimated + "-> | ");
         s.append(type);
         return s.toString();
     }

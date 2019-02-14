@@ -6,12 +6,10 @@ import org.apache.commons.dbcp.BasicDataSource;
 import org.apache.log4j.Logger;
 
 import java.sql.*;
+import java.sql.Date;
 import java.text.ParseException;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.TimeZone;
+import java.util.*;
 
 /**
  * The main class for accessing and operating on the Database. It currently uses DBCP TriasConnection Pooling to serve
@@ -64,6 +62,23 @@ public class DataSource {
         // already set delays table as msising because of iteration. This is corrected below if found in meta
         boolean delaysMissing = true;
 
+        ArrayList<Integer> indexes = new ArrayList<>();
+        ArrayList<String> tablenames = new ArrayList<>();
+
+        while(tables.next()) {
+            tablenames.add(tables.getString(3));
+        }
+
+        for(Iterator<String> i = map.keySet().iterator(); i.hasNext();) {
+            String name = i.next();
+            if(!tablenames.contains(name) && !TableConfigurations.getOptionals().contains(name)) {
+                missingTables.add(name);
+            }
+        }
+
+        tables.beforeFirst();
+
+        int index = 0;
         while (tables.next()) {
             String table = tables.getString(3);
 
@@ -81,17 +96,13 @@ public class DataSource {
                         missingColumns.add(table + ": " + column);
                     }
                 }
-            } else {
-                // delays table is handled later so don't add to missing tables
-                if (!table.equals("delays")) {
-                    missingTables.add(table);
-                }
             }
+            index++;
         }
 
         // if anything from the GTFS-specification is missing (not delays table)
         if (missingColumns.size() > 0 || missingTables.size() > 0) {
-            StringBuffer missing = new StringBuffer("Missing Tables: ");
+            StringBuilder missing = new StringBuilder("Missing Tables: ");
             missing.append(String.join(", ", missingTables));
             missing.append("\n");
             missing.append(String.join(", ", missingColumns));
@@ -177,7 +188,8 @@ public class DataSource {
         String dowColumn = SQLFormatTools.getColumnStringDayOfWeek(cal.get(Calendar.DAY_OF_WEEK));
 
         Connection ds = getDataSource();
-        PreparedStatement s = ds.prepareStatement("SELECT DISTINCT calendar_dates.service_id, exception_type FROM `calendar_dates` LEFT JOIN calendar ON calendar_dates.service_id = calendar.service_id where `date` = ? OR (date != ? AND exception_type = 1) and start_date <= ? AND end_date >= ? AND " + dowColumn + " = 1 ORDER BY `date` ASC");
+        //PreparedStatement s = ds.prepareStatement("SELECT DISTINCT calendar_dates.service_id, exception_type FROM `calendar_dates` LEFT JOIN calendar ON calendar_dates.service_id = calendar.service_id where `date` = ? OR (date != ? AND exception_type = 1) and start_date <= ? AND end_date >= ? AND " + dowColumn + " = 1 ORDER BY `date` ASC");
+        PreparedStatement s = ds.prepareStatement("SELECT DISTINCT calendar.service_id, exception_type FROM `calendar` LEFT JOIN calendar_dates ON calendar_dates.service_id = calendar.service_id WHERE (start_date <= ? AND end_date >= ? AND " + dowColumn + " = 0 AND calendar.service_id NOT IN (SELECT service_id FROM calendar_dates WHERE exception_type = 1 AND date = ?)) OR (date = ? AND exception_type = 2)");
         s.setString(1, SQLFormatTools.sqlDateFormat.format(cal.getTime()));
         s.setString(2, SQLFormatTools.sqlDateFormat.format(cal.getTime()));
         s.setString(3, SQLFormatTools.sqlDateFormat.format(cal.getTime()));
@@ -260,7 +272,7 @@ public class DataSource {
                     trips.add(trip);
                 }
             } else {
-                log.info("Skipping " + rs.getString("route_short_name") + " " + rs.getString("trip_headsign") + " scheduled at " + rs.getString("arrival_time") + " (S: " + rs.getString("service_id") + ", T: " + rs.getString("trip_id") + ")");
+                //log.debug("Skipping " + rs.getString("route_short_name") + " " + rs.getString("trip_headsign") + " scheduled at " + rs.getString("arrival_time") + " (S: " + rs.getString("service_id") + ", T: " + rs.getString("trip_id") + ")");
             }
         }
         rs.close();
