@@ -317,8 +317,12 @@ public class TripWorker {
                 Date timetabled = SQLFormatTools.timeFormat.parse(triasStop.getArrival_time());
                 Date estimated = SQLFormatTools.timeFormat.parse(triasStop.getArrival_time_estimated());
                 long seconds = (estimated.getTime() - timetabled.getTime()) / 1000;
+                seconds = seconds > Integer.MAX_VALUE ? Integer.MAX_VALUE : seconds;
                 return new Delay(gtfsStop, Math.toIntExact(seconds));
             } catch (ParseException e) {
+                log.error(e.getMessage(), e);
+                return null;
+            } catch (ArithmeticException e) {
                 log.error(e.getMessage(), e);
                 return null;
             }
