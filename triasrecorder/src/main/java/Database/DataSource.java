@@ -344,7 +344,7 @@ public class DataSource {
         for (Delay d : delays) {
             s.setString(1, tripInfo.getTrip_id());
             s.setInt(2, d.getSeconds());
-            s.setString(3, SQLFormatTools.sqlDatetimeFormat.format(Date.from(d.getTimestamp().atZone(ZoneId.of("Europe/Berlin")).toInstant())));
+            s.setString(3, SQLFormatTools.sqlDatetimeFormat.format(Date.from(d.getTimestamp().atZone(ZoneId.of("UTC")).toInstant())));
             s.setInt(4, d.getGtfsStop().getStop_sequence());
             s.addBatch();
         }
