@@ -40,8 +40,8 @@ public class RecorderProcess extends TimerTask {
             chronometer.addNow();
 
             ArrayList<TripWorker> workers = new ArrayList<>();
-            ArrayList<IgnoreService> ignoringServices = DataSource.getIgnoringServiceIds();
-            ArrayList<ScheduledTrip> trips = DataSource.getNextScheduledTrips(ignoringServices);
+            //ArrayList<IgnoreService> ignoringServices = DataSource.getIgnoringServiceIds();
+            ArrayList<ScheduledTrip> trips = DataSource.getNextScheduledTrips();
 
             chronometer.addNow();
             log.debug("Got next scheduled trips in " + (double) chronometer.getLastDifferece() / 1000 + "s");

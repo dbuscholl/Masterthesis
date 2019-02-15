@@ -35,6 +35,7 @@ public class WorkerManager {
                 Thread.currentThread().setName("WorkerManager");
                 Thread.currentThread().setUncaughtExceptionHandler(new UncaughtExceptionHandler());
                 int affected = 0;
+                int removed = 0;
                 chronometer.addNow();
                 synchronized (workers) {
                     for (Iterator<TripWorker> iterator = workers.iterator(); iterator.hasNext(); ) {
@@ -48,10 +49,12 @@ public class WorkerManager {
                                     ScheduledTrip t = w.getGtfsTripInfo();
                                     if (w.getDelays().size() > 0) {
                                         w.addDelaysToDatabase();
+                                        //log.debug(w.getFriendlyName() + " is done recording");
                                     } else {
                                         log.warn(t.getFriendlyName() + " didn't record any realtime data.");
                                     }
                                     iterator.remove();
+                                    removed++;
                                 }
                             }
                         } catch (IOException e) {
@@ -87,6 +90,9 @@ public class WorkerManager {
                 double t = (double) chronometer.getLastDifferece() / 1000;
                 if (affected > 0) {
                 }
+                if(removed > 0) {
+                    log.info(removed + " trips done recording! Recording only " + workers.size() + " now!");
+                }
                 chronometer.clear();
             }
         };
@@ -109,7 +115,9 @@ public class WorkerManager {
                 iterator.remove();
             }
         }
+        log.info("We had " + this.workers.size() + " trips.");
         this.workers.addAll(workers);
+        log.info("We added " + workers.size() + " trips.");
         log.info("We have " + this.workers.size() + " trips to record now");
     }
 

@@ -28,7 +28,7 @@ public class XMLFormatTools {
      * @throws NullPointerException
      * @throws ParseException
      */
-    public static ArrayList<TripStop> xmlToTripStop(List<Element> stopElements, Namespace namespace) throws NullPointerException, ParseException {
+    public static ArrayList<TripStop> xmlToTripStop(List<Element> stopElements, Namespace namespace) throws NullPointerException {
         ArrayList<TripStop> tsarray = new ArrayList<>();
 
         for (int i = 0; i < stopElements.size(); i++) {

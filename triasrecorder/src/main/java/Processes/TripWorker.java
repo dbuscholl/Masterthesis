@@ -82,6 +82,7 @@ public class TripWorker {
                 triasStops = createTriasStopsFromResponse(response);
                 if (triasStops == null) {
                     log.error("Error while creating Stops from TRIAS EKAP Result");
+                    log.debug(response);
                     brokenWorker = true;
                     return;
                 }
@@ -94,7 +95,7 @@ public class TripWorker {
                     break;
                 } else {
                     errorstring.append(printTripInfo(gtfsTripInfo) + "\n");
-                    if(i == 0) {
+                    if (i == 0) {
                         errorstring.append(printTour(gtfsStops) + "\n");
                     }
                     errorstring.append(i + ". TRIAS RESULT:\n" + printTour(triasStops) + "\n");
@@ -229,9 +230,6 @@ public class TripWorker {
         } catch (NullPointerException e) {
             log.error("Stopping analysis for Trip " + this.gtfsTripInfo.getRoute_short_name() + ": " + this.gtfsTripInfo.getTrip_headsign() + " because of errors");
             return triasStops;
-        } catch (ParseException e) {
-            log.warn("Parsing Problem (" + e.getMessage() + ") for " + gtfsTripInfo.getFriendlyName());
-            return null;
         } catch (NumberFormatException e) {
             log.warn("Wrong number format (" + e.getMessage() + ") for " + gtfsTripInfo.getFriendlyName(), e);
             log.debug(tripInfo.toString());
@@ -274,7 +272,7 @@ public class TripWorker {
      * @return Delay item
      * @throws ParseException
      */
-    private Delay getDelayFromResponse(XMLDocument tripInfo) throws ParseException {
+    private Delay getDelayFromResponse(XMLDocument tripInfo) {
         ArrayList<Element> stopElements = new ArrayList<>();
 
         // only look at previous calls
@@ -315,10 +313,15 @@ public class TripWorker {
             }
 
             // parse utc timestamps and subtract them
-            Date timetabled = SQLFormatTools.timeFormat.parse(triasStop.getArrival_time());
-            Date estimated = SQLFormatTools.timeFormat.parse(triasStop.getArrival_time_estimated());
-            long seconds = (estimated.getTime() - timetabled.getTime()) / 1000;
-            return new Delay(gtfsStop, Math.toIntExact(seconds));
+            try {
+                Date timetabled = SQLFormatTools.timeFormat.parse(triasStop.getArrival_time());
+                Date estimated = SQLFormatTools.timeFormat.parse(triasStop.getArrival_time_estimated());
+                long seconds = (estimated.getTime() - timetabled.getTime()) / 1000;
+                return new Delay(gtfsStop, Math.toIntExact(seconds));
+            } catch (ParseException e) {
+                log.error(e.getMessage(), e);
+                return null;
+            }
         }
     }
 
@@ -336,6 +339,10 @@ public class TripWorker {
         for (Element e : tripInfo.getDocument().getDescendants(new ElementFilter("OnwardCall"))) {
             stopElements.add(e);
         }
+
+        if (stopElements.size() == 0) {
+            int i = 0;
+        }
         return stopElements.size() < 1;
     }
 
@@ -343,13 +350,22 @@ public class TripWorker {
      * @return the startdate of a trip as readable datetime string in Europe/Berlin Timezone
      * @throws ParseException
      */
-    public Date getStartDate() throws ParseException {
-        String time = gtfsTripInfo.getDeparture_time().equals("") ? gtfsTripInfo.getArrival_time() : gtfsTripInfo.getDeparture_time();
-        Date now = new Date();
-        String departureString = SQLFormatTools.sqlDateFormat.format(now) + " " + time;
-        SQLFormatTools.sqlDatetimeFormat.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
-        Date departure = SQLFormatTools.sqlDatetimeFormat.parse(departureString);
-        return departure;
+    public Date getStartDate() {
+        try {
+            String time = gtfsTripInfo.getDeparture_time().equals("") ? gtfsTripInfo.getArrival_time() : gtfsTripInfo.getDeparture_time();
+            Date now = new Date();
+            String departureString = SQLFormatTools.sqlDateFormat.format(now) + " " + time;
+            SQLFormatTools.sqlDatetimeFormat.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
+            if (time.equals("") || departureString.equals("")) {
+                int i = 0;
+            }
+            Date departure = SQLFormatTools.sqlDatetimeFormat.parse(departureString);
+            return departure;
+        } catch (ParseException e) {
+            return null;
+        }catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     /**
@@ -359,7 +375,7 @@ public class TripWorker {
      * @return true if current time is later than x seconds after departure, false if not
      * @throws ParseException
      */
-    public boolean isMoreThanAfterDeparture(int seconds) throws ParseException {
+    public boolean isMoreThanAfterDeparture(int seconds) {
         return (new Date().getTime() - getStartDate().getTime()) / 1000 > seconds;
     }
 
@@ -369,7 +385,7 @@ public class TripWorker {
      * @return true or false
      * @throws ParseException
      */
-    public boolean isDeparted() throws ParseException {
+    public boolean isDeparted() {
         return isMoreThanAfterDeparture(0);
     }
 
@@ -389,8 +405,13 @@ public class TripWorker {
             log.error(lastDelayCheck + " - " + seconds + "s");
         }
 
-        Date last = Date.from(delays.get(delays.size() - 1).getTimestamp().atZone(ZoneId.of("Europe/Berlin")).toInstant());
-        return (new Date().getTime() - last.getTime()) / 1000 > seconds;
+        try {
+            Date last = Date.from(delays.get(delays.size() - 1).getTimestamp().atZone(ZoneId.of("Europe/Berlin")).toInstant());
+            return (new Date().getTime() - last.getTime()) / 1000 > seconds;
+        } catch (NullPointerException e) {
+            //brokenWorker = true;
+            return false;
+        }
     }
 
     /**
