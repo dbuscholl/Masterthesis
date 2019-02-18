@@ -361,7 +361,11 @@ public class TripWorker {
                 return (now.getTime() - lastDelayCheck.getTime()) / 1000 > seconds;
             }
         } catch (NullPointerException e) {
-            log.error("");
+            brokenWorker = true;
+            Date now = new Date();
+            log.error(lastDelayCheck + " - " + seconds + "s");
+            log.error((now.getTime() - lastDelayCheck.getTime()) / 1000 + "seconds.");
+            log.error(getFriendlyName() + " is somehow broken...");
         }
 
         Date last = Date.from(delays.get(delays.size() - 1).getTimestamp().atZone(ZoneId.of("Europe/Berlin")).toInstant());
