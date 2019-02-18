@@ -4,10 +4,14 @@ import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,8 +22,23 @@ import android.widget.DatePicker;
 import android.widget.TextView;
 import android.widget.TimePicker;
 
+import org.jdom2.JDOMException;
+
+import java.io.IOException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.TimeZone;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.ExecutionException;
+
+import de.dbuscholl.fahrplanauskunft.Network.Client;
+import de.dbuscholl.fahrplanauskunft.Network.Station;
+import de.dbuscholl.fahrplanauskunft.Network.Trip;
+import de.dbuscholl.fahrplanauskunft.Network.TripInfoRequest;
 
 public class ConnectionsFragment extends Fragment {
 
@@ -38,8 +57,8 @@ public class ConnectionsFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        AutoCompleteTextView from = getView().findViewById(R.id.startPoint);
-        AutoCompleteTextView to = getView().findViewById(R.id.destinationPoint);
+        final AutoCompleteTextView from = getView().findViewById(R.id.startPoint);
+        final AutoCompleteTextView to = getView().findViewById(R.id.destinationPoint);
 
         final Button date = getView().findViewById(R.id.date);
         final Button time = getView().findViewById(R.id.time);
@@ -49,9 +68,10 @@ public class ConnectionsFragment extends Fragment {
         time.setText(FormatTools.formatTime(cal));
 
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity().getApplicationContext(), android.R.layout.simple_list_item_1, STATIONS);
-        from.setAdapter(adapter);
-        to.setAdapter(adapter);
+        final AutoCompleteAdapter fromAdapter = new AutoCompleteAdapter(getActivity().getApplicationContext(), android.R.layout.simple_dropdown_item_1line);
+        from.setAdapter(fromAdapter);
+        final AutoCompleteAdapter toAdapter = new AutoCompleteAdapter(getActivity().getApplicationContext(), android.R.layout.simple_dropdown_item_1line);
+        to.setAdapter(toAdapter);
 
         date.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -90,5 +110,65 @@ public class ConnectionsFragment extends Fragment {
             }
         };
 
+        Button search = getView().findViewById(R.id.search_button);
+        search.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String fromRef = null;
+                String toRef = null;
+                String fromText = from.getText().toString();
+                for (Station s : fromAdapter.getStations()) {
+                    if (fromText.equals(s.toString())) {
+                        fromRef = s.getRef();
+                        Log.d(getClass().getName(), fromText + " - " + s.toString() + " - " + s.getRef());
+                    }
+                }
+                String toText = to.getText().toString();
+                for (Station s : toAdapter.getStations()) {
+                    if (toText.equals(s.toString())) {
+                        toRef = s.getRef();
+                        Log.d(getClass().getName(), toText + " - " + s.toString() + " - " + s.getRef());
+                    }
+                }
+                String depDate = date.getText().toString();
+                String depTime = time.getText().toString();
+
+                try {
+                    SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+                    sdf.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
+                    Date guiDate = sdf.parse(depDate + " " + depTime);
+                    String parse = FormatTools.formatTrias(guiDate);
+                    Log.d(getClass().getName(), parse);
+                    TripInfoRequest tir = new TripInfoRequest(getActivity().getApplicationContext().getResources().openRawResource(R.raw.trip_info_request));
+                    tir.buildRequest(fromRef, toRef, parse);
+                    ArrayList<Trip> trips = new TripTask().execute(tir.toString()).get();
+                } catch (JDOMException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+    }
+
+    private class TripTask extends AsyncTask<String, Void, ArrayList<Trip>> {
+
+        @Override
+        protected ArrayList<Trip> doInBackground(String... strings) {
+            try {
+                Client c = new Client("http://efastatic.vvs.de/kleinanfrager/trias");
+                String response = c.sendPostXML(strings[0]);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return new ArrayList<>();
+        }
     }
 }

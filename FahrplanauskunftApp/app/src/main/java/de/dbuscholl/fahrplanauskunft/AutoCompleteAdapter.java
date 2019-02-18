@@ -6,18 +6,26 @@ import android.widget.ArrayAdapter;
 import android.widget.Filter;
 import android.widget.Filterable;
 
+import org.jdom2.JDOMException;
+
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
 
 import de.dbuscholl.fahrplanauskunft.Network.Client;
+import de.dbuscholl.fahrplanauskunft.Network.LocationAutocompleteRequest;
+import de.dbuscholl.fahrplanauskunft.Network.Station;
 
 public class AutoCompleteAdapter extends ArrayAdapter<String> implements Filterable {
 
-    ArrayList<String> stations;
+    ArrayList<Station> stations;
+    Context context;
 
-    public AutoCompleteAdapter(Context context, int textViewResourceId){
+
+    public AutoCompleteAdapter(Context context, int textViewResourceId) {
         super(context, textViewResourceId);
-        stations = new ArrayList<String>();
+        this.context = context;
+        stations = new ArrayList<>();
     }
 
     @Override
@@ -26,26 +34,24 @@ public class AutoCompleteAdapter extends ArrayAdapter<String> implements Filtera
     }
 
     @Override
-    public String getItem(int index){
-        return stations.get(index);
+    public String getItem(int index) {
+        return stations.get(index).toString();
     }
 
     @Override
-    public Filter getFilter(){
+    public Filter getFilter() {
 
-        Filter myFilter = new Filter(){
+        Filter myFilter = new Filter() {
 
             @Override
-            protected FilterResults performFiltering(CharSequence constraint){
+            protected FilterResults performFiltering(CharSequence constraint) {
                 FilterResults filterResults = new FilterResults();
-                if(constraint != null) {
+                if (constraint != null) {
                     // A class that queries a web API, parses the data and returns an ArrayList<Style>
 //
                     try {
-
-                        stations = new DownloadShippers().execute(new String[]{constraint.toString()}).get();
-                    }
-                    catch(Exception e) {
+                        stations = new DownloadStations().execute(new String[]{constraint.toString()}).get();
+                    } catch (Exception e) {
 //                        Log.e("myException", e.getMessage());
                     }
                     // Now assign the values and count to the FilterResults object
@@ -57,10 +63,9 @@ public class AutoCompleteAdapter extends ArrayAdapter<String> implements Filtera
 
             @Override
             protected void publishResults(CharSequence contraint, FilterResults results) {
-                if(results != null && results.count > 0) {
+                if (results != null && results.count > 0) {
                     notifyDataSetChanged();
-                }
-                else {
+                } else {
                     notifyDataSetInvalidated();
                 }
             }
@@ -71,24 +76,30 @@ public class AutoCompleteAdapter extends ArrayAdapter<String> implements Filtera
 
     }
 
-    private class DownloadShippers extends AsyncTask<String, Void, ArrayList<String>> {
+    public ArrayList<Station> getStations() {
+        return stations;
+    }
+
+    private class DownloadStations extends AsyncTask<String, Void, ArrayList<Station>> {
+
 
         @Override
-        protected ArrayList<String> doInBackground(String... constraint) {
-            ArrayList<String> stationNames = new ArrayList<String>();
+        protected ArrayList<Station> doInBackground(String... constraint) {
+            ArrayList<Station> stations = new ArrayList<Station>();
             try {
-                Client client = new Client("");
-            } catch (IOException e) {
-                return stationNames;
+                LocationAutocompleteRequest lar = new LocationAutocompleteRequest(context.getResources().openRawResource(R.raw.stop_autocomplete_request));
+                lar.buildRequest(constraint[0]);
+                Client client = new Client("http://efastatic.vvs.de/kleinanfrager/trias");
+                String response = client.sendPostXML(lar.toString());
+                stations = Station.stationListFromTriasResult(response);
+            } catch (IOException | JDOMException e) {
+                return stations;
             }
-
-
-
-            return stationNames;
+            return stations;
         }
 
         @Override
-        protected void onPostExecute(ArrayList<String> result) {
+        protected void onPostExecute(ArrayList<Station> result) {
 
         }
 
