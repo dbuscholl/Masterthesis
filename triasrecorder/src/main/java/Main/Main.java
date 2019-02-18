@@ -48,7 +48,7 @@ public class Main {
 
     }
 
-    private static void readConfig() {
+    public static void readConfig() {
         Properties prop = new Properties();
         InputStream input = null;
         try {

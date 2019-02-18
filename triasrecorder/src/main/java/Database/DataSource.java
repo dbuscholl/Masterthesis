@@ -6,12 +6,10 @@ import org.apache.commons.dbcp.BasicDataSource;
 import org.apache.log4j.Logger;
 
 import java.sql.*;
+import java.sql.Date;
 import java.text.ParseException;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.TimeZone;
+import java.util.*;
 
 /**
  * The main class for accessing and operating on the Database. It currently uses DBCP TriasConnection Pooling to serve
@@ -64,6 +62,23 @@ public class DataSource {
         // already set delays table as msising because of iteration. This is corrected below if found in meta
         boolean delaysMissing = true;
 
+        ArrayList<Integer> indexes = new ArrayList<>();
+        ArrayList<String> tablenames = new ArrayList<>();
+
+        while (tables.next()) {
+            tablenames.add(tables.getString(3));
+        }
+
+        for (Iterator<String> i = map.keySet().iterator(); i.hasNext(); ) {
+            String name = i.next();
+            if (!tablenames.contains(name) && !TableConfigurations.getOptionals().contains(name)) {
+                missingTables.add(name);
+            }
+        }
+
+        tables.beforeFirst();
+
+        int index = 0;
         while (tables.next()) {
             String table = tables.getString(3);
 
@@ -81,17 +96,13 @@ public class DataSource {
                         missingColumns.add(table + ": " + column);
                     }
                 }
-            } else {
-                // delays table is handled later so don't add to missing tables
-                if (!table.equals("delays")) {
-                    missingTables.add(table);
-                }
             }
+            index++;
         }
 
         // if anything from the GTFS-specification is missing (not delays table)
         if (missingColumns.size() > 0 || missingTables.size() > 0) {
-            StringBuffer missing = new StringBuffer("Missing Tables: ");
+            StringBuilder missing = new StringBuilder("Missing Tables: ");
             missing.append(String.join(", ", missingTables));
             missing.append("\n");
             missing.append(String.join(", ", missingColumns));
@@ -175,9 +186,9 @@ public class DataSource {
         }
 
         String dowColumn = SQLFormatTools.getColumnStringDayOfWeek(cal.get(Calendar.DAY_OF_WEEK));
-
         Connection ds = getDataSource();
-        PreparedStatement s = ds.prepareStatement("SELECT DISTINCT calendar_dates.service_id, exception_type FROM `calendar_dates` LEFT JOIN calendar ON calendar_dates.service_id = calendar.service_id where `date` = ? OR (date != ? AND exception_type = 1) and start_date <= ? AND end_date >= ? AND " + dowColumn + " = 1 ORDER BY `date` ASC");
+        //PreparedStatement s = ds.prepareStatement("SELECT DISTINCT calendar_dates.service_id, exception_type FROM `calendar_dates` LEFT JOIN calendar ON calendar_dates.service_id = calendar.service_id where `date` = ? OR (date != ? AND exception_type = 1) and start_date <= ? AND end_date >= ? AND " + dowColumn + " = 1 ORDER BY `date` ASC");
+        PreparedStatement s = ds.prepareStatement("SELECT DISTINCT calendar.service_id, exception_type FROM `calendar` LEFT JOIN calendar_dates ON calendar_dates.service_id = calendar.service_id WHERE (start_date <= ? AND end_date >= ? AND " + dowColumn + " = 0 AND calendar.service_id NOT IN (SELECT service_id FROM calendar_dates WHERE exception_type = 1 AND date = ?)) OR (date = ? AND exception_type = 2)");
         s.setString(1, SQLFormatTools.sqlDateFormat.format(cal.getTime()));
         s.setString(2, SQLFormatTools.sqlDateFormat.format(cal.getTime()));
         s.setString(3, SQLFormatTools.sqlDateFormat.format(cal.getTime()));
@@ -192,23 +203,20 @@ public class DataSource {
         return ignoringServices;
     }
 
-    public static ArrayList<ScheduledTrip> getNextScheduledTrips(ArrayList<IgnoreService> ignoringServices) throws SQLException {
-        return getNextScheduledTrips(ignoringServices, null);
+    public static ArrayList<ScheduledTrip> getNextScheduledTrips() throws SQLException {
+        return getNextScheduledTrips(null);
     }
 
     /**
      * returns a list of nex Scheduled Trips but you need to provide a ignoring service list. Make sure your IgnoreServices
      * are for the date you query
      *
-     * @param ignoringServices list of Ignored Services which should be ignored in the result. If null provided, no trips
-     *                         will be ignored, but that should not be used, because this doesn't happen in reality
-     * @param datetime         string representating the datetime in <i>yyyy-MM-dd HH:mm:ss</i>
+     * @param datetime string representating the datetime in <i>yyyy-MM-dd HH:mm:ss</i>
      * @return list of next scheduled trips
      * @throws SQLException
      */
-    public static ArrayList<ScheduledTrip> getNextScheduledTrips(ArrayList<IgnoreService> ignoringServices, String datetime) throws SQLException {
+    public static ArrayList<ScheduledTrip> getNextScheduledTrips(String datetime) throws SQLException {
         ArrayList<ScheduledTrip> trips = new ArrayList<>();
-        String timeAddition = Settings.getNextTripsTimeAmount();
         Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("Europe/Berlin"));
 
         if (datetime != null) {
@@ -219,13 +227,26 @@ public class DataSource {
                 cal = Calendar.getInstance(TimeZone.getTimeZone("Europe/Berlin"));
             }
         }
+        trips.addAll(queryNextScheduledTrips(SQLFormatTools.sqlDateFormat.format(cal.getTime()), SQLFormatTools.timeFormat.format(cal.getTime()), SQLFormatTools.getColumnStringDayOfWeek(cal.get(Calendar.DAY_OF_WEEK))));
+        if (cal.get(Calendar.HOUR_OF_DAY) < 5) {
+            String[] strings = getCalendarTimeStringForAfterMidnight(cal);
+            trips.addAll(queryNextScheduledTrips(strings[0],strings[1], strings[2]));
+        }
 
+        return trips;
+    }
+
+    public static ArrayList<ScheduledTrip> queryNextScheduledTrips(String datestring, String timestring, String dayOfWeek) throws SQLException {
+        ArrayList<ScheduledTrip> trips = new ArrayList<>();
+        ArrayList<IgnoreService> ignoringServices = getIgnoringServiceIds(datestring);
+        String timeAddition = Settings.getNextTripsTimeAmount();
         Connection ds = getDataSource();
-        PreparedStatement s = ds.prepareStatement("SELECT trips.route_id, trips.trip_id, trips.service_id, stops.stop_id, stops.stop_name, route_short_name, trip_headsign, arrival_time, departure_time FROM `trips` LEFT JOIN calendar ON calendar.service_id = trips.service_id LEFT JOIN routes ON trips.route_id = routes.route_id LEFT JOIN stop_times ON stop_times.trip_id = trips.trip_id LEFT JOIN stops ON stop_times.stop_id = stops.stop_id WHERE `start_date` <= ? and `end_date` >= ? and " + SQLFormatTools.getColumnStringDayOfWeek(cal.get(Calendar.DAY_OF_WEEK)) + " = 1 and stop_sequence = 1 and arrival_time BETWEEN ? AND AddTime(?, ?) ORDER BY departure_time");
-        s.setString(1, SQLFormatTools.sqlDateFormat.format(cal.getTime()));
-        s.setString(2, SQLFormatTools.sqlDateFormat.format(cal.getTime()));
-        s.setString(3, SQLFormatTools.timeFormat.format(cal.getTime()));
-        s.setString(4, SQLFormatTools.timeFormat.format(cal.getTime()));
+
+        PreparedStatement s = ds.prepareStatement("SELECT trips.route_id, trips.trip_id, trips.service_id, stops.stop_id, stops.stop_name, route_short_name, trip_headsign, date_format(arrival_time, '%H:%i:%S') as arrival_time, date_format(departure_time, '%H:%i:%S') as departure_time FROM `trips` LEFT JOIN calendar ON calendar.service_id = trips.service_id LEFT JOIN routes ON trips.route_id = routes.route_id LEFT JOIN stop_times ON stop_times.trip_id = trips.trip_id LEFT JOIN stops ON stop_times.stop_id = stops.stop_id WHERE `start_date` <= ? and `end_date` >= ? and " + dayOfWeek + " = 1 and stop_sequence = 1 and arrival_time BETWEEN ? AND AddTime(?, ?) ORDER BY departure_time");
+        s.setString(1, datestring);
+        s.setString(2, datestring);
+        s.setString(3, timestring);
+        s.setString(4, timestring);
         s.setString(5, timeAddition);
         ResultSet rs = s.executeQuery();
 
@@ -260,13 +281,27 @@ public class DataSource {
                     trips.add(trip);
                 }
             } else {
-                log.info("Skipping " + rs.getString("route_short_name") + " " + rs.getString("trip_headsign") + " scheduled at " + rs.getString("arrival_time") + " (S: " + rs.getString("service_id") + ", T: " + rs.getString("trip_id") + ")");
+                //log.debug("Skipping " + rs.getString("route_short_name") + " " + rs.getString("trip_headsign") + " scheduled at " + rs.getString("arrival_time") + " (S: " + rs.getString("service_id") + ", T: " + rs.getString("trip_id") + ")");
             }
         }
         rs.close();
         s.close();
         ds.close();
         return trips;
+    }
+
+    /**
+     * Handles time safety in case it's after midnight
+     *
+     * @param cal cal instance for time
+     * @return Array of two: [0] datestring e.g. "2019-02-15", [1] timestring e.g. "24:10:20"
+     */
+    private static String[] getCalendarTimeStringForAfterMidnight(Calendar cal) {
+        cal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DAY_OF_MONTH) - 1);
+        String datestring = SQLFormatTools.sqlDateFormat.format(cal.getTime());
+        String timestring = (cal.get(Calendar.HOUR_OF_DAY) + 24) + ":" + (cal.get(Calendar.MINUTE) < 10 ? "0" + cal.get(Calendar.MINUTE) : cal.get(Calendar.MINUTE)) + ":" + (cal.get(Calendar.SECOND) < 10 ? "0" + cal.get(Calendar.SECOND) : cal.get(Calendar.SECOND));
+        String dayOfWeek = SQLFormatTools.getColumnStringDayOfWeek(cal.get(Calendar.DAY_OF_WEEK));
+        return new String[]{datestring, timestring, dayOfWeek};
     }
 
     /**
@@ -280,7 +315,7 @@ public class DataSource {
         ArrayList<TripStop> stops = new ArrayList<>();
 
         Connection ds = getDataSource();
-        PreparedStatement s = ds.prepareStatement("SELECT arrival_time, departure_time, stops.stop_id, stop_name, stop_sequence, pickup_type, drop_off_type FROM `stop_times` LEFT JOIN stops ON stop_times.stop_id = stops.stop_id WHERE `trip_id` = ? ORDER BY stop_sequence");
+        PreparedStatement s = ds.prepareStatement("SELECT date_format(arrival_time, '%H:%i:%S') as arrival_time, date_format(departure_time, '%H:%i:%S') as departure_time, stops.stop_id, stop_name, stop_sequence, pickup_type, drop_off_type FROM `stop_times` LEFT JOIN stops ON stop_times.stop_id = stops.stop_id WHERE `trip_id` = ? ORDER BY stop_sequence");
         s.setString(1, trip_id);
         ResultSet rs = s.executeQuery();
 
@@ -309,7 +344,7 @@ public class DataSource {
         for (Delay d : delays) {
             s.setString(1, tripInfo.getTrip_id());
             s.setInt(2, d.getSeconds());
-            s.setString(3, SQLFormatTools.sqlDatetimeFormat.format(Date.from(d.getTimestamp().atZone(ZoneId.of("Europe/Berlin")).toInstant())));
+            s.setString(3, SQLFormatTools.sqlDatetimeFormat.format(Date.from(d.getTimestamp().atZone(ZoneId.of("UTC")).toInstant())));
             s.setInt(4, d.getGtfsStop().getStop_sequence());
             s.addBatch();
         }

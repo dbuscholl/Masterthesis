@@ -21,13 +21,14 @@ public class XMLFormatTools {
      * automatically filled with each other if one of them is null. This happens very often, when trips don't pause on a
      * stop!</p>
      * <p><b>Note:</b> Estimated times can be null when no realtime data is provided</p>
+     *
      * @param stopElements must be DOM Elements with the tag names <i>PreviousCall</i>, <i>CurrentPosition</i> or <i>OnwardCall<i/>
-     * @param namespace For identifying elements (DTD)
+     * @param namespace    For identifying elements (DTD)
      * @return ArrayList of TripStops ordered by StopSequence and containing all stops for a trip
      * @throws NullPointerException
      * @throws ParseException
      */
-    public static ArrayList<TripStop> xmlToTripStop(List<Element> stopElements, Namespace namespace) throws NullPointerException, ParseException {
+    public static ArrayList<TripStop> xmlToTripStop(List<Element> stopElements, Namespace namespace) throws NullPointerException {
         ArrayList<TripStop> tsarray = new ArrayList<>();
 
         for (int i = 0; i < stopElements.size(); i++) {

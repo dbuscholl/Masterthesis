@@ -83,7 +83,7 @@ public class SQLFormatTools {
      * @return GTFS Timestring <i>HH:mm:ss</i>
      * @throws ParseException
      */
-    public static String makeTimeForGtfs(String time) throws ParseException {
+    public static String makeTimeForGtfs(String time) {
         Date d = parseTriasTime(time);
         timeFormat.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
         return timeFormat.format(d);
@@ -106,9 +106,21 @@ public class SQLFormatTools {
      * @return Date as Date Objects
      * @throws ParseException
      */
-    private static Date parseTriasTime(String time) throws ParseException {
-        String[] ts1 = time.substring(0, time.length() - 1).split("T");
-        sqlDatetimeFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-        return sqlDatetimeFormat.parse(ts1[0] + " " + ts1[1]);
+    private static Date parseTriasTime(String time) {
+        try {
+            String[] ts1 = time.substring(0, time.length() - 1).split("T");
+            sqlDatetimeFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+            String toParse = ts1[0] + " " + ts1[1];
+            if (toParse.equals("")) {
+                int i = 0;
+            }
+            return sqlDatetimeFormat.parse(toParse);
+        } catch (ParseException e) {
+            int i = 0;
+            return null;
+        }catch (NumberFormatException e) {
+            int i = 0;
+            return null;
+        }
     }
 }

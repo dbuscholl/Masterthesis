@@ -35,10 +35,12 @@ public class WorkerManager {
                 Thread.currentThread().setName("WorkerManager");
                 Thread.currentThread().setUncaughtExceptionHandler(new UncaughtExceptionHandler());
                 int affected = 0;
+                int removed = 0;
                 chronometer.addNow();
                 synchronized (workers) {
                     for (Iterator<TripWorker> iterator = workers.iterator(); iterator.hasNext(); ) {
                         TripWorker w = iterator.next();
+                        if (w.isBrokenWorker()) iterator.remove();
                         try {
                             if (w.isDeparted() && w.isMoreThanAfterLastDelay(180)) {
                                 w.getNewDelay();
@@ -47,11 +49,12 @@ public class WorkerManager {
                                     ScheduledTrip t = w.getGtfsTripInfo();
                                     if (w.getDelays().size() > 0) {
                                         w.addDelaysToDatabase();
+                                        //log.debug(w.getFriendlyName() + " is done recording");
                                     } else {
-                                        log.error(t.getFriendlyName() + " didn't record any realtime data.");
+                                        log.warn(t.getFriendlyName() + " didn't record any realtime data.");
                                     }
                                     iterator.remove();
-                                    log.debug(t.getFriendlyName() + " is done recordings!");
+                                    removed++;
                                 }
                             }
                         } catch (IOException e) {
@@ -60,23 +63,23 @@ public class WorkerManager {
                             log.error("JDOM Exception", e);
                         } catch (ParseException e) {
                             log.error("ParseException", e);
-                            log.error(w.getFriendlyName() + " (S: " + w.getGtfsTripInfo().getService_id() + ", T: " + w.getGtfsTripInfo().getTrip_id() + ")");
-                            log.error("GTFS Stops: \n" + w.printGtfsTour());
-                            log.error("TRIAS Stops: \n" + w.printTriasTour());
+                            log.debug(w.getFriendlyName() + " (S: " + w.getGtfsTripInfo().getService_id() + ", T: " + w.getGtfsTripInfo().getTrip_id() + ")");
+                            log.debug("GTFS Stops: \n" + w.printGtfsTour());
+                            log.debug("TRIAS Stops: \n" + w.printTriasTour());
                             iterator.remove();
                         } catch (SQLException e) {
                             e.printStackTrace();
                         } catch (NumberFormatException e) {
                             log.error("NumberFormatException", e);
-                            log.error(w.getFriendlyName() + " (S: " + w.getGtfsTripInfo().getService_id() + ", T: " + w.getGtfsTripInfo().getTrip_id() + ")");
-                            log.error("GTFS Stops: \n" + w.printGtfsTour());
-                            log.error("TRIAS Stops: \n" + w.printTriasTour());
+                            log.debug(w.getFriendlyName() + " (S: " + w.getGtfsTripInfo().getService_id() + ", T: " + w.getGtfsTripInfo().getTrip_id() + ")");
+                            log.debug("GTFS Stops: \n" + w.printGtfsTour());
+                            log.debug("TRIAS Stops: \n" + w.printTriasTour());
                             iterator.remove();
                         } catch (NullPointerException e) {
                             log.error("NullPointerException", e);
-                            log.error(w.getFriendlyName() + " (S: " + w.getGtfsTripInfo().getService_id() + ", T: " + w.getGtfsTripInfo().getTrip_id() + ")");
-                            log.error("GTFS Stops: \n" + w.printGtfsTour());
-                            log.error("TRIAS Stops: \n" + w.printTriasTour());
+                            log.debug(w.getFriendlyName() + " (S: " + w.getGtfsTripInfo().getService_id() + ", T: " + w.getGtfsTripInfo().getTrip_id() + ")");
+                            log.debug("GTFS Stops: \n" + w.printGtfsTour());
+                            log.debug("TRIAS Stops: \n" + w.printTriasTour());
                             iterator.remove();
                         } catch (ClassNotFoundException e) {
                             e.printStackTrace();
@@ -86,7 +89,9 @@ public class WorkerManager {
                 chronometer.addNow();
                 double t = (double) chronometer.getLastDifferece() / 1000;
                 if (affected > 0) {
-                    log.debug("Got " + affected + " new Delays! Processed them in " + t + "s.");
+                }
+                if(removed > 0) {
+                    log.info(removed + " trips done recording! Recording only " + workers.size() + " now!");
                 }
                 chronometer.clear();
             }
@@ -110,7 +115,9 @@ public class WorkerManager {
                 iterator.remove();
             }
         }
+        log.info("We had " + this.workers.size() + " trips.");
         this.workers.addAll(workers);
+        log.info("We added " + workers.size() + " trips.");
         log.info("We have " + this.workers.size() + " trips to record now");
     }
 
