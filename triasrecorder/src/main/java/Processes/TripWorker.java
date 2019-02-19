@@ -281,11 +281,19 @@ public class TripWorker {
         }
 
         // get last item as TripStop for better legibility
-        TripStop triasStop;
+        TripStop triasStop = null;
         try {
-            triasStop = XMLFormatTools.xmlToTripStop(stopElements.subList(stopElements.size() - 1, stopElements.size()), namespace).get(0);
-        } catch (NumberFormatException e) {
-            XMLFormatTools.xmlToTripStop(stopElements.subList(stopElements.size() - 1, stopElements.size()), namespace).get(0);
+            if (!stopElements.isEmpty()) {
+                triasStop = XMLFormatTools.xmlToTripStop(stopElements.subList(stopElements.size() - 1, stopElements.size()), namespace).get(0);
+            } else {
+                brokenWorker = true;
+                log.error("Error getting Delay from result. No previous stops defined.");
+                log.debug(printTripInfo(gtfsTripInfo));
+                log.debug("GTFS Stops: \n" + printGtfsTour());
+                log.debug("XML: \n" + tripInfo.toString());
+            }
+        } catch (NumberFormatException | IndexOutOfBoundsException e) {
+            log.error(e.getMessage());
             log.debug(printTripInfo(gtfsTripInfo));
             log.debug("GTFS Stops: \n" + printGtfsTour());
             log.debug("XML: \n" + tripInfo.toString());
@@ -367,7 +375,7 @@ public class TripWorker {
             return departure;
         } catch (ParseException e) {
             return null;
-        }catch (NumberFormatException e) {
+        } catch (NumberFormatException e) {
             return null;
         }
     }
@@ -380,7 +388,19 @@ public class TripWorker {
      * @throws ParseException
      */
     public boolean isMoreThanAfterDeparture(int seconds) {
-        return (new Date().getTime() - getStartDate().getTime()) / 1000 > seconds;
+        try {
+            return (new Date().getTime() - getStartDate().getTime()) / 1000 > seconds;
+        } catch (NullPointerException e) {
+            log.error(e.getMessage());
+            try {
+                log.debug(getStartDate() + " - " + seconds + " - " + (new Date().getTime() - getStartDate().getTime()) / 1000);
+            } catch (NullPointerException ex) {
+                brokenWorker = true;
+                return false;
+            }
+            brokenWorker = true;
+            return false;
+        }
     }
 
     /**
