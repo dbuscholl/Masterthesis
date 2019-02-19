@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Trias xmlns:siri="http://www.siri.org.uk/siri"
+    version="1.1"
+    xmlns="http://www.vdv.de/trias">
+    <ServiceRequest>
+        <siri:RequestTimestamp></siri:RequestTimestamp>
+        <siri:RequestorRef>kleinanfrager</siri:RequestorRef>
+        <RequestPayload>
+            <TripRequest>
+                <Origin>
+                    <LocationRef>
+                        <StopPointRef></StopPointRef>
+                    </LocationRef>
+                    <DepArrTime></DepArrTime>
+                </Origin>
+                <Destination>
+                    <LocationRef>
+                        <StopPointRef></StopPointRef>
+                    </LocationRef>
+                </Destination>
+                <Params>
+                    <IncludeTurnDescription>true</IncludeTurnDescription>
+                    <IncludeIntermediateStops>true</IncludeIntermediateStops>
+                </Params>
+            </TripRequest>
+        </RequestPayload>
+    </ServiceRequest>
+</Trias>

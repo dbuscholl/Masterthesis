@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Fahrplanauskunft</string>
+    <string name="title_connections">Verbindungen</string>
+    <string name="title_debug">Debug</string>
+    <string name="connections_startingPoint">Starthaltestelle</string>
+    <string name="connections_destinationPoint">Zielhaltestelle</string>
+    <string name="connections_date">Datum</string>
+    <string name="connections_time">Uhrzeit</string>
+    <string name="connections_search">Suchen</string>
+    <string name="connections_resultHeader">Ihre Fahten:</string>
+</resources>
