@@ -1,8 +1,7 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <Trias xmlns="http://www.vdv.de/trias" version="1.1">
     <ServiceDelivery>
-        <ResponseTimestamp xmlns="http://www.siri.org.uk/siri">2019-02-12T12:00:26Z</ResponseTimestamp>
-        <ProducerRef xmlns="http://www.siri.org.uk/siri">EFAController10.3.3.101-EFA-STATIC04</ProducerRef>
+        <ResponseTimestamp xmlns="http://www.siri.org.uk/siri">2019-02-19T08:07:29Z</ResponseTimestamp>
+        <ProducerRef xmlns="http://www.siri.org.uk/siri">EFAController10.3.4.10-EFA-STATIC04</ProducerRef>
         <Status xmlns="http://www.siri.org.uk/siri">true</Status>
         <MoreData>false</MoreData>
         <Language>de</Language>
@@ -10,57 +9,49 @@
             <TripInfoResponse>
                 <TripInfoResult>
                     <OnwardCall>
-                        <StopPointRef>de:08119:5201:1:1</StopPointRef>
+                        <StopPointRef>de:08115:4729:0:3</StopPointRef>
                         <StopPointName>
-                            <Text>Erlenhof</Text>
+                            <Text>Rohrau Rathaus</Text>
                             <Language>de</Language>
                         </StopPointName>
-                        <PlannedBay>
-                            <Text>Bstg. 1</Text>
-                            <Language>de</Language>
-                        </PlannedBay>
                         <ServiceDeparture>
-                            <TimetabledTime>2019-02-12T12:04:00Z</TimetabledTime>
-                            <EstimatedTime>2019-02-12T12:04:00Z</EstimatedTime>
+                            <TimetabledTime>2019-02-19T08:09:00Z</TimetabledTime>
+                            <EstimatedTime>2019-02-19T08:09:00Z</EstimatedTime>
                         </ServiceDeparture>
                         <StopSeqNumber>1</StopSeqNumber>
                     </OnwardCall>
                     <OnwardCall>
-                        <StopPointRef>de:08119:5279:0:3</StopPointRef>
+                        <StopPointRef>de:08115:7152:0:3</StopPointRef>
                         <StopPointName>
-                            <Text>Kottweil</Text>
+                            <Text>Gärtringen Schelmenwiesen</Text>
                             <Language>de</Language>
                         </StopPointName>
                         <ServiceArrival>
-                            <TimetabledTime>2019-02-12T12:07:00Z</TimetabledTime>
-                            <EstimatedTime>2019-02-12T12:07:00Z</EstimatedTime>
+                            <TimetabledTime>2019-02-19T08:12:00Z</TimetabledTime>
+                            <EstimatedTime>2019-02-19T08:12:00Z</EstimatedTime>
                         </ServiceArrival>
                         <ServiceDeparture>
-                            <TimetabledTime>2019-02-12T12:07:00Z</TimetabledTime>
-                            <EstimatedTime>2019-02-12T12:07:00Z</EstimatedTime>
+                            <TimetabledTime>2019-02-19T08:12:00Z</TimetabledTime>
+                            <EstimatedTime>2019-02-19T08:12:00Z</EstimatedTime>
                         </ServiceDeparture>
                         <StopSeqNumber>2</StopSeqNumber>
                     </OnwardCall>
                     <OnwardCall>
-                        <StopPointRef>de:08119:5201:1:2</StopPointRef>
+                        <StopPointRef>de:08115:5774:3:3</StopPointRef>
                         <StopPointName>
-                            <Text>Erlenhof</Text>
+                            <Text>Gärtringen Bf</Text>
                             <Language>de</Language>
                         </StopPointName>
-                        <PlannedBay>
-                            <Text>Bstg. 2</Text>
-                            <Language>de</Language>
-                        </PlannedBay>
                         <ServiceArrival>
-                            <TimetabledTime>2019-02-12T12:10:00Z</TimetabledTime>
-                            <EstimatedTime>2019-02-12T12:10:00Z</EstimatedTime>
+                            <TimetabledTime>2019-02-19T08:14:00Z</TimetabledTime>
+                            <EstimatedTime>2019-02-19T08:14:00Z</EstimatedTime>
                         </ServiceArrival>
                         <StopSeqNumber>3</StopSeqNumber>
                     </OnwardCall>
                     <Service>
-                        <OperatingDayRef>2019-02-12T</OperatingDayRef>
-                        <JourneyRef>vvs:31338::H:j19:8</JourneyRef>
-                        <LineRef>vvs:31338::H</LineRef>
+                        <OperatingDayRef>2019-02-19T</OperatingDayRef>
+                        <JourneyRef>vvs:31753:q:H:j19:8</JourneyRef>
+                        <LineRef>vvs:31753:q:H</LineRef>
                         <DirectionRef>outward</DirectionRef>
                         <Mode>
                             <PtMode>bus</PtMode>
@@ -71,22 +62,22 @@
                             </Name>
                         </Mode>
                         <PublishedLineName>
-                            <Text>338</Text>
+                            <Text>753</Text>
                             <Language>de</Language>
                         </PublishedLineName>
-                        <OperatorRef>vvs:92</OperatorRef>
+                        <OperatorRef>vvs:26</OperatorRef>
                         <RouteDescription>
-                            <Text>Erlenhof - Kottweil - Ödernhardt - Erlenhof</Text>
+                            <Text>Rohrau (- Nufringen Gewerbegebiet) - Gärtringen</Text>
                             <Language>de</Language>
                         </RouteDescription>
-                        <OriginStopPointRef>de:08119:5201:1:1</OriginStopPointRef>
+                        <OriginStopPointRef>de:08115:4729:0:3</OriginStopPointRef>
                         <OriginText>
-                            <Text>Erlenhof</Text>
+                            <Text>Rohrau Rathaus</Text>
                             <Language>de</Language>
                         </OriginText>
-                        <DestinationStopPointRef>de:08119:5201:1:2</DestinationStopPointRef>
+                        <DestinationStopPointRef>de:08115:5774:3:3</DestinationStopPointRef>
                         <DestinationText>
-                            <Text>Erlenhof</Text>
+                            <Text>Gärtringen Bf</Text>
                             <Language>de</Language>
                         </DestinationText>
                     </Service>

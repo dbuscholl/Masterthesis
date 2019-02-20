@@ -339,6 +339,7 @@ public class DataSource {
      */
     public static void addDelays(ScheduledTrip tripInfo, ArrayList<Delay> delays) throws SQLException {
         Connection ds = getDataSource();
+        SQLFormatTools.sqlDatetimeFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 
         PreparedStatement s = ds.prepareStatement("INSERT INTO `delays`(`tripId`, `delay`, `timestamp`,`stop_sequence`) VALUES (?,?,?,?)");
         for (Delay d : delays) {
@@ -351,6 +352,7 @@ public class DataSource {
         s.executeBatch();
         s.close();
         ds.close();
+        SQLFormatTools.sqlDatetimeFormat.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
     }
 
 }

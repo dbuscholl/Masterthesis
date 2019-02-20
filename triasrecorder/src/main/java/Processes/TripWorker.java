@@ -322,6 +322,7 @@ public class TripWorker {
 
             // parse utc timestamps and subtract them
             try {
+                SQLFormatTools.timeFormat.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
                 Date timetabled = SQLFormatTools.timeFormat.parse(triasStop.getArrival_time());
                 Date estimated = SQLFormatTools.timeFormat.parse(triasStop.getArrival_time_estimated());
                 long seconds = (estimated.getTime() - timetabled.getTime()) / 1000;
@@ -427,6 +428,7 @@ public class TripWorker {
             }
         } catch (NullPointerException e) {
             log.error(lastDelayCheck + " - " + seconds + "s");
+            log.error((new Date().getTime() - lastDelayCheck.getTime()) / 1000 > seconds);
         }
 
         try {

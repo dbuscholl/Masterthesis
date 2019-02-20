@@ -83,6 +83,9 @@ public class WorkerManager {
                             iterator.remove();
                         } catch (ClassNotFoundException e) {
                             e.printStackTrace();
+                        } catch (IllegalStateException e) {
+                            log.error("Serious illegal state error occured");
+                            break;
                         }
                     }
                 }

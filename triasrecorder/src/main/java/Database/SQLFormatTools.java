@@ -114,7 +114,9 @@ public class SQLFormatTools {
             if (toParse.equals("")) {
                 int i = 0;
             }
-            return sqlDatetimeFormat.parse(toParse);
+            Date parse = sqlDatetimeFormat.parse(toParse);
+            sqlDatetimeFormat.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
+            return parse;
         } catch (ParseException e) {
             int i = 0;
             return null;

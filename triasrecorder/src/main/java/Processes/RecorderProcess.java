@@ -5,6 +5,7 @@ import Database.Entities.IgnoreService;
 import Database.Entities.ScheduledTrip;
 import Static.Chronometer;
 import Static.UncaughtExceptionHandler;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.log4j.Logger;
 
 import java.sql.SQLException;
@@ -62,7 +63,12 @@ public class RecorderProcess extends TimerTask {
                 TripWorker newWorker = iScheduler.next();
                 for (Iterator<TripWorker> iManager = workerManager.getWorkers().iterator(); iManager.hasNext(); ) {
                     TripWorker existingWorker = iManager.next();
-                    if (existingWorker.getGtfsTripInfo().getTrip_id().equals(newWorker.getGtfsTripInfo().getTrip_id())) {
+                    try {
+                        if (existingWorker.getGtfsTripInfo().getTrip_id().equals(newWorker.getGtfsTripInfo().getTrip_id())) {
+                            iScheduler.remove();
+                            break;
+                        }
+                    } catch (NullPointerException e) {
                         iScheduler.remove();
                         break;
                     }
