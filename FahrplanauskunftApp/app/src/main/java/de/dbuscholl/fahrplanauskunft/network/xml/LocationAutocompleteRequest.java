@@ -1,6 +1,4 @@
-package de.dbuscholl.fahrplanauskunft.Network;
-
-import android.content.res.Resources;
+package de.dbuscholl.fahrplanauskunft.network.xml;
 
 import org.jdom2.JDOMException;
 
@@ -10,7 +8,6 @@ import java.util.Calendar;
 import java.util.TimeZone;
 
 import de.dbuscholl.fahrplanauskunft.FormatTools;
-import de.dbuscholl.fahrplanauskunft.R;
 
 public class LocationAutocompleteRequest extends XMLDocument {
 

@@ -1,11 +1,13 @@
-package de.dbuscholl.fahrplanauskunft.Network;
+package de.dbuscholl.fahrplanauskunft.network.entities;
 
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
-import org.jdom2.Namespace;
 
 import java.io.IOException;
 import java.util.ArrayList;
+
+import de.dbuscholl.fahrplanauskunft.common.Constants;
+import de.dbuscholl.fahrplanauskunft.network.xml.XMLDocument;
 
 public class Station {
     private String ref;
@@ -79,7 +81,6 @@ public class Station {
     }
 
     public static ArrayList<Station> stationListFromTriasResult(String result) {
-        Namespace namespace = Namespace.getNamespace("http://www.vdv.de/trias");
         ArrayList<Station> stations = new ArrayList<>();
 
         try {
@@ -87,15 +88,15 @@ public class Station {
 
             for(Element e : elements) {
                 try {
-                    String ref = e.getChild("StopPoint", namespace).getChild("StopPointRef", namespace).getTextNormalize();
-                    String name = e.getChild("StopPoint", namespace).getChild("StopPointName", namespace).getChild("Text", namespace).getTextNormalize();
-                    String locationRef = e.getChild("StopPoint", namespace).getChild("LocalityRef", namespace).getTextNormalize();
-                    String locationName = e.getChild("LocationName", namespace).getChild("Text", namespace).getTextNormalize();
+                    String ref = e.getChild("StopPoint", Constants.NAMESPACE).getChild("StopPointRef", Constants.NAMESPACE).getTextNormalize();
+                    String name = e.getChild("StopPoint", Constants.NAMESPACE).getChild("StopPointName", Constants.NAMESPACE).getChild("Text", Constants.NAMESPACE).getTextNormalize();
+                    String locationRef = e.getChild("StopPoint", Constants.NAMESPACE).getChild("LocalityRef", Constants.NAMESPACE).getTextNormalize();
+                    String locationName = e.getChild("LocationName", Constants.NAMESPACE).getChild("Text", Constants.NAMESPACE).getTextNormalize();
                     float longitude = 0;
                     float latitude = 0;
                     try {
-                        longitude = Float.parseFloat(e.getChild("GeoPosition", namespace).getChild("Longitude", namespace).getTextNormalize());
-                        latitude = Float.parseFloat(e.getChild("GeoPosition", namespace).getChild("Latitude", namespace).getTextNormalize());
+                        longitude = Float.parseFloat(e.getChild("GeoPosition", Constants.NAMESPACE).getChild("Longitude", Constants.NAMESPACE).getTextNormalize());
+                        latitude = Float.parseFloat(e.getChild("GeoPosition", Constants.NAMESPACE).getChild("Latitude", Constants.NAMESPACE).getTextNormalize());
                     } catch (NumberFormatException ignored) {
                     }
                     stations.add(new Station(ref,name,locationRef,locationName,longitude,latitude));

@@ -1,4 +1,4 @@
-package de.dbuscholl.fahrplanauskunft;
+package de.dbuscholl.fahrplanauskunft.gui.activities;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -7,8 +7,10 @@ import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
-import android.widget.TextView;
-import android.widget.Toast;
+
+import de.dbuscholl.fahrplanauskunft.R;
+import de.dbuscholl.fahrplanauskunft.gui.fragments.ConnectionsFragment;
+import de.dbuscholl.fahrplanauskunft.gui.fragments.DebugFragment;
 
 public class MainActivity extends AppCompatActivity implements BottomNavigationView.OnNavigationItemSelectedListener {
 

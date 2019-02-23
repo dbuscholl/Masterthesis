@@ -1,4 +1,4 @@
-package de.dbuscholl.fahrplanauskunft.Network;
+package de.dbuscholl.fahrplanauskunft.network.xml;
 
 import org.jdom2.JDOMException;
 import org.jdom2.Namespace;

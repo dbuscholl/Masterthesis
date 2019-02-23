@@ -1,4 +1,4 @@
-package de.dbuscholl.fahrplanauskunft.Network;
+package de.dbuscholl.fahrplanauskunft.network;
 
 import java.io.BufferedReader;
 import java.io.IOException;

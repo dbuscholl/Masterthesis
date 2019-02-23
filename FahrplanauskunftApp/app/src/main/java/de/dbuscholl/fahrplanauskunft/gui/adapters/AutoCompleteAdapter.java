@@ -1,4 +1,4 @@
-package de.dbuscholl.fahrplanauskunft;
+package de.dbuscholl.fahrplanauskunft.gui.adapters;
 
 import android.content.Context;
 import android.os.AsyncTask;
@@ -10,11 +10,11 @@ import org.jdom2.JDOMException;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.concurrent.ExecutionException;
 
-import de.dbuscholl.fahrplanauskunft.Network.Client;
-import de.dbuscholl.fahrplanauskunft.Network.LocationAutocompleteRequest;
-import de.dbuscholl.fahrplanauskunft.Network.Station;
+import de.dbuscholl.fahrplanauskunft.R;
+import de.dbuscholl.fahrplanauskunft.network.Client;
+import de.dbuscholl.fahrplanauskunft.network.xml.LocationAutocompleteRequest;
+import de.dbuscholl.fahrplanauskunft.network.entities.Station;
 
 public class AutoCompleteAdapter extends ArrayAdapter<String> implements Filterable {
 
