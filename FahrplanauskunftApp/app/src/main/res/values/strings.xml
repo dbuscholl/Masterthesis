@@ -7,5 +7,5 @@
     <string name="connections_date">Datum</string>
     <string name="connections_time">Uhrzeit</string>
     <string name="connections_search">Suchen</string>
-    <string name="connections_resultHeader">Ihre Fahten:</string>
+    <string name="connections_resultHeader">Ihre Fahrten:</string>
 </resources>

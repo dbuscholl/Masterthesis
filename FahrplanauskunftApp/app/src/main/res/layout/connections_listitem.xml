@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:padding="4dp"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
@@ -60,28 +61,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" android:orientation="horizontal">
         <TextView
+            android:id="@+id/services"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="@dimen/standard"
             android:textColor="@color/standardText"
             android:text="U7  -   65  -  U3"/>
     </LinearLayout>
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="@dimen/standard"
-        android:textColor="@color/tinyInfo"
-        android:text="Linie U7 ist i.d.R. pünktlich."/>
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="@dimen/standard"
-        android:textColor="@color/tinyInfo"
-        android:text="Linie 65 ist i.d.R. maximal 3 Minuten verspätet."/>
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="@dimen/standard"
-        android:textColor="@color/tinyInfo"
-        android:text="Linie U3 ist i.d.R. pünktlich."/>
 </LinearLayout>

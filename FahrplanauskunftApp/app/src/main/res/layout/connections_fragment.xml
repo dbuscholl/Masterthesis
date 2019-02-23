@@ -71,6 +71,7 @@
             android:text="@string/connections_search"/>
 
         <TextView
+            android:id="@+id/resultListText"
             android:layout_width="wrap_content"
             android:layout_marginTop="16dp"
             android:text="@string/connections_resultHeader"

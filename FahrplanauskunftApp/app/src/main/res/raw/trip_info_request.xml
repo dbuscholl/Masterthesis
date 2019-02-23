@@ -21,6 +21,7 @@
                 <Params>
                     <IncludeTurnDescription>true</IncludeTurnDescription>
                     <IncludeIntermediateStops>true</IncludeIntermediateStops>
+                    <NumberOfResults>16</NumberOfResults>
                 </Params>
             </TripRequest>
         </RequestPayload>

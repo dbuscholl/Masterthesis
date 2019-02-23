@@ -2,15 +2,15 @@ package de.dbuscholl.fahrplanauskunft.network.entities;
 
 import java.util.ArrayList;
 
-public class TripResult {
+public class Connection {
     private String id;
     private String startTime;
     private String endTime;
     private ArrayList<Trip> legs;
 
-    public TripResult() {}
+    public Connection() {}
 
-    public TripResult(String id, String startTimeU, String endTime, ArrayList<Trip> legs) {
+    public Connection(String id, String startTimeU, String endTime, ArrayList<Trip> legs) {
         this.id = id;
         this.startTime = startTimeU;
         this.endTime = endTime;
