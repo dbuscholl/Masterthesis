@@ -2,6 +2,7 @@ package de.dbuscholl.fahrplanauskunft.gui.fragments;
 
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -17,7 +18,6 @@ import android.widget.DatePicker;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.TimePicker;
-import android.widget.Toast;
 
 import org.jdom2.JDOMException;
 
@@ -32,6 +32,7 @@ import java.util.concurrent.ExecutionException;
 
 import de.dbuscholl.fahrplanauskunft.FormatTools;
 import de.dbuscholl.fahrplanauskunft.R;
+import de.dbuscholl.fahrplanauskunft.gui.activities.ResultDetailActivity;
 import de.dbuscholl.fahrplanauskunft.gui.adapters.AutoCompleteAdapter;
 import de.dbuscholl.fahrplanauskunft.gui.adapters.ConnectionsListAdapter;
 import de.dbuscholl.fahrplanauskunft.network.TripInfoDownloadTask;
@@ -40,12 +41,22 @@ import de.dbuscholl.fahrplanauskunft.network.entities.Connection;
 import de.dbuscholl.fahrplanauskunft.network.xml.TripInfoRequest;
 
 public class ConnectionsFragment extends Fragment {
+    private static ArrayList<Connection> currentResult = new ArrayList<>();
+    private static String fromValue;
+    private static String toValue;
+    private static String dateValue;
+    private static String timeValue;
 
     private static final String[] STATIONS = {"Heumaden", "Heumaden Bockelstraße", "Heumaden Schule",
             "Heumaden Rose", "Schemppstraße", "Sillenbuch", "Silberwald", "Waldau", "Ruhbank (Fernsehturm)",
             "Isegrimweg"};
     private DatePickerDialog.OnDateSetListener dateSetListener;
     private TimePickerDialog.OnTimeSetListener timeSetListener;
+
+    private AutoCompleteTextView fromTextView;
+    private AutoCompleteTextView toTextView;
+    private Button dateButton;
+    private Button timeButton;
 
     @Nullable
     @Override
@@ -56,23 +67,38 @@ public class ConnectionsFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        final AutoCompleteTextView from = getView().findViewById(R.id.startPoint);
-        final AutoCompleteTextView to = getView().findViewById(R.id.destinationPoint);
+        fromTextView = getView().findViewById(R.id.startPoint);
+        toTextView = getView().findViewById(R.id.destinationPoint);
 
-        final Button date = getView().findViewById(R.id.date);
-        final Button time = getView().findViewById(R.id.time);
+        dateButton = getView().findViewById(R.id.date);
+        timeButton = getView().findViewById(R.id.time);
 
         Calendar cal = Calendar.getInstance();
-        date.setText(FormatTools.formatDate(cal));
-        time.setText(FormatTools.formatTime(cal));
+        if (fromValue != null && toValue != null) {
+            fromTextView.setText(fromValue);
+            toTextView.setText(toValue);
+            if (dateValue != null) {
+                dateButton.setText(dateValue);
+            } else {
+                dateButton.setText(FormatTools.formatDate(cal));
+            }
+            if (timeValue != null) {
+                timeButton.setText(timeValue);
+            } else {
+                timeButton.setText(FormatTools.formatTime(cal));
+            }
+        } else {
+            dateButton.setText(FormatTools.formatDate(cal));
+            timeButton.setText(FormatTools.formatTime(cal));
+        }
 
 
         final AutoCompleteAdapter fromAdapter = new AutoCompleteAdapter(getActivity().getApplicationContext(), android.R.layout.simple_dropdown_item_1line);
-        from.setAdapter(fromAdapter);
+        fromTextView.setAdapter(fromAdapter);
         final AutoCompleteAdapter toAdapter = new AutoCompleteAdapter(getActivity().getApplicationContext(), android.R.layout.simple_dropdown_item_1line);
-        to.setAdapter(toAdapter);
+        toTextView.setAdapter(toAdapter);
 
-        date.setOnClickListener(new View.OnClickListener() {
+        dateButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Calendar cal = Calendar.getInstance();
@@ -88,11 +114,11 @@ public class ConnectionsFragment extends Fragment {
             @Override
             public void onDateSet(DatePicker view, int year, int month, int day) {
                 month = month + 1;
-                date.setText(FormatTools.formatDate(year, month, day));
+                dateButton.setText(FormatTools.formatDate(year, month, day));
             }
         };
 
-        time.setOnClickListener(new View.OnClickListener() {
+        timeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Calendar cal = Calendar.getInstance();
@@ -105,7 +131,7 @@ public class ConnectionsFragment extends Fragment {
         timeSetListener = new TimePickerDialog.OnTimeSetListener() {
             @Override
             public void onTimeSet(TimePicker view, int hour, int minute) {
-                time.setText(FormatTools.formatDate(hour, minute));
+                timeButton.setText(FormatTools.formatDate(hour, minute));
             }
         };
 
@@ -113,49 +139,50 @@ public class ConnectionsFragment extends Fragment {
         resultListTextView.setVisibility(View.INVISIBLE);
         final ListView resultListView = getView().findViewById(R.id.resultlistview);
 
+        if (currentResult.size() > 0) {
+            ConnectionsListAdapter cla = new ConnectionsListAdapter(currentResult, getContext());
+            resultListView.setAdapter(cla);
+            resultListView.setOnItemClickListener(new ItemClickHandler());
+            resultListTextView.setVisibility(View.VISIBLE);
+        }
+
         Button search = getView().findViewById(R.id.search_button);
         search.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 String fromRef = null;
                 String toRef = null;
-                String fromText = from.getText().toString();
+                fromValue = fromTextView.getText().toString();
                 for (Station s : fromAdapter.getStations()) {
-                    if (fromText.equals(s.toString())) {
+                    if (fromValue.equals(s.toString())) {
                         fromRef = s.getRef();
-                        Log.d(getClass().getName(), fromText + " - " + s.toString() + " - " + s.getRef());
+                        Log.d(getClass().getName(), fromValue + " - " + s.toString() + " - " + s.getRef());
                     }
                 }
-                String toText = to.getText().toString();
+                toValue = toTextView.getText().toString();
                 for (Station s : toAdapter.getStations()) {
-                    if (toText.equals(s.toString())) {
+                    if (toValue.equals(s.toString())) {
                         toRef = s.getRef();
-                        Log.d(getClass().getName(), toText + " - " + s.toString() + " - " + s.getRef());
+                        Log.d(getClass().getName(), toValue + " - " + s.toString() + " - " + s.getRef());
                     }
                 }
-                String depDate = date.getText().toString();
-                String depTime = time.getText().toString();
+                dateValue = dateButton.getText().toString();
+                timeValue = timeButton.getText().toString();
 
                 try {
                     SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm");
                     sdf.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
-                    Date guiDate = sdf.parse(depDate + " " + depTime);
+                    Date guiDate = sdf.parse(dateValue + " " + timeValue);
                     String parse = FormatTools.formatTrias(guiDate);
                     Log.d(getClass().getName(), parse);
                     TripInfoRequest tir = new TripInfoRequest(getActivity().getApplicationContext().getResources().openRawResource(R.raw.trip_info_request));
                     tir.buildRequest(fromRef, toRef, parse);
-                    final ArrayList<Connection> trips = new TripInfoDownloadTask().execute(tir.toString()).get();
+                    currentResult = new TripInfoDownloadTask().execute(tir.toString()).get();
 
                     resultListTextView.setVisibility(View.VISIBLE);
-                    ConnectionsListAdapter cla = new ConnectionsListAdapter(trips, getContext());
+                    ConnectionsListAdapter cla = new ConnectionsListAdapter(currentResult, getContext());
                     resultListView.setAdapter(cla);
-                    resultListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                        @Override
-                        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                            Connection c = trips.get(position);
-                            Toast.makeText(getActivity().getApplicationContext(), c.getLegs().get(0).getBoarding().getName(), Toast.LENGTH_LONG);
-                        }
-                    });
+                    resultListView.setOnItemClickListener(new ItemClickHandler());
 
                 } catch (JDOMException e) {
                     e.printStackTrace();
@@ -172,4 +199,18 @@ public class ConnectionsFragment extends Fragment {
         });
     }
 
+    public static ArrayList<Connection> getCurrentResult() {
+        return currentResult;
+    }
+
+    private class ItemClickHandler implements AdapterView.OnItemClickListener {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            Connection c = currentResult.get(position);
+
+            Intent intent = new Intent(getActivity(), ResultDetailActivity.class);
+            intent.putExtra("position", position);
+            startActivity(intent);
+        }
+    }
 }

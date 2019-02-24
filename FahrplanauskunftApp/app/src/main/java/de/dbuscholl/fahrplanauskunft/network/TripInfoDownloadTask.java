@@ -130,7 +130,7 @@ public class TripInfoDownloadTask extends AsyncTask<String, Void, ArrayList<Conn
             start.setName(stopNameStart.getChildTextNormalize("Text", Constants.NAMESPACE));
         }
         if (startTime != null) {
-            start.setArrivalTime(startTime.getTextNormalize());
+            start.setDepartureTime(startTime.getTextNormalize());
         }
         t.setBoarding(start);
 
@@ -210,7 +210,10 @@ public class TripInfoDownloadTask extends AsyncTask<String, Void, ArrayList<Conn
             service.setRoute(routeDescription.getChildTextNormalize("RouteDescription", Constants.NAMESPACE));
         }
         if (destinationText != null) {
-            service.setDesitnation(destinationText.getChildTextNormalize("DestinationText", Constants.NAMESPACE));
+            Element dest = destinationText.getChild("DestinationText", Constants.NAMESPACE);
+            if(dest!=null) {
+                service.setDesitnation(dest.getChildTextNormalize("Text", Constants.NAMESPACE));
+            }
         }
 
         return service;

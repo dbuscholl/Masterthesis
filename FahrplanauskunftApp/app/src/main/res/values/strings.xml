@@ -8,4 +8,9 @@
     <string name="connections_time">Uhrzeit</string>
     <string name="connections_search">Suchen</string>
     <string name="connections_resultHeader">Ihre Fahrten:</string>
+    <string name="trip_start">Start</string>
+    <string name="trip_end">Ziel</string>
+    <string name="trip_date">Datum</string>
+    <string name="result_activity_title">Ausgewählte Fahrt</string>
+    <string name="action_back">Zurück</string>
 </resources>
