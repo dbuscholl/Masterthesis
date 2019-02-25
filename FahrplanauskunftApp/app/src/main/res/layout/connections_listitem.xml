@@ -58,7 +58,7 @@
             android:layout_marginLeft="24dp"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="0.5"
+            android:layout_weight="0.4"
             android:text="00:24"
             android:textColor="@color/standardText"
             android:textSize="@dimen/standard" />
