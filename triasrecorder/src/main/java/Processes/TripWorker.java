@@ -49,7 +49,7 @@ public class TripWorker {
      */
     public TripWorker(ScheduledTrip tripInfo) {
         this.gtfsTripInfo = tripInfo;
-        lastDelayCheck = new Date(0);
+        lastDelayCheck = new Date(10000);
     }
 
     /**
@@ -339,6 +339,10 @@ public class TripWorker {
      * @return true if time is later than x seconds after last delay insertion or no delay recorded yet, false if not
      */
     public boolean isMoreThanAfterLastDelay(int seconds) {
+        if(delays == null) {
+            brokenWorker = true;
+            return false;
+        }
         try {
             if (delays.isEmpty()) {
                 Date now = new Date();
