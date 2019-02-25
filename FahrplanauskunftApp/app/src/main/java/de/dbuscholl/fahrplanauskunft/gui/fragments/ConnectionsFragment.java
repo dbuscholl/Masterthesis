@@ -1,9 +1,12 @@
 package de.dbuscholl.fahrplanauskunft.gui.fragments;
 
+import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -11,6 +14,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
@@ -18,6 +22,7 @@ import android.widget.DatePicker;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.TimePicker;
+import android.widget.Toast;
 
 import org.jdom2.JDOMException;
 
@@ -66,7 +71,7 @@ public class ConnectionsFragment extends Fragment {
 
 
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         fromTextView = getView().findViewById(R.id.startPoint);
         toTextView = getView().findViewById(R.id.destinationPoint);
 
@@ -169,7 +174,14 @@ public class ConnectionsFragment extends Fragment {
                 dateValue = dateButton.getText().toString();
                 timeValue = timeButton.getText().toString();
 
+                if (fromRef == null || toRef == null) {
+                    Toast.makeText(getContext(), "Invalid refs. Please retype stations to get results!", Toast.LENGTH_LONG).show();
+                    return;
+                }
+
                 try {
+                    InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Activity.INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
                     SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm");
                     sdf.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
                     Date guiDate = sdf.parse(dateValue + " " + timeValue);
@@ -177,22 +189,28 @@ public class ConnectionsFragment extends Fragment {
                     Log.d(getClass().getName(), parse);
                     TripInfoRequest tir = new TripInfoRequest(getActivity().getApplicationContext().getResources().openRawResource(R.raw.trip_info_request));
                     tir.buildRequest(fromRef, toRef, parse);
-                    currentResult = new TripInfoDownloadTask().execute(tir.toString()).get();
+                    TripInfoDownloadTask.setOnSuccessEvent(new TripInfoDownloadTask.SuccessEvent() {
+                        @Override
+                        public void onSuccess(final ArrayList<Connection> result) {
+                            new Handler(Looper.getMainLooper()).post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    currentResult = result;
+                                    ConnectionsListAdapter cla = new ConnectionsListAdapter(currentResult, getContext());
+                                    resultListView.setAdapter(cla);
+                                    resultListView.setOnItemClickListener(new ItemClickHandler());
+                                }
+                            });
+                        }
+                    });
+                    new TripInfoDownloadTask(getActivity()).execute(tir.toString());
 
                     resultListTextView.setVisibility(View.VISIBLE);
-                    ConnectionsListAdapter cla = new ConnectionsListAdapter(currentResult, getContext());
-                    resultListView.setAdapter(cla);
-                    resultListView.setOnItemClickListener(new ItemClickHandler());
-
                 } catch (JDOMException e) {
                     e.printStackTrace();
                 } catch (IOException e) {
                     e.printStackTrace();
                 } catch (ParseException e) {
-                    e.printStackTrace();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (ExecutionException e) {
                     e.printStackTrace();
                 }
             }
@@ -213,4 +231,5 @@ public class ConnectionsFragment extends Fragment {
             startActivity(intent);
         }
     }
+
 }

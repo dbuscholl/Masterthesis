@@ -215,9 +215,6 @@ public class TripWorker {
         } catch (NullPointerException e) {
             log.error("Stopping analysis for Trip " + this.gtfsTripInfo.getRoute_short_name() + ": " + this.gtfsTripInfo.getTrip_headsign() + " because of errors");
             return triasStops;
-        } catch (ParseException e) {
-            log.warn("Parsing Problem (" + e.getMessage() + ") for " + gtfsTripInfo.getFriendlyName());
-            return null;
         } catch (NumberFormatException e) {
             log.warn("Wrong number format (" + e.getMessage() + ") for " + gtfsTripInfo.getFriendlyName());
             return null;

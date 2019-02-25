@@ -1,6 +1,7 @@
 package de.dbuscholl.fahrplanauskunft.gui.adapters;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -55,14 +56,20 @@ public class ConnectionsListAdapter extends ArrayAdapter<Connection> {
         viewHolder.duration = (TextView) convertView.findViewById(R.id.duration);
 
         lastPosition = position;
-        String startTime = FormatTools.parseTriasTime(c.getStartTime());
-        String endTime = FormatTools.parseTriasTime(c.getEndTime());
+        String departureTime = c.getLegs().get(0).getBoarding().getDepartureTime();
+        String arrivalTime = c.getLegs().get(c.getLegs().size() - 1).getAlighting().getArrivalTime();
+        String startTime = FormatTools.parseTriasTime(departureTime);
+        String endTime = FormatTools.parseTriasTime(arrivalTime);
 
         viewHolder.startTimeDelay.setText("");
         if (c.getLegs().get(0).getType() == Trip.TripType.TIMED) {
             String startTimeEstimated = c.getLegs().get(0).getBoarding().getDepartureTimeEstimated();
             if (startTimeEstimated != null) {
-                viewHolder.startTimeDelay.setText(getDelayForTextView(c.getStartTime(), startTimeEstimated));
+                long diff = getDelayForTextView(departureTime, startTimeEstimated);
+                if (diff > 5) {
+                    viewHolder.startTimeDelay.setTextColor(Color.rgb(244, 37, 30));
+                }
+                viewHolder.startTimeDelay.setText("+" + String.valueOf(diff));
             }
         }
 
@@ -70,7 +77,11 @@ public class ConnectionsListAdapter extends ArrayAdapter<Connection> {
         if (c.getLegs().get(c.getLegs().size() - 1).getType() == Trip.TripType.TIMED) {
             String endTimeEstimated = c.getLegs().get(c.getLegs().size() - 1).getAlighting().getArrivalTimeEstimated();
             if (endTimeEstimated != null) {
-                viewHolder.startTimeDelay.setText(getDelayForTextView(c.getEndTime(), endTimeEstimated));
+                long diff = getDelayForTextView(arrivalTime, endTimeEstimated);
+                if (diff > 5) {
+                    viewHolder.endTimeDelay.setTextColor(Color.rgb(244, 37, 30));
+                }
+                viewHolder.endTimeDelay.setText("+" + String.valueOf(diff));
             }
         }
 
@@ -110,11 +121,9 @@ public class ConnectionsListAdapter extends ArrayAdapter<Connection> {
         return s.toString();
     }
 
-    private String getDelayForTextView(String timetabled, String estimated) {
+    private long getDelayForTextView(String timetabled, String estimated) {
         long difference = FormatTools.getTriasDifference(timetabled, estimated) / 1000 / 60;
-        StringBuilder s = new StringBuilder();
-        s.append("+").append(difference);
-        return s.toString();
+        return difference;
     }
 
     private String getDurationForTextiView(String startTime, String endTime) {

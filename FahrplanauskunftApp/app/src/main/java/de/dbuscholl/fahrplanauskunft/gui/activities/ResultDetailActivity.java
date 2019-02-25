@@ -6,11 +6,12 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.TypedValue;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
+
+import java.util.ArrayList;
 
 import de.dbuscholl.fahrplanauskunft.FormatTools;
 import de.dbuscholl.fahrplanauskunft.R;
@@ -21,6 +22,8 @@ import de.dbuscholl.fahrplanauskunft.network.entities.StopPoint;
 import de.dbuscholl.fahrplanauskunft.network.entities.Trip;
 
 public class ResultDetailActivity extends AppCompatActivity {
+    private int stdFontsize = 14;
+    private int bigFontsize = 18;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -44,21 +47,26 @@ public class ResultDetailActivity extends AppCompatActivity {
         endStation.setText(connection.getLegs().get(connection.getLegs().size() - 1).getAlighting().getName());
         dateTextView.setText(FormatTools.parseTriasDate(connection.getStartTime()));
 
-        LinearLayout wrapper = new LinearLayout(getApplicationContext());
-        wrapper.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout result = new LinearLayout(getApplicationContext());
+        result.setOrientation(LinearLayout.VERTICAL);
 
-        for (Trip t : connection.getLegs()) {
+        ArrayList<Trip> legs = connection.getLegs();
+        for (int i = 0; i < legs.size(); i++) {
+            Trip t = legs.get(i);
             if (t.getType() == Trip.TripType.TIMED) {
                 LinearLayout tripLayout = getTimedTripLayout(t);
-                wrapper.addView(tripLayout);
+                result.addView(tripLayout);
             } else {
                 LinearLayout interchangeLayout = getInterchangeTripLayout(t);
-                wrapper.addView(interchangeLayout);
+                result.addView(interchangeLayout);
+            }
+            if (i != legs.size() - 1) {
+                result.addView(getStrongDivider());
             }
         }
 
-        LinearLayout layout = findViewById(R.id.result_content);
-        layout.addView(wrapper);
+        ScrollView layout = findViewById(R.id.result_content);
+        layout.addView(result);
     }
 
     private LinearLayout getInterchangeTripLayout(Trip trip) {
@@ -66,7 +74,7 @@ public class ResultDetailActivity extends AppCompatActivity {
         interchangeLayout.setOrientation(LinearLayout.VERTICAL);
 
         TextView header = new TextView(getApplicationContext());
-        header.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        header.setTextSize(TypedValue.COMPLEX_UNIT_SP, bigFontsize);
         header.setTextColor(Color.BLACK);
         header.setText("Umstieg:");
         interchangeLayout.addView(header);
@@ -75,14 +83,14 @@ public class ResultDetailActivity extends AppCompatActivity {
         start.setOrientation(LinearLayout.HORIZONTAL);
 
         TextView startTime = new TextView(getApplicationContext());
-        startTime.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        startTime.setTextSize(TypedValue.COMPLEX_UNIT_SP, stdFontsize);
         startTime.setTextColor(Color.BLACK);
         startTime.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 0.2f));
         startTime.setText(FormatTools.parseTriasTime(trip.getBoarding().getDepartureTime()));
         start.addView(startTime);
 
         TextView startName = new TextView(getApplicationContext());
-        startName.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        startName.setTextSize(TypedValue.COMPLEX_UNIT_SP, stdFontsize);
         startName.setTextColor(Color.BLACK);
         startName.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 0.8f));
         startName.setText(trip.getBoarding().getName());
@@ -93,14 +101,14 @@ public class ResultDetailActivity extends AppCompatActivity {
         end.setOrientation(LinearLayout.HORIZONTAL);
 
         TextView endTime = new TextView(getApplicationContext());
-        endTime.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        endTime.setTextSize(TypedValue.COMPLEX_UNIT_SP, stdFontsize);
         endTime.setTextColor(Color.BLACK);
         endTime.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 0.2f));
         endTime.setText(FormatTools.parseTriasTime(trip.getAlighting().getArrivalTime()));
         end.addView(endTime);
 
         TextView endName = new TextView(getApplicationContext());
-        endName.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        endName.setTextSize(TypedValue.COMPLEX_UNIT_SP, stdFontsize);
         endName.setTextColor(Color.BLACK);
         endName.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 0.8f));
         endName.setText(trip.getAlighting().getName());
@@ -115,7 +123,7 @@ public class ResultDetailActivity extends AppCompatActivity {
         tripLayout.setOrientation(LinearLayout.VERTICAL);
 
         TextView headerText = new TextView(getApplicationContext());
-        headerText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        headerText.setTextSize(TypedValue.COMPLEX_UNIT_SP, bigFontsize);
         headerText.setTextColor(Color.BLACK);
         Service s = trip.getService();
         headerText.setText(s.getRailName() + " " + s.getLineName() + " -> " + s.getDesitnation());
@@ -123,16 +131,11 @@ public class ResultDetailActivity extends AppCompatActivity {
 
         tripLayout.addView(getStopPointLayout(trip.getBoarding()));
 
-        ImageView divider = new ImageView(this);
-        LinearLayout.LayoutParams lp =
-                new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        lp.setMargins(1, 1, 1, 1);
-        divider.setLayoutParams(lp);
-        divider.setBackgroundColor(Color.BLACK);
-        tripLayout.addView(divider);
+        tripLayout.addView(getDivider());
 
         for (StopPoint stop : trip.getIntermediates()) {
             tripLayout.addView(getStopPointLayout(stop));
+            tripLayout.addView(getDivider());
         }
         tripLayout.addView(getStopPointLayout(trip.getAlighting()));
 
@@ -167,16 +170,16 @@ public class ResultDetailActivity extends AppCompatActivity {
 
 
         TextView time = new TextView(getApplicationContext());
-        time.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        time.setTextSize(TypedValue.COMPLEX_UNIT_SP, stdFontsize);
         time.setTextColor(Color.BLACK);
-        time.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 0.2f));
+        time.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 0.11f));
         time.setText(timeValue);
         boarding.addView(time);
 
         TextView delay = new TextView(getApplicationContext());
-        delay.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
-        delay.setTextColor(Color.GREEN);
-        delay.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 0.1f));
+        delay.setTextSize(TypedValue.COMPLEX_UNIT_SP, stdFontsize);
+        delay.setTextColor(Color.rgb(124,179,66));
+        delay.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 0.09f));
         delay.setText(delayValue);
         if (late) {
             delay.setTextColor(Color.RED);
@@ -184,16 +187,38 @@ public class ResultDetailActivity extends AppCompatActivity {
         boarding.addView(delay);
 
         TextView name = new TextView(getApplicationContext());
-        name.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        name.setTextSize(TypedValue.COMPLEX_UNIT_SP, stdFontsize);
         name.setTextColor(Color.BLACK);
-        name.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 0.7f));
+        name.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 0.8f));
         StringBuilder builder = new StringBuilder(stop.getName());
         if (stop.getBay() != null) {
+            builder.append(", ");
             builder.append(stop.getBay());
         }
         name.setText(builder.toString());
         boarding.addView(name);
 
         return boarding;
+    }
+
+    public View getDivider() {
+        View v = new View(getApplicationContext());
+        v.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                5
+        ));
+        v.setBackgroundColor(Color.parseColor("#cdcdcd"));
+
+        return v;
+    }
+
+    public View getStrongDivider() {
+        View v = new View(getApplicationContext());
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 7);
+        params.setMargins(0,24,0,24);
+        v.setLayoutParams(params);
+        v.setBackgroundColor(Color.parseColor("#B3B3B3"));
+
+        return v;
     }
 }

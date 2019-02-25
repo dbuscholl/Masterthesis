@@ -82,6 +82,7 @@ public class FormatTools {
             return null;
         }
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.GERMANY);
+        sdf.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
         return sdf.format(d);
     }
 

@@ -1,5 +1,7 @@
 package de.dbuscholl.fahrplanauskunft.network;
 
+import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
@@ -20,14 +22,31 @@ import de.dbuscholl.fahrplanauskunft.network.entities.Connection;
 import de.dbuscholl.fahrplanauskunft.network.xml.XMLDocument;
 
 public class TripInfoDownloadTask extends AsyncTask<String, Void, ArrayList<Connection>> {
+
+    private static SuccessEvent successEvent;
+    private ProgressDialog dialog;
     private Context context;
+    private ArrayList<Connection> results;
+    private String response = "";
+
+    public TripInfoDownloadTask(Activity activity) {
+        dialog = new ProgressDialog(activity);
+    }
+
+    @Override
+    protected void onPreExecute() {
+        dialog.setMessage("Suche nach Fahrten...");
+        dialog.show();
+    }
+
 
     @Override
     protected ArrayList<Connection> doInBackground(String... strings) {
         try {
-            ArrayList<Connection> results = new ArrayList<>();
+            results = new ArrayList<>();
             Client c = new Client("http://efastatic.vvs.de/kleinanfrager/trias");
             String response = c.sendPostXML(strings[0]);
+            this.response = response;
             XMLDocument xml = XMLDocument.documentFromString(response);
 
             for (Element e : xml.getDocument().getDescendants(new ElementFilter("Trip"))) {
@@ -36,13 +55,24 @@ public class TripInfoDownloadTask extends AsyncTask<String, Void, ArrayList<Conn
                 t.setLegs(legs);
                 results.add(t);
             }
-            return results;
+            if(successEvent!=null) {
+                successEvent.onSuccess(results);
+            }
+            return null;
         } catch (IOException e) {
             e.printStackTrace();
         } catch (JDOMException e) {
             e.printStackTrace();
         }
-        return new ArrayList<>();
+        return null;
+    }
+
+    @Override
+    protected void onPostExecute(ArrayList<Connection> connections) {
+        if (dialog.isShowing()) {
+            dialog.dismiss();
+        }
+        super.onPostExecute(connections);
     }
 
     public void setContext(Context context) {
@@ -210,10 +240,7 @@ public class TripInfoDownloadTask extends AsyncTask<String, Void, ArrayList<Conn
             service.setRoute(routeDescription.getChildTextNormalize("RouteDescription", Constants.NAMESPACE));
         }
         if (destinationText != null) {
-            Element dest = destinationText.getChild("DestinationText", Constants.NAMESPACE);
-            if(dest!=null) {
-                service.setDesitnation(dest.getChildTextNormalize("Text", Constants.NAMESPACE));
-            }
+            service.setDesitnation(destinationText.getChild("Text", Constants.NAMESPACE).getTextNormalize());
         }
 
         return service;
@@ -290,5 +317,18 @@ public class TripInfoDownloadTask extends AsyncTask<String, Void, ArrayList<Conn
         }
 
         return stop;
+    }
+
+    public String getResponse() {
+        return response;
+    }
+
+
+    public static void setOnSuccessEvent(SuccessEvent e) {
+        successEvent = e;
+    }
+
+    public interface SuccessEvent {
+        public void onSuccess(ArrayList<Connection> result);
     }
 }

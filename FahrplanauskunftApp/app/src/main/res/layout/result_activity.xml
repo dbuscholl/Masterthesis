@@ -78,11 +78,11 @@
         android:background="#ababab"
         android:visibility="visible" />
 
-    <LinearLayout
+    <ScrollView
         android:id="@+id/result_content"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical" />
+        android:layout_marginBottom="64dp"/>
 
 
 </LinearLayout>
