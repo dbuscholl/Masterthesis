@@ -53,9 +53,11 @@ public class TripInfoDownloadTask extends AsyncTask<String, Void, ArrayList<Conn
                 Connection t = getTripResult(e);
                 ArrayList<Trip> legs = getTripLegs(e);
                 t.setLegs(legs);
-                results.add(t);
+                if (legs.size() > 0) {
+                    results.add(t);
+                }
             }
-            if(successEvent!=null) {
+            if (successEvent != null) {
                 successEvent.onSuccess(results);
             }
             return null;
@@ -115,8 +117,7 @@ public class TripInfoDownloadTask extends AsyncTask<String, Void, ArrayList<Conn
                 } else if (interchangeLeg != null) {
                     leg = getInterchangeTrip(legId, interchangeLeg);
                 } else if (continuousLeg != null) {
-                    Toast.makeText(context, "ContinuousLeg", Toast.LENGTH_LONG);
-                    leg = new Trip();
+                    continue;
                 }
                 if (leg != null) {
                     triplegs.add(leg);

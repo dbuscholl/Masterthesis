@@ -28,7 +28,15 @@ public class ConnectionsListAdapter extends ArrayAdapter<Connection> {
     }
 
     @Override
+    public int getCount() {
+        return data.size();
+    }
+
+    @Override
     public View getView(int position, View convertView, ViewGroup parent) {
+        if(position > data.size()) {
+            return null;
+        }
         // Get the data item for this position
         Connection c = getItem(position);
         // Check if an existing view is being reused, otherwise inflate the view

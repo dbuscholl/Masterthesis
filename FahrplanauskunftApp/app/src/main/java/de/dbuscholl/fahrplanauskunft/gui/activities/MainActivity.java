@@ -1,5 +1,6 @@
 package de.dbuscholl.fahrplanauskunft.gui.activities;
 
+import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -13,11 +14,17 @@ import de.dbuscholl.fahrplanauskunft.gui.fragments.ConnectionsFragment;
 import de.dbuscholl.fahrplanauskunft.gui.fragments.DebugFragment;
 
 public class MainActivity extends AppCompatActivity implements BottomNavigationView.OnNavigationItemSelectedListener {
+    private static Activity context;
+
+    public static Activity getAppContext() {
+        return context;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        this.context = this;
 
         BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(this);
