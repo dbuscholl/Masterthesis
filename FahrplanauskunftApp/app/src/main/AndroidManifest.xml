@@ -36,7 +36,7 @@
                 android:value=".gui.activities.MainActivity" />
         </activity>
 
-        <service android:name=".gui.GoogleService"></service>
+        <service android:name=".gui.GoogleService" android:enabled="true" />
 
     </application>
 </manifest>

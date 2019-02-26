@@ -1,15 +1,19 @@
 package de.dbuscholl.fahrplanauskunft.gui.activities;
 
+import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Address;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
@@ -32,6 +36,7 @@ import java.util.TimeZone;
 
 import de.dbuscholl.fahrplanauskunft.FormatTools;
 import de.dbuscholl.fahrplanauskunft.R;
+import de.dbuscholl.fahrplanauskunft.gui.ConnectionsListView;
 import de.dbuscholl.fahrplanauskunft.gui.GoogleService;
 import de.dbuscholl.fahrplanauskunft.gui.fragments.ConnectionsFragment;
 import de.dbuscholl.fahrplanauskunft.network.entities.Connection;
@@ -40,10 +45,10 @@ import de.dbuscholl.fahrplanauskunft.network.entities.StopPoint;
 import de.dbuscholl.fahrplanauskunft.network.entities.Trip;
 
 public class ResultDetailActivity extends AppCompatActivity {
-    private int stdFontsize = 14;
-    private int bigFontsize = 18;
     private static final int REQUEST_PERMISSIONS = 100;
     boolean boolean_permission;
+    GoogleService gpsService;
+    boolean isBound = false;
     SharedPreferences mPref;
     SharedPreferences.Editor medit;
 
@@ -69,26 +74,9 @@ public class ResultDetailActivity extends AppCompatActivity {
         endStation.setText(connection.getLegs().get(connection.getLegs().size() - 1).getAlighting().getName());
         dateTextView.setText(FormatTools.parseTriasDate(connection.getStartTime()));
 
-        LinearLayout result = new LinearLayout(getApplicationContext());
-        result.setOrientation(LinearLayout.VERTICAL);
-
-        ArrayList<Trip> legs = connection.getLegs();
-        for (int i = 0; i < legs.size(); i++) {
-            Trip t = legs.get(i);
-            if (t.getType() == Trip.TripType.TIMED) {
-                LinearLayout tripLayout = getTimedTripLayout(t);
-                result.addView(tripLayout);
-            } else {
-                LinearLayout interchangeLayout = getInterchangeTripLayout(t);
-                result.addView(interchangeLayout);
-            }
-            if (i != legs.size() - 1) {
-                result.addView(getStrongDivider());
-            }
-        }
-
+        ConnectionsListView clv = new ConnectionsListView(getApplicationContext()).build(connection);
         final ScrollView layout = findViewById(R.id.result_content);
-        layout.addView(result);
+        layout.addView(clv);
 
         Calendar cal = Calendar.getInstance();
         cal.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
@@ -120,24 +108,22 @@ public class ResultDetailActivity extends AppCompatActivity {
             handler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    Snackbar make = Snackbar.make(layout, "Möhctest du diese Verbindung nutzen??", Snackbar.LENGTH_INDEFINITE);
+                    Snackbar make = Snackbar.make(layout, "Möchtest du diese Verbindung aufzeichnen?", Snackbar.LENGTH_INDEFINITE);
                     make.setAction("Ja!", new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
                             fn_permission();
-                            mPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-                            medit = mPref.edit();
                             if (boolean_permission) {
-
-                                if (mPref.getString("service", "").matches("")) {
-                                    medit.putString("service", "service").commit();
-
-                                    Intent intent = new Intent(getApplicationContext(), GoogleService.class);
+                                Intent intent = new Intent(getApplicationContext(), GoogleService.class);
+                                if (!isMyServiceRunning(GoogleService.class)) {
+                                    Log.d(ResultDetailActivity.this.getClass().getName(), "started service");
                                     startService(intent);
-
-                                } else {
-                                    Toast.makeText(getApplicationContext(), "Service is already running", Toast.LENGTH_SHORT).show();
                                 }
+                                if (!isBound) {
+                                    bindService(intent, gpsConnection, Context.BIND_AUTO_CREATE);
+                                    Log.d(ResultDetailActivity.this.getClass().getName(), "Bound service");
+                                }
+                                Log.d(ResultDetailActivity.this.getClass().getName(), "Service seems to be running");
                             } else {
                                 Toast.makeText(getApplicationContext(), "Please enable the gps", Toast.LENGTH_SHORT).show();
                             }
@@ -152,21 +138,24 @@ public class ResultDetailActivity extends AppCompatActivity {
 
     private void fn_permission() {
         if ((ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)) {
-
             if ((ActivityCompat.shouldShowRequestPermissionRationale(ResultDetailActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION))) {
-
-
             } else {
-                ActivityCompat.requestPermissions(ResultDetailActivity.this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION
-
-                        },
-                        REQUEST_PERMISSIONS);
-
+                ActivityCompat.requestPermissions(ResultDetailActivity.this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_PERMISSIONS);
             }
             Toast.makeText(getApplicationContext(), "Please enable the gps", Toast.LENGTH_SHORT).show();
         } else {
             boolean_permission = true;
         }
+    }
+
+    private boolean isMyServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -177,7 +166,6 @@ public class ResultDetailActivity extends AppCompatActivity {
             case REQUEST_PERMISSIONS: {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     boolean_permission = true;
-
                 } else {
                     Toast.makeText(getApplicationContext(), "Please allow the permission", Toast.LENGTH_LONG).show();
 
@@ -186,183 +174,20 @@ public class ResultDetailActivity extends AppCompatActivity {
         }
     }
 
-    private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+    private ServiceConnection gpsConnection = new ServiceConnection() {
         @Override
-        public void onReceive(Context context, Intent intent) {
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            GoogleService.GpsBinder binder = (GoogleService.GpsBinder) service;
+            gpsService = binder.getService();
+            isBound = true;
+            int size = gpsService.getLocations().size();
+            Toast.makeText(getApplicationContext(), String.valueOf(size), Toast.LENGTH_SHORT).show();
+        }
 
-            String latutide = intent.getStringExtra("latutide");
-            String longitude = intent.getStringExtra("longitude");
-            String accuracy = intent.getStringExtra("accuracy");
-
-            Log.d(ResultDetailActivity.this.getClass().getName(), latutide);
-            Log.d(ResultDetailActivity.this.getClass().getName(), longitude);
-            Log.d(ResultDetailActivity.this.getClass().getName(), accuracy);
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            isBound = false;
         }
     };
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        registerReceiver(broadcastReceiver, new IntentFilter(GoogleService.str_receiver));
-
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        unregisterReceiver(broadcastReceiver);
-    }
-
-    private LinearLayout getInterchangeTripLayout(Trip trip) {
-        LinearLayout interchangeLayout = new LinearLayout(getApplicationContext());
-        interchangeLayout.setOrientation(LinearLayout.VERTICAL);
-
-        TextView header = new TextView(getApplicationContext());
-        header.setTextSize(TypedValue.COMPLEX_UNIT_SP, bigFontsize);
-        header.setTextColor(Color.BLACK);
-        header.setText("Umstieg:");
-        interchangeLayout.addView(header);
-
-        LinearLayout start = new LinearLayout(getApplicationContext());
-        start.setOrientation(LinearLayout.HORIZONTAL);
-
-        TextView startTime = new TextView(getApplicationContext());
-        startTime.setTextSize(TypedValue.COMPLEX_UNIT_SP, stdFontsize);
-        startTime.setTextColor(Color.BLACK);
-        startTime.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 0.2f));
-        startTime.setText(FormatTools.parseTriasTime(trip.getBoarding().getDepartureTime()));
-        start.addView(startTime);
-
-        TextView startName = new TextView(getApplicationContext());
-        startName.setTextSize(TypedValue.COMPLEX_UNIT_SP, stdFontsize);
-        startName.setTextColor(Color.BLACK);
-        startName.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 0.8f));
-        startName.setText(trip.getBoarding().getName());
-        start.addView(startName);
-        interchangeLayout.addView(start);
-
-        LinearLayout end = new LinearLayout(getApplicationContext());
-        end.setOrientation(LinearLayout.HORIZONTAL);
-
-        TextView endTime = new TextView(getApplicationContext());
-        endTime.setTextSize(TypedValue.COMPLEX_UNIT_SP, stdFontsize);
-        endTime.setTextColor(Color.BLACK);
-        endTime.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 0.2f));
-        endTime.setText(FormatTools.parseTriasTime(trip.getAlighting().getArrivalTime()));
-        end.addView(endTime);
-
-        TextView endName = new TextView(getApplicationContext());
-        endName.setTextSize(TypedValue.COMPLEX_UNIT_SP, stdFontsize);
-        endName.setTextColor(Color.BLACK);
-        endName.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 0.8f));
-        endName.setText(trip.getAlighting().getName());
-        end.addView(endName);
-        interchangeLayout.addView(end);
-
-        return interchangeLayout;
-    }
-
-    private LinearLayout getTimedTripLayout(Trip trip) {
-        LinearLayout tripLayout = new LinearLayout(getApplicationContext());
-        tripLayout.setOrientation(LinearLayout.VERTICAL);
-
-        TextView headerText = new TextView(getApplicationContext());
-        headerText.setTextSize(TypedValue.COMPLEX_UNIT_SP, bigFontsize);
-        headerText.setTextColor(Color.BLACK);
-        Service s = trip.getService();
-        headerText.setText(s.getRailName() + " " + s.getLineName() + " -> " + s.getDesitnation());
-        tripLayout.addView(headerText);
-
-        tripLayout.addView(getStopPointLayout(trip.getBoarding()));
-
-        tripLayout.addView(getDivider());
-
-        for (StopPoint stop : trip.getIntermediates()) {
-            tripLayout.addView(getStopPointLayout(stop));
-            tripLayout.addView(getDivider());
-        }
-        tripLayout.addView(getStopPointLayout(trip.getAlighting()));
-
-        return tripLayout;
-    }
-
-    private LinearLayout getStopPointLayout(StopPoint stop) {
-        LinearLayout boarding = new LinearLayout(getApplicationContext());
-        boarding.setOrientation(LinearLayout.HORIZONTAL);
-
-        String timeValue, delayValue = "";
-        boolean late = false;
-        if (stop.getDepartureTime() != null) {
-            timeValue = FormatTools.parseTriasTime(stop.getDepartureTime());
-            if (stop.getDepartureTimeEstimated() != null) {
-                long difference = FormatTools.getTriasDifference(stop.getDepartureTime(), stop.getDepartureTimeEstimated()) / 1000 / 60;
-                delayValue = "+" + String.valueOf(difference);
-                if (difference > 5) {
-                    late = true;
-                }
-            }
-        } else {
-            timeValue = FormatTools.parseTriasTime(stop.getArrivalTime());
-            if (stop.getArrivalTimeEstimated() != null) {
-                long difference = FormatTools.getTriasDifference(stop.getArrivalTime(), stop.getArrivalTimeEstimated()) / 1000 / 60;
-                delayValue = "+" + String.valueOf(difference);
-                if (difference > 5) {
-                    late = true;
-                }
-            }
-        }
-
-
-        TextView time = new TextView(getApplicationContext());
-        time.setTextSize(TypedValue.COMPLEX_UNIT_SP, stdFontsize);
-        time.setTextColor(Color.BLACK);
-        time.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 0.11f));
-        time.setText(timeValue);
-        boarding.addView(time);
-
-        TextView delay = new TextView(getApplicationContext());
-        delay.setTextSize(TypedValue.COMPLEX_UNIT_SP, stdFontsize);
-        delay.setTextColor(Color.rgb(124, 179, 66));
-        delay.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 0.09f));
-        delay.setText(delayValue);
-        if (late) {
-            delay.setTextColor(Color.RED);
-        }
-        boarding.addView(delay);
-
-        TextView name = new TextView(getApplicationContext());
-        name.setTextSize(TypedValue.COMPLEX_UNIT_SP, stdFontsize);
-        name.setTextColor(Color.BLACK);
-        name.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 0.8f));
-        StringBuilder builder = new StringBuilder(stop.getName());
-        if (stop.getBay() != null) {
-            builder.append(", ");
-            builder.append(stop.getBay());
-        }
-        name.setText(builder.toString());
-        boarding.addView(name);
-
-        return boarding;
-    }
-
-    public View getDivider() {
-        View v = new View(getApplicationContext());
-        v.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                5
-        ));
-        v.setBackgroundColor(Color.parseColor("#cdcdcd"));
-
-        return v;
-    }
-
-    public View getStrongDivider() {
-        View v = new View(getApplicationContext());
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 7);
-        params.setMargins(0, 24, 0, 24);
-        v.setLayoutParams(params);
-        v.setBackgroundColor(Color.parseColor("#B3B3B3"));
-
-        return v;
-    }
 }

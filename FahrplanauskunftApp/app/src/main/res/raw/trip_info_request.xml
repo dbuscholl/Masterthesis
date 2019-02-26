@@ -20,6 +20,8 @@
                 </Destination>
                 <Params>
                     <IncludeTurnDescription>true</IncludeTurnDescription>
+                    <IncludeTrackSections>true</IncludeTrackSections>
+                    <IncludeLegProjection>true</IncludeLegProjection>
                     <IncludeIntermediateStops>true</IncludeIntermediateStops>
                     <NumberOfResults>16</NumberOfResults>
                 </Params>
