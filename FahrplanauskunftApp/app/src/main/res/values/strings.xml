@@ -13,4 +13,18 @@
     <string name="trip_date">Datum</string>
     <string name="result_activity_title">Ausgewählte Fahrt</string>
     <string name="action_back">Zurück</string>
+    <string name="dialog_question_capacity">Wie <b>voll</b> war das Fahrzeug</string>
+    <string name="dialog_question_capacity_option_low">Leer (Maximal 5 Personen)</string>
+    <string name="dialog_question_capacity_option_medium">Mittel (Die meisten Sitzplätze belegt)</string>
+    <string name="dialog_question_capacity_option_high">Voll (Viele stehende Menschen)</string>
+    <string name="dialog_question_cancelall">Alle Abbrechen</string>
+    <string name="dialog_question_next">Weiter</string>
+    <string name="dialog_question_cleanness">Wie <b>sauber</b> war das Fahrzeug</string>
+    <string name="dialog_question_cleanness_option_low">Besonders sauber</string>
+    <string name="dialog_question_cleanness_option_medium">In Ordnung</string>
+    <string name="dialog_question_cleanness_option_high">Schmutzig</string>
+    <string name="dialog_question_delay">Wieviele Minuten <b>Verspätung</b> hatte das Fahrzeug</string>
+    <string name="dialog_question_interchange_option_yes">Ja</string>
+    <string name="dialog_question_interchange_option_no">Nein</string>
+    <string name="dialog_question_interchange">Wurde der Anschluss erreicht?</string>
 </resources>

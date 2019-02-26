@@ -52,9 +52,6 @@ public class ConnectionsFragment extends Fragment {
     private static String dateValue;
     private static String timeValue;
 
-    private static final String[] STATIONS = {"Heumaden", "Heumaden Bockelstraße", "Heumaden Schule",
-            "Heumaden Rose", "Schemppstraße", "Sillenbuch", "Silberwald", "Waldau", "Ruhbank (Fernsehturm)",
-            "Isegrimweg"};
     private DatePickerDialog.OnDateSetListener dateSetListener;
     private TimePickerDialog.OnTimeSetListener timeSetListener;
 
@@ -140,15 +137,12 @@ public class ConnectionsFragment extends Fragment {
             }
         };
 
-        final TextView resultListTextView = getView().findViewById(R.id.resultListText);
-        resultListTextView.setVisibility(View.INVISIBLE);
         final ListView resultListView = getView().findViewById(R.id.resultlistview);
 
         if (currentResult.size() > 0) {
             ConnectionsListAdapter cla = new ConnectionsListAdapter(currentResult, getContext());
             resultListView.setAdapter(cla);
             resultListView.setOnItemClickListener(new ItemClickHandler());
-            resultListTextView.setVisibility(View.VISIBLE);
         }
 
         Button search = getView().findViewById(R.id.search_button);
@@ -205,7 +199,6 @@ public class ConnectionsFragment extends Fragment {
                     });
                     new TripInfoDownloadTask(getActivity()).execute(tir.toString());
 
-                    resultListTextView.setVisibility(View.VISIBLE);
                 } catch (JDOMException e) {
                     e.printStackTrace();
                 } catch (IOException e) {

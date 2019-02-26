@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal" android:layout_width="match_parent"
+    android:layout_height="match_parent" android:layout_marginTop="8dp">
+        <Button
+            android:id="@+id/dialog_question_cancelbutton"
+            android:layout_weight="0.5"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="4dp"
+            android:layout_marginRight="4dp"
+            android:textSize="@dimen/itny"
+            android:background="@color/colorPrimaryDark"
+            android:textColor="@color/standardTextOverBackground"
+            android:text="@string/dialog_question_cancelall"/>
+        <Button
+            android:id="@+id/dialog_question_continuebutton"
+            android:layout_weight="0.5"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="4dp"
+            android:layout_marginRight="4dp"
+            android:textSize="@dimen/itny"
+            android:background="@color/colorPrimaryDark"
+            android:textColor="@color/standardTextOverBackground"
+            android:text="@string/dialog_question_next"/>
+
+</LinearLayout>

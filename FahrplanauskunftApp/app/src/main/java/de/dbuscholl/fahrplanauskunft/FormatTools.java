@@ -46,7 +46,7 @@ public class FormatTools {
         return dateString + "T" + timeString + "Z";
     }
 
-    private static Date parseTrias(String time, DateFormat sdf) {
+    public static Date parseTrias(String time, DateFormat sdf) {
         try {
             if (sdf == null) {
                 sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");

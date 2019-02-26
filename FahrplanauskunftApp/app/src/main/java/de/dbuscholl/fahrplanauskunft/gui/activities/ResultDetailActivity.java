@@ -2,16 +2,19 @@ package de.dbuscholl.fahrplanauskunft.gui.activities;
 
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.TypedValue;
 import android.view.View;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.TimeZone;
 
 import de.dbuscholl.fahrplanauskunft.FormatTools;
 import de.dbuscholl.fahrplanauskunft.R;
@@ -28,7 +31,7 @@ public class ResultDetailActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.result_activity);
+        setContentView(R.layout.activity_result_detail);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
@@ -37,7 +40,7 @@ public class ResultDetailActivity extends AppCompatActivity {
             onBackPressed();
         }
 
-        Connection connection = ConnectionsFragment.getCurrentResult().get(position);
+        final Connection connection = ConnectionsFragment.getCurrentResult().get(position);
 
         TextView startStation = findViewById(R.id.result_tripstart_text);
         TextView endStation = findViewById(R.id.result_tripend_text);
@@ -65,8 +68,35 @@ public class ResultDetailActivity extends AppCompatActivity {
             }
         }
 
-        ScrollView layout = findViewById(R.id.result_content);
+        final ScrollView layout = findViewById(R.id.result_content);
         layout.addView(result);
+
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
+
+        String arrivalTime = connection.getLegs().get(connection.getLegs().size() - 1).getAlighting().getArrivalTime();
+        String departureTime = connection.getLegs().get(0).getBoarding().getDepartureTime();
+        long diffAlight = (FormatTools.parseTrias(arrivalTime, null).getTime() - cal.getTime().getTime()) / 1000 / 60;
+        long diffBoarding = (FormatTools.parseTrias(departureTime, null).getTime() - cal.getTime().getTime()) / 1000 / 60;
+        if (diffAlight > -60 && diffAlight < 0) {
+            final Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    Snackbar make = Snackbar.make(layout, "Bist du mit dieser Verbindung gefahren?", Snackbar.LENGTH_INDEFINITE);
+                    make.setAction("Ja!", new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Questionnaire q = new Questionnaire(ResultDetailActivity.this, connection);
+                            q.startForPastConnection();
+                        }
+                    });
+                    make.show();
+                }
+            }, 2000);
+
+        }
+
     }
 
     private LinearLayout getInterchangeTripLayout(Trip trip) {
@@ -178,7 +208,7 @@ public class ResultDetailActivity extends AppCompatActivity {
 
         TextView delay = new TextView(getApplicationContext());
         delay.setTextSize(TypedValue.COMPLEX_UNIT_SP, stdFontsize);
-        delay.setTextColor(Color.rgb(124,179,66));
+        delay.setTextColor(Color.rgb(124, 179, 66));
         delay.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 0.09f));
         delay.setText(delayValue);
         if (late) {
@@ -215,7 +245,7 @@ public class ResultDetailActivity extends AppCompatActivity {
     public View getStrongDivider() {
         View v = new View(getApplicationContext());
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 7);
-        params.setMargins(0,24,0,24);
+        params.setMargins(0, 24, 0, 24);
         v.setLayoutParams(params);
         v.setBackgroundColor(Color.parseColor("#B3B3B3"));
 

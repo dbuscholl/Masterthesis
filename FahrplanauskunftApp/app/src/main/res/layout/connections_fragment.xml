@@ -70,16 +70,7 @@
             android:textColor="#ffffff"
             android:text="@string/connections_search"/>
 
-        <TextView
-            android:id="@+id/resultListText"
-            android:layout_width="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="@string/connections_resultHeader"
-            android:textSize="@dimen/header2"
-            android:textColor="@color/standardText"
-            android:layout_height="wrap_content" />
-
-        <ListView
+    <ListView
             android:id="@+id/resultlistview"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"></ListView>
