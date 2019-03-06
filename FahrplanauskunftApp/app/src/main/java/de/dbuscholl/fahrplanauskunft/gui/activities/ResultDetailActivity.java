@@ -103,7 +103,7 @@ public class ResultDetailActivity extends AppCompatActivity {
             }, 2000);
         }
 
-        if (diffBoarding > -2 && diffBoarding < 15) {
+        if (diffBoarding > -2 && diffBoarding < 25) {
             final Handler handler = new Handler();
             handler.postDelayed(new Runnable() {
                 @Override
@@ -117,7 +117,7 @@ public class ResultDetailActivity extends AppCompatActivity {
                                 Intent intent = new Intent(getApplicationContext(), GoogleService.class);
                                 if (!isMyServiceRunning(GoogleService.class)) {
                                     Log.d(ResultDetailActivity.this.getClass().getName(), "started service");
-                                    startService(intent);
+                                    ContextCompat.startForegroundService(getApplicationContext(),intent);
                                 }
                                 if (!isBound) {
                                     bindService(intent, gpsConnection, Context.BIND_AUTO_CREATE);
@@ -181,7 +181,7 @@ public class ResultDetailActivity extends AppCompatActivity {
             gpsService = binder.getService();
             isBound = true;
             int size = gpsService.getLocations().size();
-            Toast.makeText(getApplicationContext(), String.valueOf(size), Toast.LENGTH_SHORT).show();
+            //Toast.makeText(getApplicationContext(), String.valueOf(size), Toast.LENGTH_SHORT).show();
         }
 
         @Override
