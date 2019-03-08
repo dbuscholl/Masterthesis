@@ -37,7 +37,7 @@
                 android:value=".gui.activities.MainActivity" />
         </activity>
 
-        <service android:name=".gui.GoogleService" android:enabled="true" android:stopWithTask="false"/>
+        <service android:name=".gui.services.TripRecordingService" android:enabled="true" android:stopWithTask="false"/>
 
     </application>
 </manifest>

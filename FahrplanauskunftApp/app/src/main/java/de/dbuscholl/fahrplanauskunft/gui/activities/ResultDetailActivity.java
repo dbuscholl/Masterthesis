@@ -1,53 +1,42 @@
 package de.dbuscholl.fahrplanauskunft.gui.activities;
 
 import android.app.ActivityManager;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
-import android.location.Address;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.View;
-import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
 import java.util.TimeZone;
 
 import de.dbuscholl.fahrplanauskunft.FormatTools;
 import de.dbuscholl.fahrplanauskunft.R;
 import de.dbuscholl.fahrplanauskunft.gui.ConnectionsListView;
-import de.dbuscholl.fahrplanauskunft.gui.GoogleService;
+import de.dbuscholl.fahrplanauskunft.gui.services.TripRecordingService;
 import de.dbuscholl.fahrplanauskunft.gui.fragments.ConnectionsFragment;
 import de.dbuscholl.fahrplanauskunft.network.entities.Connection;
-import de.dbuscholl.fahrplanauskunft.network.entities.Service;
-import de.dbuscholl.fahrplanauskunft.network.entities.StopPoint;
-import de.dbuscholl.fahrplanauskunft.network.entities.Trip;
 
 public class ResultDetailActivity extends AppCompatActivity {
     private static final int REQUEST_PERMISSIONS = 100;
     boolean boolean_permission;
-    GoogleService gpsService;
+    ScrollView layout;
+    Connection connection;
+    TripRecordingService gpsService;
     boolean isBound = false;
     SharedPreferences mPref;
     SharedPreferences.Editor medit;
@@ -64,7 +53,7 @@ public class ResultDetailActivity extends AppCompatActivity {
             onBackPressed();
         }
 
-        final Connection connection = ConnectionsFragment.getCurrentResult().get(position);
+        connection = ConnectionsFragment.getCurrentResult().get(position);
 
         TextView startStation = findViewById(R.id.result_tripstart_text);
         TextView endStation = findViewById(R.id.result_tripend_text);
@@ -75,7 +64,7 @@ public class ResultDetailActivity extends AppCompatActivity {
         dateTextView.setText(FormatTools.parseTriasDate(connection.getStartTime()));
 
         ConnectionsListView clv = new ConnectionsListView(getApplicationContext()).build(connection);
-        final ScrollView layout = findViewById(R.id.result_content);
+        layout = findViewById(R.id.result_content);
         layout.addView(clv);
 
         Calendar cal = Calendar.getInstance();
@@ -109,25 +98,7 @@ public class ResultDetailActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     Snackbar make = Snackbar.make(layout, "Möchtest du diese Verbindung aufzeichnen?", Snackbar.LENGTH_INDEFINITE);
-                    make.setAction("Ja!", new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            fn_permission();
-                            if (boolean_permission) {
-                                Intent intent = new Intent(getApplicationContext(), GoogleService.class);
-                                if (!isMyServiceRunning(GoogleService.class)) {
-                                    Log.d(ResultDetailActivity.this.getClass().getName(), "started service");
-                                    ContextCompat.startForegroundService(getApplicationContext(),intent);
-                                }
-                                if (!isBound) {
-                                    bindService(intent, gpsConnection, Context.BIND_AUTO_CREATE);
-                                    Log.d(ResultDetailActivity.this.getClass().getName(), "Bound service");
-                                }
-                                Log.d(ResultDetailActivity.this.getClass().getName(), "Service seems to be running");
-                            } else {
-                                Toast.makeText(getApplicationContext(), "Please enable the gps", Toast.LENGTH_SHORT).show();
-                            }
-                        }
+                    make.setAction("Ja!", new Action() {
                     });
                     make.show();
                 }
@@ -148,16 +119,6 @@ public class ResultDetailActivity extends AppCompatActivity {
         }
     }
 
-    private boolean isMyServiceRunning(Class<?> serviceClass) {
-        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-            if (serviceClass.getName().equals(service.service.getClassName())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -166,6 +127,10 @@ public class ResultDetailActivity extends AppCompatActivity {
             case REQUEST_PERMISSIONS: {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     boolean_permission = true;
+                    Snackbar make = Snackbar.make(layout, "Möchtest du diese Verbindung aufzeichnen?", Snackbar.LENGTH_INDEFINITE);
+                    make.setAction("Ja!", new Action() {
+                    });
+                    make.show();
                 } else {
                     Toast.makeText(getApplicationContext(), "Please allow the permission", Toast.LENGTH_LONG).show();
 
@@ -177,7 +142,7 @@ public class ResultDetailActivity extends AppCompatActivity {
     private ServiceConnection gpsConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            GoogleService.GpsBinder binder = (GoogleService.GpsBinder) service;
+            TripRecordingService.GpsBinder binder = (TripRecordingService.GpsBinder) service;
             gpsService = binder.getService();
             isBound = true;
             int size = gpsService.getLocations().size();
@@ -190,4 +155,35 @@ public class ResultDetailActivity extends AppCompatActivity {
         }
     };
 
+    private class Action implements View.OnClickListener {
+        @Override
+        public void onClick(View v) {
+            fn_permission();
+            if (boolean_permission) {
+                Intent intent = new Intent(getApplicationContext(), TripRecordingService.class);
+                if (!isMyServiceRunning(TripRecordingService.class)) {
+                    Log.d(ResultDetailActivity.this.getClass().getName(), "started service");
+                    ContextCompat.startForegroundService(getApplicationContext(),intent);
+                }
+                if (!isBound) {
+                    bindService(intent, gpsConnection, Context.BIND_AUTO_CREATE);
+                    Log.d(ResultDetailActivity.this.getClass().getName(), "Bound service");
+                    boolean added = gpsService.addConnection(connection);
+                }
+                Log.d(ResultDetailActivity.this.getClass().getName(), "Service seems to be running");
+            } else {
+                Toast.makeText(getApplicationContext(), "Please enable the gps", Toast.LENGTH_SHORT).show();
+            }
+        }
+
+        private boolean isMyServiceRunning(Class<?> serviceClass) {
+            ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+            for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+                if (serviceClass.getName().equals(service.service.getClassName())) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
 }
