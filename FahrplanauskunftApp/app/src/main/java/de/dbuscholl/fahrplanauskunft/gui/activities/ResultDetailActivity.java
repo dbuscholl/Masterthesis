@@ -29,6 +29,7 @@ import de.dbuscholl.fahrplanauskunft.R;
 import de.dbuscholl.fahrplanauskunft.gui.ConnectionsListView;
 import de.dbuscholl.fahrplanauskunft.gui.services.TripRecordingService;
 import de.dbuscholl.fahrplanauskunft.gui.fragments.ConnectionsFragment;
+import de.dbuscholl.fahrplanauskunft.network.TripInfoDownloadTask;
 import de.dbuscholl.fahrplanauskunft.network.entities.Connection;
 
 public class ResultDetailActivity extends AppCompatActivity {
@@ -163,12 +164,20 @@ public class ResultDetailActivity extends AppCompatActivity {
                 Intent intent = new Intent(getApplicationContext(), TripRecordingService.class);
                 if (!isMyServiceRunning(TripRecordingService.class)) {
                     Log.d(ResultDetailActivity.this.getClass().getName(), "started service");
-                    ContextCompat.startForegroundService(getApplicationContext(),intent);
+                    ContextCompat.startForegroundService(getApplicationContext(), intent);
                 }
                 if (!isBound) {
                     bindService(intent, gpsConnection, Context.BIND_AUTO_CREATE);
                     Log.d(ResultDetailActivity.this.getClass().getName(), "Bound service");
                     boolean added = gpsService.addConnection(connection);
+                    if (!added) {
+                        Toast.makeText(getApplicationContext(), "Kann nicht aufgenommen werden.", Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                    String request = TripInfoDownloadTask.getRequest();
+                    if (request != null) {
+                        gpsService.addRequestString(request);
+                    }
                 }
                 Log.d(ResultDetailActivity.this.getClass().getName(), "Service seems to be running");
             } else {

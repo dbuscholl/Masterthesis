@@ -23,20 +23,33 @@ import de.dbuscholl.fahrplanauskunft.network.xml.XMLDocument;
 
 public class TripInfoDownloadTask extends AsyncTask<String, Void, ArrayList<Connection>> {
 
-    private static SuccessEvent successEvent;
+    private SuccessEvent successEvent;
     private ProgressDialog dialog;
-    private Context context;
     private ArrayList<Connection> results;
-    private String response = "";
+    private static String response = null;
+    private static String request = null;
 
+    public TripInfoDownloadTask() {
+    }
+
+    /**
+     *  Use this constructor if you want to show a indefinite progress dialog
+     * @param activity
+     */
     public TripInfoDownloadTask(Activity activity) {
         dialog = new ProgressDialog(activity);
     }
 
+    public static String getRequest() {
+        return request;
+    }
+
     @Override
     protected void onPreExecute() {
-        dialog.setMessage("Suche nach Fahrten...");
-        dialog.show();
+        if (dialog != null) {
+            dialog.setMessage("Suche nach Fahrten...");
+            dialog.show();
+        }
     }
 
 
@@ -45,8 +58,10 @@ public class TripInfoDownloadTask extends AsyncTask<String, Void, ArrayList<Conn
         try {
             results = new ArrayList<>();
             Client c = new Client("http://efastatic.vvs.de/kleinanfrager/trias");
+            request = strings[0];
             String response = c.sendPostXML(strings[0]);
-            this.response = response;
+            TripInfoDownloadTask.response = response;
+
             XMLDocument xml = XMLDocument.documentFromString(response);
 
             for (Element e : xml.getDocument().getDescendants(new ElementFilter("Trip"))) {
@@ -71,14 +86,10 @@ public class TripInfoDownloadTask extends AsyncTask<String, Void, ArrayList<Conn
 
     @Override
     protected void onPostExecute(ArrayList<Connection> connections) {
-        if (dialog.isShowing()) {
+        if (dialog != null && dialog.isShowing()) {
             dialog.dismiss();
         }
         super.onPostExecute(connections);
-    }
-
-    public void setContext(Context context) {
-        this.context = context;
     }
 
     private Connection getTripResult(Element e) {
@@ -325,7 +336,7 @@ public class TripInfoDownloadTask extends AsyncTask<String, Void, ArrayList<Conn
     }
 
 
-    public static void setOnSuccessEvent(SuccessEvent e) {
+    public void setOnSuccessEvent(SuccessEvent e) {
         successEvent = e;
     }
 

@@ -48,4 +48,33 @@ public class Client {
         return s.toString();
     }
 
+    public String sendPostJSON(String json) throws IOException {
+        http.setRequestMethod("POST");
+        http.setDoOutput(true);
+        http.setDoInput(true);
+        http.setUseCaches(false);
+
+        byte[] out = json.getBytes(StandardCharsets.UTF_8);
+        int length = out.length;
+
+        http.setFixedLengthStreamingMode(length);
+        http.setRequestProperty("content-type", "application/json");
+
+        OutputStreamWriter writer = new OutputStreamWriter( http.getOutputStream());
+        writer.write(json);
+        writer.flush();
+
+        StringBuilder s = new StringBuilder();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(http.getInputStream()));
+        for (String line; (line = reader.readLine()) != null;) {
+            s.append(line);
+        }
+
+        writer.close();
+        reader.close();
+        http.disconnect();
+
+        return s.toString();
+    }
+
 }

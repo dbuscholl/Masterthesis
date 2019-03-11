@@ -29,16 +29,12 @@ import de.dbuscholl.fahrplanauskunft.FormatTools;
 import de.dbuscholl.fahrplanauskunft.R;
 import de.dbuscholl.fahrplanauskunft.gui.activities.MainActivity;
 import de.dbuscholl.fahrplanauskunft.gui.activities.Questionnaire;
+import de.dbuscholl.fahrplanauskunft.network.TripInfoDownloadTask;
 import de.dbuscholl.fahrplanauskunft.network.entities.Connection;
 
 import static de.dbuscholl.fahrplanauskunft.gui.App.CHANNEL_ID;
 
-/**
- * Created by deepshikha on 24/11/16.
- */
-
 public class TripRecordingService extends Service implements LocationListener {
-    private ArrayList<Location> locations = new ArrayList<>();
     private final IBinder gpsBinder = new GpsBinder();
 
     boolean isGPSEnable = false;
@@ -53,8 +49,13 @@ public class TripRecordingService extends Service implements LocationListener {
     public static String str_receiver = "service.locationreceiver";
     Intent intent;
 
+    private ArrayList<Location> locations = new ArrayList<>();
     private static List<Connection> recordingQueue = Collections.synchronizedList(new ArrayList<Connection>());
+    private static List<String> requestStrings = Collections.synchronizedList(new ArrayList<String>());
     private Connection currentlyRecordingTrip;
+    private String currentlyRecordingTripRequest;
+    private String realtimeArrival;
+    private long lastRealtimeObtain;
 
     public TripRecordingService() {
 
@@ -129,59 +130,55 @@ public class TripRecordingService extends Service implements LocationListener {
                 @Override
                 public void run() {
 
+                    // get next Trip to recording if nothing recording
                     if (currentlyRecordingTrip == null) {
-                        currentlyRecordingTrip = getNextScheduledTrip();
+                        int next = getNextScheduledTripIndex();
+                        currentlyRecordingTrip = recordingQueue.get(next);
+                        try {
+                            currentlyRecordingTripRequest = requestStrings.get(next);
+                        } catch (IndexOutOfBoundsException e) {
+                            currentlyRecordingTripRequest = null;
+                        }
+
+                        int size = currentlyRecordingTrip.getLegs().size();
+                        if (size > 0) {
+                            String arrivalTimeEstimated = currentlyRecordingTrip.getLegs().get(size - 1).getAlighting().getArrivalTimeEstimated();
+                            if (arrivalTimeEstimated != null && !(arrivalTimeEstimated.equals(""))) {
+                                realtimeArrival = arrivalTimeEstimated;
+                                lastRealtimeObtain = Calendar.getInstance().getTimeInMillis();
+                            }
+                        }
+
                     }
+
+                    // repeating procedure for recording
                     if (currentlyRecordingTrip != null) {
-                        // TODO: Update Realtime once in a while
                         getlocation();
                         if (isTripEnding()) {
-                            recordingQueue.remove(currentlyRecordingTrip);
-                            currentlyRecordingTrip = null;
-                            // TODO: send notification for Questionaire
+                            startQuestionaire();
+                            endCurrentTripRecording();
                             // TODO: send recorded locations to server
                         }
                     }
 
+                    long now = Calendar.getInstance().getTimeInMillis();
+                    if (realtimeArrival != null && !(realtimeArrival.equals(""))) {
+                        if (now - lastRealtimeObtain > 180000) {
+                            updateRealtimeArrival();
+                        }
+                    }
                 }
             });
 
         }
     }
 
-    private boolean isTripEnding() {
-        try {
-
-            long time = Calendar.getInstance().getTimeInMillis();
-            if (currentlyRecordingTrip != null) {
-                String arrivalTimeEstimated = currentlyRecordingTrip.getLegs().get(currentlyRecordingTrip.getLegs().size() - 1).getAlighting().getArrivalTimeEstimated();
-
-                long endTime;
-
-                if (arrivalTimeEstimated != null && !arrivalTimeEstimated.equals("")) {
-                    endTime = FormatTools.parseTrias(arrivalTimeEstimated, null).getTime();
-                } else {
-                    endTime = FormatTools.parseTrias(currentlyRecordingTrip.getEndTime(), null).getTime();
-                }
-
-                if (endTime != 0) {
-                    return endTime <= time;
-                }
-            }
-
-        } catch (NullPointerException e) {
-            return true;
-        }
-
-        return true;
-    }
-
-    private Connection getNextScheduledTrip() {
+    private int getNextScheduledTripIndex() {
         int index = -1;
         long smallestTime = Long.MAX_VALUE;
 
         if (recordingQueue.isEmpty()) {
-            return null;
+            return -1;
         }
 
         try {
@@ -195,14 +192,14 @@ public class TripRecordingService extends Service implements LocationListener {
                 }
             }
         } catch (NullPointerException e) {
-            return null;
+            return -1;
         }
 
         if (index >= 0) {
-            return recordingQueue.get(index);
+            return index;
         }
 
-        return null;
+        return -1;
     }
 
     private void getlocation() {
@@ -247,6 +244,73 @@ public class TripRecordingService extends Service implements LocationListener {
         }
     }
 
+    private void updateRealtimeArrival() {
+        TripInfoDownloadTask tidt = new TripInfoDownloadTask();
+        tidt.setOnSuccessEvent(new TripInfoDownloadTask.SuccessEvent() {
+            @Override
+            public void onSuccess(ArrayList<Connection> result) {
+                for (Connection c : result) {
+                    if (c.equals(currentlyRecordingTrip)) {
+                        int size = c.getLegs().size();
+                        if (size > 0) {
+                            String arrival = c.getLegs().get(size - 1).getAlighting().getArrivalTimeEstimated();
+                            if (arrival != null && !(arrival.equals(""))) {
+                                realtimeArrival = arrival;
+                            }
+                        }
+                        lastRealtimeObtain = Calendar.getInstance().getTimeInMillis();
+                    }
+                }
+            }
+        });
+        tidt.execute(currentlyRecordingTripRequest);
+    }
+
+    private boolean isTripEnding() {
+        try {
+
+            long time = Calendar.getInstance().getTimeInMillis();
+            if (currentlyRecordingTrip != null) {
+                String arrivalTimeEstimated = currentlyRecordingTrip.getLegs().get(currentlyRecordingTrip.getLegs().size() - 1).getAlighting().getArrivalTimeEstimated();
+
+                long endTime;
+
+                if (realtimeArrival != null && !(realtimeArrival.equals(""))) {
+                    endTime = FormatTools.parseTrias(realtimeArrival, null).getTime();
+                } else {
+                    endTime = FormatTools.parseTrias(currentlyRecordingTrip.getEndTime(), null).getTime();
+                }
+
+                if (endTime != 0) {
+                    return endTime <= time;
+                }
+            }
+
+        } catch (NullPointerException e) {
+            return true;
+        }
+
+        return true;
+    }
+
+    private void endCurrentTripRecording() {
+        recordingQueue.remove(currentlyRecordingTrip);
+        currentlyRecordingTrip = null;
+        if (currentlyRecordingTripRequest != null) {
+            requestStrings.remove(currentlyRecordingTripRequest);
+            currentlyRecordingTripRequest = null;
+        }
+        realtimeArrival = null;
+        lastRealtimeObtain = 0;
+        locations.clear();
+    }
+
+    private void startQuestionaire() {
+        Questionnaire q = new Questionnaire(this.getApplicationContext(), currentlyRecordingTrip);
+        q.setRecordingData(new ArrayList<>(locations));
+        q.startForPastConnection();
+    }
+
     public ArrayList<Location> getLocations() {
         return locations;
     }
@@ -283,6 +347,11 @@ public class TripRecordingService extends Service implements LocationListener {
         }
         recordingQueue.add(connection);
         return true;
+    }
+
+
+    public void addRequestString(String request) {
+
     }
 
     private void update(Location location) {

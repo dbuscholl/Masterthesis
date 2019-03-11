@@ -183,7 +183,8 @@ public class ConnectionsFragment extends Fragment {
                     Log.d(getClass().getName(), parse);
                     TripInfoRequest tir = new TripInfoRequest(getActivity().getApplicationContext().getResources().openRawResource(R.raw.trip_info_request));
                     tir.buildRequest(fromRef, toRef, parse);
-                    TripInfoDownloadTask.setOnSuccessEvent(new TripInfoDownloadTask.SuccessEvent() {
+                    TripInfoDownloadTask tidt = new TripInfoDownloadTask(getActivity());
+                    tidt.setOnSuccessEvent(new TripInfoDownloadTask.SuccessEvent() {
                         @Override
                         public void onSuccess(final ArrayList<Connection> result) {
                             new Handler(Looper.getMainLooper()).post(new Runnable() {
@@ -197,7 +198,7 @@ public class ConnectionsFragment extends Fragment {
                             });
                         }
                     });
-                    new TripInfoDownloadTask(getActivity()).execute(tir.toString());
+                    tidt.execute(tir.toString());
 
                 } catch (JDOMException e) {
                     e.printStackTrace();
