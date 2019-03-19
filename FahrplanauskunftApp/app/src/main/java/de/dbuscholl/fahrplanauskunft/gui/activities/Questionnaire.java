@@ -12,25 +12,36 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 
 import de.dbuscholl.fahrplanauskunft.R;
+import de.dbuscholl.fahrplanauskunft.network.QuestionaireResultTask;
 import de.dbuscholl.fahrplanauskunft.network.entities.Connection;
+import de.dbuscholl.fahrplanauskunft.network.entities.CustomLocation;
 import de.dbuscholl.fahrplanauskunft.network.entities.Service;
 import de.dbuscholl.fahrplanauskunft.network.entities.Trip;
 
 public class Questionnaire {
-    private final Connection connection;
-    private final Context activity;
+    private Connection connection;
+    private Context activity;
     private boolean cancel = false;
     private Dialog currentOpenDialog = null;
     private NextButtonClickHandler nextHandler;
     private int step = 0;
     private int leg = 0;
 
-    private ArrayList<Location> recordingData;
+    private ArrayList<CustomLocation> recordingData;
     private ArrayList<ArrayList<String>> answers;
+
+    public Questionnaire() {
+
+    }
 
     public Questionnaire(Context context, Connection connection) {
         this.activity = context;
@@ -46,7 +57,7 @@ public class Questionnaire {
                     leg++;
                     step = 0;
                     if (leg >= connection.getLegs().size()) {
-                        // done asking
+                        sendResults();
                         return;
                     }
                 }
@@ -55,8 +66,10 @@ public class Questionnaire {
                 for (int i = leg; i < connection.getLegs().size(); i++, leg++) {
                     t = connection.getLegs().get(i);
                     if (t.getType() == Trip.TripType.TIMED) {
-                        answers.add(new ArrayList<String>()); // to make leg value match answers index add empty
                         break;
+                    } else {
+                        answers.add(new ArrayList<String>()); // to make leg value match answers index add empty
+                        continue;
                     }
                 }
 
@@ -91,6 +104,76 @@ public class Questionnaire {
             }
         };
         nextHandler.onNextButtonClick();
+    }
+
+    private void sendResults() {
+        QuestionaireResultTask qrt = new QuestionaireResultTask(activity);
+        qrt.setOnSuccessEvent(new QuestionaireResultTask.SuccessEvent() {
+            @Override
+            public void onSuccess(String result) {
+                Toast.makeText(activity,"Done sending!",Toast.LENGTH_LONG).show();
+            }
+        });
+
+        JSONObject results = resultsToJSON();
+        if(results==null) {
+            return;
+        }
+        Log.d(this.getClass().getName(),results.toString());
+        qrt.execute(results.toString());
+    }
+
+    public JSONObject resultsToJSON() {
+        JSONObject sendingData = new JSONObject();
+        try {
+            JSONObject c = connection.toJSON();
+            sendingData.put("connection", c==null?"":c);
+
+            if(recordingData != null) {
+                JSONArray locations = new JSONArray();
+                for (CustomLocation l : recordingData) {
+                    JSONObject location = new JSONObject();
+                    location.put("time", l.getTime());
+                    location.put("latitude", l.getLatitude());
+                    location.put("longitude", l.getLongitude());
+                    location.put("altitude", l.getAltitude());
+                    location.put("accuracy", l.getAccuracy());
+                    locations.put(location);
+                }
+                sendingData.put("recordingData", locations);
+            } else {
+                sendingData.put("recordingData", "");
+            }
+
+            JSONArray answersJson = new JSONArray();
+            for(ArrayList<String> leg : answers) {
+                JSONObject answer = new JSONObject();
+                for (int i = 0; i < leg.size(); i++) {
+                    String s = leg.get(i);
+
+                    switch (i) {
+                        case 0:
+                            answer.put("capacity",s);
+                            break;
+                        case 1:
+                            answer.put("cleanness",s);
+                            break;
+                        case 2:
+                            answer.put("delay",s);
+                            break;
+                        case 3:
+                            answer.put("interchangeToNextTrip",s);
+                            break;
+                    }
+                }
+                answersJson.put(answer);
+            }
+            sendingData.put("answers",answersJson);
+            return sendingData;
+
+        } catch (JSONException e) {
+            return null;
+        }
     }
 
     private void askCapacity(Trip t) {
@@ -274,7 +357,7 @@ public class Questionnaire {
 
         headerview.setText(Html.fromHtml(header));
 
-        final RadioGroup radio = dialog.findViewById(R.id.radio_cleanness_group);
+        final RadioGroup radio = dialog.findViewById(R.id.radio_interchange_group);
 
         cancel.setOnClickListener(new CancelButton());
         next.setOnClickListener(new View.OnClickListener() {
@@ -308,7 +391,7 @@ public class Questionnaire {
             }
 
             ArrayList<String> trip = answers.get(leg);
-            if (trip.size() <= step) {
+            if (trip.size() < step) {
                 int length = step - (trip.size() - 1);
                 for (int i = 0; i < length - 1; i++) {
                     trip.add("");
@@ -320,8 +403,16 @@ public class Questionnaire {
         }
     }
 
-    public void setRecordingData(ArrayList<Location> recordingData) {
+    public void setRecordingData(ArrayList<CustomLocation> recordingData) {
         this.recordingData = recordingData;
+    }
+
+    public void setContext(Context activity) {
+        this.activity = activity;
+    }
+
+    public void setConnection(Connection connection) {
+        this.connection = connection;
     }
 
     private class CancelButton implements View.OnClickListener {

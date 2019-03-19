@@ -2,9 +2,11 @@ package de.dbuscholl.fahrplanauskunft.gui.services;
 
 import android.Manifest;
 import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
@@ -13,10 +15,14 @@ import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -31,8 +37,11 @@ import de.dbuscholl.fahrplanauskunft.gui.activities.MainActivity;
 import de.dbuscholl.fahrplanauskunft.gui.activities.Questionnaire;
 import de.dbuscholl.fahrplanauskunft.network.TripInfoDownloadTask;
 import de.dbuscholl.fahrplanauskunft.network.entities.Connection;
+import de.dbuscholl.fahrplanauskunft.network.entities.CustomLocation;
+import de.dbuscholl.fahrplanauskunft.network.entities.StopPoint;
 
-import static de.dbuscholl.fahrplanauskunft.gui.App.CHANNEL_ID;
+import static de.dbuscholl.fahrplanauskunft.common.App.CHANNEL_ID;
+import static de.dbuscholl.fahrplanauskunft.common.App.CHANNEL_ID_DONE_CHANNEL;
 
 public class TripRecordingService extends Service implements LocationListener {
     private final IBinder gpsBinder = new GpsBinder();
@@ -44,14 +53,15 @@ public class TripRecordingService extends Service implements LocationListener {
 
     private Handler mHandler = new Handler();
     private Timer mTimer = null;
-    long notify_interval = 20000;
+    long notify_interval = 3000;
 
     public static String str_receiver = "service.locationreceiver";
     Intent intent;
 
-    private ArrayList<Location> locations = new ArrayList<>();
+    private ArrayList<CustomLocation> locations = new ArrayList<>();
     private static List<Connection> recordingQueue = Collections.synchronizedList(new ArrayList<Connection>());
     private static List<String> requestStrings = Collections.synchronizedList(new ArrayList<String>());
+    private static List<FinishedRecording> finishedRecordings = Collections.synchronizedList(new ArrayList<FinishedRecording>());
     private Connection currentlyRecordingTrip;
     private String currentlyRecordingTripRequest;
     private String realtimeArrival;
@@ -131,7 +141,7 @@ public class TripRecordingService extends Service implements LocationListener {
                 public void run() {
 
                     // get next Trip to recording if nothing recording
-                    if (currentlyRecordingTrip == null) {
+                    if (currentlyRecordingTrip == null && !recordingQueue.isEmpty()) {
                         int next = getNextScheduledTripIndex();
                         currentlyRecordingTrip = recordingQueue.get(next);
                         try {
@@ -155,9 +165,14 @@ public class TripRecordingService extends Service implements LocationListener {
                     if (currentlyRecordingTrip != null) {
                         getlocation();
                         if (isTripEnding()) {
-                            startQuestionaire();
+                            newFinishedRecording();
                             endCurrentTripRecording();
-                            // TODO: send recorded locations to server
+                            if(recordingQueue.isEmpty()) {
+                                mTimer.cancel();
+                                mTimer.purge();
+                                stopForeground(true);
+                                stopSelf();
+                            }
                         }
                     }
 
@@ -170,6 +185,28 @@ public class TripRecordingService extends Service implements LocationListener {
                 }
             });
 
+        }
+    }
+
+    private void newFinishedRecording(){
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        String json = sharedPref.getString("recordings", null);
+
+        if (json != null) {
+            finishedRecordings = new Gson().fromJson(json, new TypeToken<List<FinishedRecording>>() {
+            }.getType());
+        }
+
+        if (finishedRecordings != null) {
+            FinishedRecording f = new FinishedRecording();
+            f.setRecordingData(locations);
+            f.setConnection(currentlyRecordingTrip);
+            finishedRecordings.add(f);
+
+            SharedPreferences.Editor editor = sharedPref.edit();
+
+            String recordings = new Gson().toJson(finishedRecordings);
+            editor.putString("recordings", recordings).apply();
         }
     }
 
@@ -268,6 +305,9 @@ public class TripRecordingService extends Service implements LocationListener {
 
     private boolean isTripEnding() {
         try {
+            if(locations.size()>3) {
+                return true;
+            }
 
             long time = Calendar.getInstance().getTimeInMillis();
             if (currentlyRecordingTrip != null) {
@@ -302,7 +342,37 @@ public class TripRecordingService extends Service implements LocationListener {
         }
         realtimeArrival = null;
         lastRealtimeObtain = 0;
-        locations.clear();
+        locations = new ArrayList<CustomLocation>();
+
+        sendNotification();
+    }
+
+    private void sendNotification() {
+        if(finishedRecordings == null || finishedRecordings.size()<=0) {
+            return;
+        }
+
+        Connection connection = finishedRecordings.get(finishedRecordings.size() - 1).getConnection();
+        if(connection.getLegs() == null || connection.getLegs().size() <= 0) {
+            return;
+        }
+        StopPoint boarding = connection.getLegs().get(0).getBoarding();
+        StopPoint alighting = connection.getLegs().get(connection.getLegs().size() - 1).getAlighting();
+
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        notificationIntent.putExtra("fragment","queue");
+        notificationIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID_DONE_CHANNEL)
+                .setContentTitle("Fahrt nach " + alighting.getName() + " aufgezeichnet!")
+                .setContentText("Tippen um Aufzeichnung abzuschließen")
+                .setSmallIcon(R.drawable.ic_check_black_24dp)
+                .setContentIntent(pendingIntent)
+                .build();
+
+        NotificationManager notificationManager =
+                (NotificationManager) getSystemService(Service.NOTIFICATION_SERVICE);
+        notificationManager.notify(2,notification);
     }
 
     private void startQuestionaire() {
@@ -311,7 +381,7 @@ public class TripRecordingService extends Service implements LocationListener {
         q.startForPastConnection();
     }
 
-    public ArrayList<Location> getLocations() {
+    public ArrayList<CustomLocation> getLocations() {
         return locations;
     }
 
@@ -362,7 +432,42 @@ public class TripRecordingService extends Service implements LocationListener {
         editor.putInt("size", locations.size());
         editor.commit();
         */
-        locations.add(location);
+        CustomLocation cl = new CustomLocation();
+        cl.setLatitude(location.getLatitude());
+        cl.setLongitude(location.getLongitude());
+        cl.setAltitude(location.getAltitude());
+        cl.setAccuracy(location.getAccuracy());
+        cl.setTime(location.getTime());
+        locations.add(cl);
+    }
+
+    public static List<Connection> getRecordingQueue() {
+        return recordingQueue;
+    }
+
+    public static List<FinishedRecording> getFinishedRecordings() {
+        return finishedRecordings;
+    }
+
+    public class FinishedRecording {
+        private Connection connection;
+        private ArrayList<CustomLocation> recordingData;
+
+        public Connection getConnection() {
+            return connection;
+        }
+
+        public void setConnection(Connection connection) {
+            this.connection = connection;
+        }
+
+        public ArrayList<CustomLocation> getRecordingData() {
+            return recordingData;
+        }
+
+        public void setRecordingData(ArrayList<CustomLocation> recordingData) {
+            this.recordingData = recordingData;
+        }
     }
 
     public class GpsBinder extends Binder {

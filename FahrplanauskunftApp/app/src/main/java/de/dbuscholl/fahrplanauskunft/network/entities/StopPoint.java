@@ -1,6 +1,12 @@
 package de.dbuscholl.fahrplanauskunft.network.entities;
 
-public class StopPoint {
+import android.os.Parcel;
+import android.os.Parcelable;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+public class StopPoint implements Parcelable {
     private int position;
     private String ref;
     private String name;
@@ -22,6 +28,57 @@ public class StopPoint {
         this.arrivalTimeEstimated = arrivalTimeEstimated;
         this.departureTime = departureTime;
         this.departureTimeEstimated = departureTimeEstimated;
+    }
+
+    protected StopPoint(Parcel in) {
+        position = in.readInt();
+        ref = in.readString();
+        name = in.readString();
+        bay = in.readString();
+        arrivalTime = in.readString();
+        arrivalTimeEstimated = in.readString();
+        departureTime = in.readString();
+        departureTimeEstimated = in.readString();
+    }
+
+    public static final Creator<StopPoint> CREATOR = new Creator<StopPoint>() {
+        @Override
+        public StopPoint createFromParcel(Parcel in) {
+            return new StopPoint(in);
+        }
+
+        @Override
+        public StopPoint[] newArray(int size) {
+            return new StopPoint[size];
+        }
+    };
+
+    public JSONObject toJSON() {
+        JSONObject stopPoint = new JSONObject();
+        try {
+            stopPoint.put("position",position);
+            stopPoint.put("ref",ref==null?"":ref);
+            stopPoint.put("name",name==null?"":name);
+            stopPoint.put("bay",bay==null?"":bay);
+            stopPoint.put("arrivalTime",arrivalTime==null?"":arrivalTime);
+            stopPoint.put("arrivalTimeEstimated",arrivalTimeEstimated==null?"":arrivalTimeEstimated);
+            stopPoint.put("departureTime",departureTime==null?"":departureTime);
+            stopPoint.put("departureTimeEstimated",departureTimeEstimated==null?"":departureTimeEstimated);
+            return stopPoint;
+        }catch (JSONException e) {
+            return null;
+        }
+    }
+
+    @Override
+    public String toString() {
+        JSONObject json = toJSON();
+
+        if(json==null) {
+            return "null";
+        } else {
+            return json.toString();
+        }
     }
 
     public int getPosition() {
@@ -86,5 +143,22 @@ public class StopPoint {
 
     public void setDepartureTimeEstimated(String departureTimeEstimated) {
         this.departureTimeEstimated = departureTimeEstimated;
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeInt(position);
+        dest.writeString(ref);
+        dest.writeString(name);
+        dest.writeString(bay);
+        dest.writeString(arrivalTime);
+        dest.writeString(arrivalTimeEstimated);
+        dest.writeString(departureTime);
+        dest.writeString(departureTimeEstimated);
     }
 }

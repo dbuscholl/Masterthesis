@@ -26,6 +26,7 @@ import java.util.TimeZone;
 
 import de.dbuscholl.fahrplanauskunft.FormatTools;
 import de.dbuscholl.fahrplanauskunft.R;
+import de.dbuscholl.fahrplanauskunft.common.App;
 import de.dbuscholl.fahrplanauskunft.gui.ConnectionsListView;
 import de.dbuscholl.fahrplanauskunft.gui.services.TripRecordingService;
 import de.dbuscholl.fahrplanauskunft.gui.fragments.ConnectionsFragment;
@@ -41,6 +42,7 @@ public class ResultDetailActivity extends AppCompatActivity {
     boolean isBound = false;
     SharedPreferences mPref;
     SharedPreferences.Editor medit;
+    ServiceConnectedCallback serviceConnectedCallback;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -53,7 +55,6 @@ public class ResultDetailActivity extends AppCompatActivity {
         if (position == -1) {
             onBackPressed();
         }
-
         connection = ConnectionsFragment.getCurrentResult().get(position);
 
         TextView startStation = findViewById(R.id.result_tripstart_text);
@@ -148,6 +149,10 @@ public class ResultDetailActivity extends AppCompatActivity {
             isBound = true;
             int size = gpsService.getLocations().size();
             //Toast.makeText(getApplicationContext(), String.valueOf(size), Toast.LENGTH_SHORT).show();
+            if(serviceConnectedCallback!=null) {
+                serviceConnectedCallback.onConnected();
+            }
+            unbindService(gpsConnection);
         }
 
         @Override
@@ -162,21 +167,27 @@ public class ResultDetailActivity extends AppCompatActivity {
             fn_permission();
             if (boolean_permission) {
                 Intent intent = new Intent(getApplicationContext(), TripRecordingService.class);
-                if (!isMyServiceRunning(TripRecordingService.class)) {
+                if (!App.isMyServiceRunning(TripRecordingService.class, getApplicationContext())) {
                     Log.d(ResultDetailActivity.this.getClass().getName(), "started service");
                     ContextCompat.startForegroundService(getApplicationContext(), intent);
-                }
-                if (!isBound) {
-                    bindService(intent, gpsConnection, Context.BIND_AUTO_CREATE);
-                    Log.d(ResultDetailActivity.this.getClass().getName(), "Bound service");
-                    boolean added = gpsService.addConnection(connection);
-                    if (!added) {
-                        Toast.makeText(getApplicationContext(), "Kann nicht aufgenommen werden.", Toast.LENGTH_LONG).show();
-                        return;
-                    }
-                    String request = TripInfoDownloadTask.getRequest();
-                    if (request != null) {
-                        gpsService.addRequestString(request);
+                    if (!isBound) {
+                        serviceConnectedCallback = new ServiceConnectedCallback() {
+                            @Override
+                            public void onConnected() {
+                                boolean added = gpsService.addConnection(connection);
+                                if (!added) {
+                                    Toast.makeText(getApplicationContext(), "Kann nicht aufgenommen werden.", Toast.LENGTH_LONG).show();
+                                    return;
+                                }
+                                String request = TripInfoDownloadTask.getRequest();
+                                if (request != null) {
+                                    gpsService.addRequestString(request);
+                                }
+                            }
+                        };
+
+                        bindService(intent, gpsConnection, Context.BIND_AUTO_CREATE);
+                        Log.d(ResultDetailActivity.this.getClass().getName(), "Bound service");
                     }
                 }
                 Log.d(ResultDetailActivity.this.getClass().getName(), "Service seems to be running");
@@ -184,15 +195,9 @@ public class ResultDetailActivity extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(), "Please enable the gps", Toast.LENGTH_SHORT).show();
             }
         }
+    }
 
-        private boolean isMyServiceRunning(Class<?> serviceClass) {
-            ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-            for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-                if (serviceClass.getName().equals(service.service.getClassName())) {
-                    return true;
-                }
-            }
-            return false;
-        }
+    private interface ServiceConnectedCallback {
+        void onConnected();
     }
 }

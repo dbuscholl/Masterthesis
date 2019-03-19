@@ -1,6 +1,13 @@
 package de.dbuscholl.fahrplanauskunft.network.entities;
 
-public class Service {
+import android.os.Parcel;
+import android.os.Parcelable;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+
+public class Service implements Parcelable {
     private String operatingDayRef;
     private String journeyRef;
     private String lineRef;
@@ -21,6 +28,58 @@ public class Service {
         this.lineName = lineNAme;
         this.route = riute;
         this.desitnation = desitnation;
+    }
+
+    protected Service(Parcel in) {
+        operatingDayRef = in.readString();
+        journeyRef = in.readString();
+        lineRef = in.readString();
+        railType = in.readString();
+        railName = in.readString();
+        lineName = in.readString();
+        route = in.readString();
+        desitnation = in.readString();
+    }
+
+    public static final Creator<Service> CREATOR = new Creator<Service>() {
+        @Override
+        public Service createFromParcel(Parcel in) {
+            return new Service(in);
+        }
+
+        @Override
+        public Service[] newArray(int size) {
+            return new Service[size];
+        }
+    };
+
+    public JSONObject toJSON() {
+        JSONObject service = new JSONObject();
+        try {
+            service.put("operatingDayRef", operatingDayRef==null?"":operatingDayRef);
+            service.put("journeyRef",journeyRef==null?"":journeyRef);
+            service.put("lineRef",lineRef==null?"":lineRef);
+            service.put("railType",railType==null?"":railType);
+            service.put("railName",railName==null?"":railName);
+            service.put("lineName",lineName==null?"":lineName);
+            service.put("route",route==null?"":route);
+            service.put("desitnation",desitnation==null?"":desitnation);
+            return service;
+        }
+        catch (JSONException e) {
+            return null;
+        }
+    }
+
+    @Override
+    public String toString() {
+        JSONObject json = toJSON();
+
+        if(json==null) {
+            return "null";
+        } else {
+            return json.toString();
+        }
     }
 
     public String getOperatingDayRef() {
@@ -85,5 +144,22 @@ public class Service {
 
     public void setDesitnation(String desitnation) {
         this.desitnation = desitnation;
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(operatingDayRef);
+        dest.writeString(journeyRef);
+        dest.writeString(lineRef);
+        dest.writeString(railType);
+        dest.writeString(railName);
+        dest.writeString(lineName);
+        dest.writeString(route);
+        dest.writeString(desitnation);
     }
 }

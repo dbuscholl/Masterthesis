@@ -1,5 +1,8 @@
 package de.dbuscholl.fahrplanauskunft.network.entities;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
 
@@ -9,7 +12,7 @@ import java.util.ArrayList;
 import de.dbuscholl.fahrplanauskunft.common.Constants;
 import de.dbuscholl.fahrplanauskunft.network.xml.XMLDocument;
 
-public class Station {
+public class Station implements Parcelable {
     private String ref;
     private String name;
     private String locationRef;
@@ -26,6 +29,27 @@ public class Station {
         this.longitude = longitude;
         this.latitude = latitude;
     }
+
+    protected Station(Parcel in) {
+        ref = in.readString();
+        name = in.readString();
+        locationRef = in.readString();
+        locationName = in.readString();
+        longitude = in.readFloat();
+        latitude = in.readFloat();
+    }
+
+    public static final Creator<Station> CREATOR = new Creator<Station>() {
+        @Override
+        public Station createFromParcel(Parcel in) {
+            return new Station(in);
+        }
+
+        @Override
+        public Station[] newArray(int size) {
+            return new Station[size];
+        }
+    };
 
     public String getRef() {
         return ref;
@@ -112,5 +136,20 @@ public class Station {
 
 
         return stations;
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(ref);
+        dest.writeString(name);
+        dest.writeString(locationRef);
+        dest.writeString(locationName);
+        dest.writeFloat(longitude);
+        dest.writeFloat(latitude);
     }
 }
