@@ -94,11 +94,12 @@ public class TripWorker {
                     //TODO: gtfsTripInfo TRIAS Edition from Result
                     break;
                 } else {
-                    errorstring.append(printTripInfo(gtfsTripInfo) + "\n");
-                    if (i == 0) {
-                        errorstring.append(printTour(gtfsStops) + "\n");
+                    try {
+                        log.debug(getFriendlyName() + " was NOT found in TRIAS! Departure GTFS: " + gtfsTripInfo.getStop_name() + ", " + gtfsTripInfo.getDeparture_time() + ", Departure TRIAS: " + triasStops.get(0).getStop_name() + ", " + triasStops.get(0).getDeparture_time());
+                    } catch (IndexOutOfBoundsException e) {
+                        log.debug("L95 IndexOutOfBoundsException: " + e.getMessage());
+                        log.debug(response);
                     }
-                    errorstring.append(i + ". TRIAS RESULT:\n" + printTour(triasStops) + "\n");
                 }
             }
 
@@ -280,6 +281,9 @@ public class TripWorker {
             stopElements.add(e);
         }
 
+        if (stopElements.size() < 1) {
+            return null;
+        }
         // get last item as TripStop for better legibility
         TripStop triasStop = null;
         try {
@@ -322,16 +326,12 @@ public class TripWorker {
 
             // parse utc timestamps and subtract them
             try {
-                SQLFormatTools.timeFormat.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
                 Date timetabled = SQLFormatTools.timeFormat.parse(triasStop.getArrival_time());
                 Date estimated = SQLFormatTools.timeFormat.parse(triasStop.getArrival_time_estimated());
                 long seconds = (estimated.getTime() - timetabled.getTime()) / 1000;
-                seconds = seconds > Integer.MAX_VALUE ? Integer.MAX_VALUE : seconds;
-                return new Delay(gtfsStop, Math.toIntExact(seconds));
-            } catch (ParseException e) {
-                log.error(e.getMessage(), e);
-                return null;
-            } catch (ArithmeticException e) {
+                int exact = Math.toIntExact(seconds);
+                return new Delay(gtfsStop, exact);
+            } catch (Exception e) {
                 log.error(e.getMessage(), e);
                 return null;
             }
@@ -428,7 +428,9 @@ public class TripWorker {
             }
         } catch (NullPointerException e) {
             log.error(lastDelayCheck + " - " + seconds + "s");
-            log.error((new Date().getTime() - lastDelayCheck.getTime()) / 1000 > seconds);
+            log.error((new Date().getTime() - lastDelayCheck.getTime()) / 1000 + "seconds.");
+            log.error(getFriendlyName() + " is somehow broken...");
+            return false;
         }
 
         try {
