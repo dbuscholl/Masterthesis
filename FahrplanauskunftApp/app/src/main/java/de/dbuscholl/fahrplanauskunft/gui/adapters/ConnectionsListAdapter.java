@@ -22,7 +22,7 @@ public class ConnectionsListAdapter extends ArrayAdapter<Connection> {
     private int lastPosition = -1;
 
     public ConnectionsListAdapter(ArrayList<Connection> data, Context context) {
-        super(context, R.layout.connections_listitem, data);
+        super(context, R.layout.listitem_connection, data);
         this.context = context;
         this.data = data;
     }
@@ -48,7 +48,7 @@ public class ConnectionsListAdapter extends ArrayAdapter<Connection> {
 
             viewHolder = new ViewHolder();
             LayoutInflater inflater = LayoutInflater.from(context);
-            convertView = inflater.inflate(R.layout.connections_listitem, parent, false);
+            convertView = inflater.inflate(R.layout.listitem_connection, parent, false);
 
             convertView.setTag(viewHolder);
         } else {

@@ -20,7 +20,6 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
@@ -33,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
-import java.util.concurrent.ExecutionException;
 
 import de.dbuscholl.fahrplanauskunft.FormatTools;
 import de.dbuscholl.fahrplanauskunft.R;
@@ -63,7 +61,7 @@ public class ConnectionsFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.connections_fragment, null);
+        return inflater.inflate(R.layout.fragment_connection, null);
     }
 
 

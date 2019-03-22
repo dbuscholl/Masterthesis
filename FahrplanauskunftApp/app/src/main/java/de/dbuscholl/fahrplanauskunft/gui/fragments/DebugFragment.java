@@ -1,6 +1,5 @@
 package de.dbuscholl.fahrplanauskunft.gui.fragments;
 
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -16,11 +15,9 @@ import android.widget.Toast;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import de.dbuscholl.fahrplanauskunft.R;
-import de.dbuscholl.fahrplanauskunft.gui.services.TripRecordingService;
 import de.dbuscholl.fahrplanauskunft.gui.services.TripRecordingService.FinishedRecording;
 
 public class DebugFragment extends Fragment {
@@ -28,7 +25,7 @@ public class DebugFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.debug_fragment, null);
+        return inflater.inflate(R.layout.fragment_debug, null);
     }
 
     @Override
