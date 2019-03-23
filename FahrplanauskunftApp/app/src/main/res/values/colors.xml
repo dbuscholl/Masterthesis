@@ -8,4 +8,5 @@
     <color name="delayBad">#F4251E</color>
     <color name="delayGood">#7cb342</color>
     <color name="tinyInfo">#757575</color>
+    <color name="whiteText">#ffffff</color>
 </resources>

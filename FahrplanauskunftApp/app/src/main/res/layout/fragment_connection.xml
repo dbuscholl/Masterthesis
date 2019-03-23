@@ -71,8 +71,8 @@
             android:text="@string/connections_search"/>
 
     <ListView
-            android:id="@+id/resultlistview"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"></ListView>
+        android:id="@+id/resultlistview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
 
 </LinearLayout>

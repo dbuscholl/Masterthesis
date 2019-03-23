@@ -50,7 +50,7 @@ public class QuestionaireResultTask extends AsyncTask<String, Void, String> {
     @Override
     protected String doInBackground(String... strings) {
         try {
-            Client c = new Client("http://efastatic.vvs.de/kleinanfrager/trias");
+            Client c = new Client("http://busbilder.net:8080/masterthesis/userrecord");
             request = strings[0];
             String response = c.sendPostJSON(strings[0]);
             QuestionaireResultTask.response = response;

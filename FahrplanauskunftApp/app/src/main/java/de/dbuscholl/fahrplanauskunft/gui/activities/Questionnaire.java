@@ -21,6 +21,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 
 import de.dbuscholl.fahrplanauskunft.R;
+import de.dbuscholl.fahrplanauskunft.gui.services.TripRecordingService;
 import de.dbuscholl.fahrplanauskunft.network.QuestionaireResultTask;
 import de.dbuscholl.fahrplanauskunft.network.entities.Connection;
 import de.dbuscholl.fahrplanauskunft.network.entities.CustomLocation;
@@ -38,6 +39,10 @@ public class Questionnaire {
 
     private ArrayList<CustomLocation> recordingData;
     private ArrayList<ArrayList<String>> answers;
+
+    private TripRecordingService.FinishedRecording finishedRecording;
+    private boolean hasFinishedRecording = false;
+    private SuccessfullySendHandler successfullySendHandler;
 
     public Questionnaire() {
 
@@ -111,6 +116,9 @@ public class Questionnaire {
         qrt.setOnSuccessEvent(new QuestionaireResultTask.SuccessEvent() {
             @Override
             public void onSuccess(String result) {
+                if(successfullySendHandler != null) {
+                    successfullySendHandler.onSuccessfullySend();
+                }
                 Toast.makeText(activity,"Done sending!",Toast.LENGTH_LONG).show();
             }
         });
@@ -415,6 +423,22 @@ public class Questionnaire {
         this.connection = connection;
     }
 
+    public void setFinishedRecording(TripRecordingService.FinishedRecording finishedRecording) {
+        if(finishedRecording == null) {
+            return;
+        }
+
+        this.finishedRecording = finishedRecording;
+        hasFinishedRecording = true;
+
+        connection = finishedRecording.getConnection();
+        recordingData = finishedRecording.getRecordingData();
+    }
+
+    public void setSuccessfullySendHandler (SuccessfullySendHandler ssh) {
+        this.successfullySendHandler = ssh;
+    }
+
     private class CancelButton implements View.OnClickListener {
 
         @Override
@@ -427,5 +451,9 @@ public class Questionnaire {
 
     private interface NextButtonClickHandler {
         void onNextButtonClick();
+    }
+
+    public interface SuccessfullySendHandler {
+        void onSuccessfullySend();
     }
 }
