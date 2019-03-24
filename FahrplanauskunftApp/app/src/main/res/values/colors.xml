@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#f57c00</color>
+    <color name="colorPrimaryDark">#e65100</color>
+    <color name="colorAccent">#00E1FF</color>
+    <color name="standardText">#000000</color>
+    <color name="standardTextOverBackground">#ffffff</color>
+    <color name="delayBad">#F4251E</color>
+    <color name="delayGood">#7cb342</color>
+    <color name="tinyInfo">#757575</color>
+    <color name="whiteText">#ffffff</color>
+</resources>

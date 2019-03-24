@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="8dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/dialog_question_delay_header"
+            android:text="@string/dialog_question_delay"
+            android:textColor="@color/standardText"
+            android:textSize="@dimen/standard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <SeekBar
+            android:id="@+id/dialog_question_delay_seekbar"
+            android:layout_marginTop="14dp"
+            android:layout_marginBottom="4dp"
+            style="@style/Widget.AppCompat.SeekBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:thumbTint="@color/colorAccent"
+            android:max="60"
+            android:progress="0" />
+
+        <TextView
+            android:id="@+id/dialog_question_delay_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/standardText"
+            android:textAlignment="center"
+            android:text="0 Minuten"
+            android:layout_marginBottom="8dp"/>
+        <include layout="@layout/dialog_question_buttons"/>
+    </LinearLayout>
+</ScrollView>
