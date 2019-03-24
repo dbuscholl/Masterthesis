@@ -128,6 +128,10 @@ public class Questionnaire {
             return;
         }
         Log.d(this.getClass().getName(),results.toString());
+        // TODO: Remove after webapp implementation
+        if(successfullySendHandler != null) {
+            successfullySendHandler.onSuccessfullySend();
+        }
         qrt.execute(results.toString());
     }
 
