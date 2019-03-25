@@ -14,6 +14,7 @@ public class Trip {
     private int legId = -1;
     private TripType type;
     private String interchangeType;
+    private String GTFSTripId;
 
     public Trip() {
     }
@@ -166,6 +167,13 @@ public class Trip {
         return legId;
     }
 
+    public String getGTFSTripId() {
+        return GTFSTripId;
+    }
+
+    public void setGTFSTripId(String GTFSTripId) {
+        this.GTFSTripId = GTFSTripId;
+    }
 
     public enum TripType {
         TIMED, INTERCHANGE, CONTINUOUS;

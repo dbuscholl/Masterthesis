@@ -44,4 +44,16 @@ public class UserRecordingData {
             throw new NullPointerException(e.getMessage());
         }
     }
+
+    public Connection getConnection() {
+        return connection;
+    }
+
+    public ArrayList<CustomLocation> getLocations() {
+        return locations;
+    }
+
+    public ArrayList<Answer> getAnswers() {
+        return answers;
+    }
 }
