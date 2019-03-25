@@ -1,0 +1,246 @@
+{
+  "connection": {
+    "id": "ID-D8962986-28D7-49BC-AA69-4CE69C4CAC1C",
+    "startTime": "2019-03-25T09:17:00Z",
+    "endTime": "2019-03-25T09:43:00Z",
+    "legs": [
+      {
+        "type": "TIMED",
+        "legId": 1,
+        "interchangeType": "",
+        "service": {
+          "operatingDayRef": "2019-03-25T",
+          "journeyRef": "vvs:30065::H:j19:35",
+          "lineRef": "vvs:30065::H",
+          "railType": "localBus",
+          "railName": "Bus",
+          "lineName": "65",
+          "route": "",
+          "desitnation": "Plieningen"
+        },
+        "boarding": {
+          "position": 1,
+          "ref": "de:08111:2538",
+          "name": "Heumaden Rose",
+          "bay": "",
+          "arrivalTime": "",
+          "arrivalTimeEstimated": "",
+          "departureTime": "2019-03-25T09:16:00Z",
+          "departureTimeEstimated": "2019-03-25T09:17:00Z"
+        },
+        "alighting": {
+          "position": 4,
+          "ref": "de:08111:6133",
+          "name": "Heumaden Bockelstr.",
+          "bay": "",
+          "arrivalTime": "2019-03-25T09:20:00Z",
+          "arrivalTimeEstimated": "2019-03-25T09:21:00Z",
+          "departureTime": "",
+          "departureTimeEstimated": ""
+        },
+        "intermediates": [
+          {
+            "position": 2,
+            "ref": "de:08111:2539:0:3",
+            "name": "Heumaden Schule",
+            "bay": "",
+            "arrivalTime": "2019-03-25T09:18:00Z",
+            "arrivalTimeEstimated": "2019-03-25T09:19:00Z",
+            "departureTime": "2019-03-25T09:18:00Z",
+            "departureTimeEstimated": "2019-03-25T09:19:00Z"
+          },
+          {
+            "position": 3,
+            "ref": "de:08111:137:0:3",
+            "name": "Isegrimweg",
+            "bay": "",
+            "arrivalTime": "2019-03-25T09:19:00Z",
+            "arrivalTimeEstimated": "2019-03-25T09:20:00Z",
+            "departureTime": "2019-03-25T09:19:00Z",
+            "departureTimeEstimated": "2019-03-25T09:20:00Z"
+          }
+        ]
+      },
+      {
+        "type": "TIMED",
+        "legId": 1,
+        "interchangeType": "",
+        "service": {
+          "operatingDayRef": "2019-03-25T",
+          "journeyRef": "vvs:20007::R:j19:547",
+          "lineRef": "vvs:20007::R",
+          "railType": "urbanRailway",
+          "railName": "Stadtbahn",
+          "lineName": "U7",
+          "route": "",
+          "desitnation": "Mönchfeld"
+        },
+        "boarding": {
+          "position": 1,
+          "ref": "de:08111:6133",
+          "name": "Heumaden Bockelstraße",
+          "bay": "",
+          "arrivalTime": "",
+          "arrivalTimeEstimated": "",
+          "departureTime": "2019-03-25T09:26:00Z",
+          "departureTimeEstimated": "2019-03-25T09:26:00Z"
+        },
+        "alighting": {
+          "position": 12,
+          "ref": "de:08111:6112",
+          "name": "Hauptbf (A.-Klett-Pl.)",
+          "bay": "Gleis 3",
+          "arrivalTime": "2019-03-25T09:43:00Z",
+          "arrivalTimeEstimated": "2019-03-25T09:43:00Z",
+          "departureTime": "",
+          "departureTimeEstimated": ""
+        },
+        "intermediates": [
+          {
+            "position": 2,
+            "ref": "de:08111:6130:1:2",
+            "name": "Schemppstraße",
+            "bay": "",
+            "arrivalTime": "2019-03-25T09:27:00Z",
+            "arrivalTimeEstimated": "2019-03-25T09:27:00Z",
+            "departureTime": "2019-03-25T09:27:00Z",
+            "departureTimeEstimated": "2019-03-25T09:27:00Z"
+          },
+          {
+            "position": 3,
+            "ref": "de:08111:6134:1:2",
+            "name": "Sillenbuch",
+            "bay": "",
+            "arrivalTime": "2019-03-25T09:28:00Z",
+            "arrivalTimeEstimated": "2019-03-25T09:28:00Z",
+            "departureTime": "2019-03-25T09:28:00Z",
+            "departureTimeEstimated": "2019-03-25T09:28:00Z"
+          },
+          {
+            "position": 4,
+            "ref": "de:08111:129:1:2",
+            "name": "Silberwald",
+            "bay": "",
+            "arrivalTime": "2019-03-25T09:29:00Z",
+            "arrivalTimeEstimated": "2019-03-25T09:29:00Z",
+            "departureTime": "2019-03-25T09:29:00Z",
+            "departureTimeEstimated": "2019-03-25T09:29:00Z"
+          },
+          {
+            "position": 5,
+            "ref": "de:08111:6128:2:2",
+            "name": "Ruhbank (Fernsehturm)",
+            "bay": "",
+            "arrivalTime": "2019-03-25T09:31:00Z",
+            "arrivalTimeEstimated": "2019-03-25T09:31:00Z",
+            "departureTime": "2019-03-25T09:31:00Z",
+            "departureTimeEstimated": "2019-03-25T09:31:00Z"
+          },
+          {
+            "position": 6,
+            "ref": "de:08111:130:1:2",
+            "name": "Waldau",
+            "bay": "",
+            "arrivalTime": "2019-03-25T09:32:00Z",
+            "arrivalTimeEstimated": "2019-03-25T09:32:00Z",
+            "departureTime": "2019-03-25T09:32:00Z",
+            "departureTimeEstimated": "2019-03-25T09:32:00Z"
+          },
+          {
+            "position": 7,
+            "ref": "de:08111:6160:1:2",
+            "name": "Bopser",
+            "bay": "",
+            "arrivalTime": "2019-03-25T09:36:00Z",
+            "arrivalTimeEstimated": "2019-03-25T09:36:00Z",
+            "departureTime": "2019-03-25T09:36:00Z",
+            "departureTimeEstimated": "2019-03-25T09:36:00Z"
+          },
+          {
+            "position": 8,
+            "ref": "de:08111:159:1:2",
+            "name": "Dobelstraße",
+            "bay": "",
+            "arrivalTime": "2019-03-25T09:37:00Z",
+            "arrivalTimeEstimated": "2019-03-25T09:37:00Z",
+            "departureTime": "2019-03-25T09:37:00Z",
+            "departureTimeEstimated": "2019-03-25T09:37:00Z"
+          },
+          {
+            "position": 9,
+            "ref": "de:08111:6119:1:2",
+            "name": "Olgaeck",
+            "bay": "",
+            "arrivalTime": "2019-03-25T09:39:00Z",
+            "arrivalTimeEstimated": "2019-03-25T09:39:00Z",
+            "departureTime": "2019-03-25T09:39:00Z",
+            "departureTimeEstimated": "2019-03-25T09:39:00Z"
+          },
+          {
+            "position": 10,
+            "ref": "de:08111:6075:4:8",
+            "name": "Charlottenplatz",
+            "bay": "Gleis 4",
+            "arrivalTime": "2019-03-25T09:40:00Z",
+            "arrivalTimeEstimated": "2019-03-25T09:40:00Z",
+            "departureTime": "2019-03-25T09:41:00Z",
+            "departureTimeEstimated": "2019-03-25T09:41:00Z"
+          },
+          {
+            "position": 11,
+            "ref": "de:08111:6022:1:2",
+            "name": "Schlossplatz",
+            "bay": "",
+            "arrivalTime": "2019-03-25T09:41:00Z",
+            "arrivalTimeEstimated": "2019-03-25T09:41:00Z",
+            "departureTime": "2019-03-25T09:42:00Z",
+            "departureTimeEstimated": "2019-03-25T09:42:00Z"
+          }
+        ]
+      }
+    ]
+  },
+  "recordingData": [
+    {
+      "time": 1553505338000,
+      "latitude": 48.05113192,
+      "longitude": 8.20988006,
+      "altitude": 846,
+      "accuracy": 12
+    },
+    {
+      "time": 1553505341000,
+      "latitude": 48.05112896,
+      "longitude": 8.20988355,
+      "altitude": 848,
+      "accuracy": 12
+    },
+    {
+      "time": 1553505344000,
+      "latitude": 48.05112935,
+      "longitude": 8.20988291,
+      "altitude": 849,
+      "accuracy": 13
+    },
+    {
+      "time": 1553505347000,
+      "latitude": 48.05112914,
+      "longitude": 8.20988325,
+      "altitude": 849,
+      "accuracy": 18
+    }
+  ],
+  "answers": [
+    {
+      "capacity": "Mittel (Die meisten Sitzplätze belegt)",
+      "cleanness": "In Ordnung",
+      "delay": "2 Minuten",
+      "interchangeToNextTrip": "1"
+    },
+    {
+      "capacity": "Leer (Maximal 5 Personen)",
+      "cleanness": "In Ordnung",
+      "delay": "2 Minuten"
+    }
+  ]
+}
