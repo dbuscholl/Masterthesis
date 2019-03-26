@@ -6,6 +6,7 @@ import entities.network.*;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
 import utilities.Chronometer;
+import utilities.MathToolbox;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -22,13 +23,14 @@ public class UserRecordingImporter {
         chronometer.addNow();
         logger.info("Done parsing data in " + chronometer.getLastDifferece() + "ms!");
 
-        // TODO: REACTIVATE
-        // importAnswers(userRecordingData);
+        importAnswers(userRecordingData);
 
         chronometer.addNow();
         logger.info("Done adding answers in " + chronometer.getLastDifferece() + "ms!");
 
         importLocationData(userRecordingData);
+        chronometer.addNow();
+        logger.info("Done adding recording data in " + chronometer.getLastDifferece() + "ms!");
     }
 
     private static void importAnswers(UserRecordingData data) {
@@ -94,7 +96,6 @@ public class UserRecordingImporter {
             GTFS.addStopSequencesForConnection(data.getConnection());
             findNearestStations(data);
             addRecordingToDatabase(data.getConnection());
-            logger.info("Done getting locations");
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -121,7 +122,7 @@ public class UserRecordingImporter {
                     continue;
                 }
 
-                currentDistance = meterDistanceBetween((float) userLat, (float) userLon, (float) stopLat, (float) stopLon);
+                currentDistance = MathToolbox.meterDistanceBetween((float) userLat, (float) userLon, (float) stopLat, (float) stopLon);
 
                 if (currentDistance < closestDistance) {
                     closestStopPoint = stop;
@@ -163,21 +164,5 @@ public class UserRecordingImporter {
         }
 
         return stops;
-    }
-
-    public static float meterDistanceBetween(float lat1, float lng1, float lat2, float lng2) {
-        double earthRadius = 6371000; //meters
-
-        double dLat = Math.toRadians(lat2 - lat1);
-        double dLng = Math.toRadians(lng2 - lng1);
-
-        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
-                        Math.sin(dLng / 2) * Math.sin(dLng / 2);
-
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        float dist = (float) (earthRadius * c);
-
-        return dist;
     }
 }
