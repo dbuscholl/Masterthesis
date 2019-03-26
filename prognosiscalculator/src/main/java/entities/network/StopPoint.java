@@ -1,9 +1,10 @@
 package entities.network;
 
+import database.SQLFormatTools;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class StopPoint  {
+public class StopPoint {
     private int position;
     private String ref;
     private String name;
@@ -12,6 +13,11 @@ public class StopPoint  {
     private String arrivalTimeEstimated;
     private String departureTime;
     private String departureTimeEstimated;
+    private double latitude;
+    private double longitude;
+    private int minDistance;
+    private double delay;
+    private int stopSequence = -1;
 
     public StopPoint() {
     }
@@ -45,16 +51,16 @@ public class StopPoint  {
     public JSONObject toJSON() {
         JSONObject stopPoint = new JSONObject();
         try {
-            stopPoint.put("position",position);
-            stopPoint.put("ref",ref==null?"":ref);
-            stopPoint.put("name",name==null?"":name);
-            stopPoint.put("bay",bay==null?"":bay);
-            stopPoint.put("arrivalTime",arrivalTime==null?"":arrivalTime);
-            stopPoint.put("arrivalTimeEstimated",arrivalTimeEstimated==null?"":arrivalTimeEstimated);
-            stopPoint.put("departureTime",departureTime==null?"":departureTime);
-            stopPoint.put("departureTimeEstimated",departureTimeEstimated==null?"":departureTimeEstimated);
+            stopPoint.put("position", position);
+            stopPoint.put("ref", ref == null ? "" : ref);
+            stopPoint.put("name", name == null ? "" : name);
+            stopPoint.put("bay", bay == null ? "" : bay);
+            stopPoint.put("arrivalTime", arrivalTime == null ? "" : arrivalTime);
+            stopPoint.put("arrivalTimeEstimated", arrivalTimeEstimated == null ? "" : arrivalTimeEstimated);
+            stopPoint.put("departureTime", departureTime == null ? "" : departureTime);
+            stopPoint.put("departureTimeEstimated", departureTimeEstimated == null ? "" : departureTimeEstimated);
             return stopPoint;
-        }catch (JSONException e) {
+        } catch (JSONException e) {
             return null;
         }
     }
@@ -63,11 +69,15 @@ public class StopPoint  {
     public String toString() {
         JSONObject json = toJSON();
 
-        if(json==null) {
+        if (json == null) {
             return "null";
         } else {
             return json.toString();
         }
+    }
+
+    public boolean hasCalculatedDelay() {
+        return delay != 0;
     }
 
     public int getPosition() {
@@ -132,5 +142,58 @@ public class StopPoint  {
 
     public void setDepartureTimeEstimated(String departureTimeEstimated) {
         this.departureTimeEstimated = departureTimeEstimated;
+    }
+
+    public double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(double latitude) {
+        this.latitude = latitude;
+    }
+
+    public double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(double longitude) {
+        this.longitude = longitude;
+    }
+
+    public int getMinDistance() {
+        return minDistance;
+    }
+
+    public void setMinDistance(int minDistance) {
+        this.minDistance = minDistance;
+    }
+
+    public double getDelay() {
+        return delay;
+    }
+
+    public void setDelay(long locationTime) {
+        long stopTime;
+        if (departureTime != null) {
+            stopTime = SQLFormatTools.parseTriasTime(departureTime).getTime();
+        } else if (arrivalTime != null) {
+            stopTime = SQLFormatTools.parseTriasTime(arrivalTime).getTime();
+        } else {
+            throw new NullPointerException("Arrival Time and Departure Time are both not set!");
+        }
+
+        this.delay = ((double) locationTime - stopTime) / 1000;
+    }
+
+    public void setDelay(double delay) {
+        this.delay = delay;
+    }
+
+    public int getStopSequence() {
+        return stopSequence;
+    }
+
+    public void setStopSequence(int stopSequence) {
+        this.stopSequence = stopSequence;
     }
 }

@@ -2,20 +2,18 @@ package database.procedures;
 
 import database.GTFS;
 import database.UserData;
-import entities.network.Answer;
-import entities.network.Connection;
-import entities.network.Trip;
-import entities.network.UserRecordingData;
+import entities.network.*;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
 import utilities.Chronometer;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 public class UserRecordingImporter {
     private static Logger logger = Logger.getLogger(UserRecordingData.class);
 
-    private static void doWork(JSONObject json) {
+    public static void doWork(JSONObject json) {
         Chronometer chronometer = new Chronometer();
         chronometer.addNow();
 
@@ -24,10 +22,13 @@ public class UserRecordingImporter {
         chronometer.addNow();
         logger.info("Done parsing data in " + chronometer.getLastDifferece() + "ms!");
 
-        importAnswers(userRecordingData);
+        // TODO: REACTIVATE
+        // importAnswers(userRecordingData);
 
         chronometer.addNow();
         logger.info("Done adding answers in " + chronometer.getLastDifferece() + "ms!");
+
+        importLocationData(userRecordingData);
     }
 
     private static void importAnswers(UserRecordingData data) {
@@ -52,11 +53,131 @@ public class UserRecordingImporter {
 
     private static void addAnswersToDatabase(UserRecordingData data) throws SQLException {
         for (int i = 0; i < data.getAnswers().size(); i++) {
-            if (i < data.getConnection().getLegs().size()) {
-                String gtfsTripId = data.getConnection().getLegs().get(i).getGTFSTripId();
+            ArrayList<Trip> legs = data.getConnection().getLegs();
+
+            if (i < legs.size()) {
+                String gtfsTripId = legs.get(i).getGTFSTripId();
                 Answer answer = data.getAnswers().get(i);
-                UserData.addAnswer(gtfsTripId, answer);
+                String nextTripId = i + 1 >= legs.size() ? null : legs.get(i + 1).getGTFSTripId();
+
+                UserData.addAnswer(gtfsTripId, answer, nextTripId);
             }
         }
+    }
+
+    private static void addRecordingToDatabase(Connection c) throws SQLException {
+        for (Trip t : c.getLegs()) {
+            String tripId = t.getGTFSTripId();
+
+            if (t.getBoarding().hasCalculatedDelay()) {
+                UserData.addRecordingData(tripId, t.getBoarding());
+            }
+
+            for (StopPoint s : t.getIntermediates()) {
+                if (s.hasCalculatedDelay()) {
+                    UserData.addRecordingData(tripId, s);
+                }
+            }
+
+            if (t.getAlighting().hasCalculatedDelay()) {
+                UserData.addRecordingData(tripId, t.getAlighting());
+            }
+        }
+    }
+
+    private static void importLocationData(UserRecordingData data) {
+        ArrayList<Trip> legs = data.getConnection().getLegs();
+        ArrayList<StopPoint> stops = extractStopsFromConnection(legs);
+
+        try {
+            GTFS.getLocationDataForStopList(stops);
+            GTFS.addStopSequencesForConnection(data.getConnection());
+            findNearestStations(data);
+            addRecordingToDatabase(data.getConnection());
+            logger.info("Done getting locations");
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static ArrayList<StopPoint> findNearestStations(UserRecordingData data) {
+        ArrayList<CustomLocation> locations = data.getLocations();
+        ArrayList<StopPoint> stops = extractStopsFromConnection(data.getConnection());
+        ArrayList<StopPoint> stopsWithUpdatedData = new ArrayList<>();
+
+        for (CustomLocation l : locations) {
+            StopPoint closestStopPoint = null;
+            float closestDistance = Float.MAX_VALUE;
+            double userLat = l.getLatitude();
+            double userLon = l.getLongitude();
+            float currentDistance = Float.MAX_VALUE;
+
+            for (StopPoint stop : stops) {
+                double stopLat = stop.getLatitude();
+                double stopLon = stop.getLongitude();
+
+                if (stopLat <= 0 || stopLon <= 0) {
+                    continue;
+                }
+
+                currentDistance = meterDistanceBetween((float) userLat, (float) userLon, (float) stopLat, (float) stopLon);
+
+                if (currentDistance < closestDistance) {
+                    closestStopPoint = stop;
+                    closestDistance = currentDistance;
+                }
+            }
+
+            if (closestStopPoint != null) {
+                if (!isAlighting(data, closestStopPoint)) {
+                    closestStopPoint.setDelay(l.getTime());
+                }
+                closestStopPoint.setMinDistance((int) currentDistance);
+                stopsWithUpdatedData.add(closestStopPoint);
+            }
+        }
+        return stopsWithUpdatedData;
+    }
+
+    private static boolean isAlighting(UserRecordingData data, StopPoint closestStopPoint) {
+        for (Trip t : data.getConnection().getLegs()) {
+            if (t.getAlighting() == closestStopPoint) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static ArrayList<StopPoint> extractStopsFromConnection(Connection c) {
+        return extractStopsFromConnection(c.getLegs());
+    }
+
+    private static ArrayList<StopPoint> extractStopsFromConnection(ArrayList<Trip> legs) {
+        ArrayList<StopPoint> stops = new ArrayList<>();
+
+        for (Trip t : legs) {
+            stops.add(t.getBoarding());
+            stops.addAll(t.getIntermediates());
+            stops.add(t.getAlighting());
+        }
+
+        return stops;
+    }
+
+    public static float meterDistanceBetween(float lat1, float lng1, float lat2, float lng2) {
+        double earthRadius = 6371000; //meters
+
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLng = Math.toRadians(lng2 - lng1);
+
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                        Math.sin(dLng / 2) * Math.sin(dLng / 2);
+
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        float dist = (float) (earthRadius * c);
+
+        return dist;
     }
 }

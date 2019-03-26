@@ -1,5 +1,6 @@
 package servlets;
 
+import database.procedures.UserRecordingImporter;
 import org.apache.log4j.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -26,6 +27,8 @@ public class UserRecordingServlet extends HttpServlet {
         if(jsonObject==null) {
             response.getWriter().println(new ErrorResponse("Invalid JSON as POST Data").toString());
             response.getWriter().close();
+        } else {
+            UserRecordingImporter.doWork(jsonObject);
         }
 
 

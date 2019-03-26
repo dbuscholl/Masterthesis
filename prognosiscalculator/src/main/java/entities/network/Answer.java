@@ -48,24 +48,21 @@ public class Answer {
     }
 
     private int getValue(String item) {
-        switch (item) {
-            case "Leer (Maximal 5 Personen)":
-                return 0;
-            case "Mittel (Die meisten Sitzplätze belegt)":
-                return 1;
-            case "Voll (Viele stehende Menschen)":
-                return 2;
+        if(item.contains("Leer"))
+            return 0;
+        if(item.contains("Mittel"))
+            return 1;
+        if(item.contains("Voll"))
+            return 2;
 
-            case "Besonders sauber":
-                return 0;
-            case "In Ordnung":
-                return 1;
-            case "Schmutzig":
-                return 2;
+        if(item.equals("Besonders sauber"))
+            return 0;
+        if(item.equals("In Ordnung"))
+            return 1;
+        if(item.equals("Schmutzig"))
+            return 2;
 
-            default:
-                return -1;
-        }
+        return -1;
     }
 
     public int getCapacity() {

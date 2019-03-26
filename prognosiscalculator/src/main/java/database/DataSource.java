@@ -24,6 +24,7 @@ public class DataSource {
             Settings s = new Settings();
             if (ds == null) {
                 ds = new BasicDataSource();
+                ds.setDriverClassName("com.mysql.jdbc.Driver");
                 ds.setUrl("jdbc:mysql://" + s.getHost() + ":" + s.getPort() + "/" + s.getDatabase());
                 ds.setUsername(s.getUsername());
                 ds.setPassword(s.getPassword());

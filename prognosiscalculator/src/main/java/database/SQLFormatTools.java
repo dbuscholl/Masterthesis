@@ -108,7 +108,7 @@ public class SQLFormatTools {
      * @return Date as Date Objects
      * @throws ParseException
      */
-    private static Date parseTriasTime(String time) {
+    public static Date parseTriasTime(String time) {
         try {
             String[] ts1 = time.substring(0, time.length() - 1).split("T");
             sqlDatetimeFormat.setTimeZone(TimeZone.getTimeZone("UTC"));

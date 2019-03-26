@@ -8,9 +8,18 @@
         <servlet-name>TesetServlet</servlet-name>
         <servlet-class>TesetServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>UserDataImporter</servlet-name>
+        <servlet-class>servlets.UserRecordingServlet</servlet-class>
+    </servlet>
 
     <servlet-mapping>
         <servlet-name>TesetServlet</servlet-name>
         <url-pattern>/test/</url-pattern>
     </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>UserDataImporter</servlet-name>
+        <url-pattern>/import</url-pattern>
+    </servlet-mapping>
+
 </web-app>

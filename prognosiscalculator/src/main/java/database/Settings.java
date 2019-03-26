@@ -15,7 +15,7 @@ public class Settings {
 
     public Settings() throws IOException {
         Properties prop = new Properties();
-        InputStream is = getClass().getResource("config.properties").openStream();
+        InputStream is = getClass().getResource("/config.properties").openStream();
         prop.load(is);
 
         host = prop.getProperty("dbhost");
