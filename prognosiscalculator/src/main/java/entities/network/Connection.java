@@ -27,13 +27,13 @@ public class Connection {
             id = json.has("id") ? json.getString("id") : null;
             startTime = json.getString("startTime");
             endTime = json.getString("endTime");
-            if(!json.has("legs") || json.getJSONArray("legs").length() == 0) {
+            if (!json.has("legs") || json.getJSONArray("legs").length() == 0) {
                 legs = new ArrayList<>();
             } else {
                 JSONArray legs = json.getJSONArray("legs");
                 this.legs = new ArrayList<>();
 
-                for(int i = 0; i < legs.length(); i++) {
+                for (int i = 0; i < legs.length(); i++) {
                     JSONObject leg = legs.getJSONObject(i);
                     Trip t = new Trip(leg);
                     this.legs.add(t);
@@ -150,5 +150,33 @@ public class Connection {
         }
 
         return true;
+    }
+
+    public ArrayList<StopPoint> extractAllStops() {
+        ArrayList<StopPoint> stops = new ArrayList<>();
+
+        for (Trip t : legs) {
+            stops.add(t.getBoarding());
+            stops.addAll(t.getIntermediates());
+            stops.add(t.getAlighting());
+        }
+
+        return stops;
+    }
+
+    public boolean isAnAlighting(StopPoint s) {
+        for (Trip t : legs) {
+            StopPoint alighting = t.getAlighting();
+            if (alighting == s) {
+                return true;
+            }
+
+            boolean sameName = alighting.getName().equals(s.getName());
+            boolean sameArrivalTime = alighting.getArrivalTime().equals(s.getArrivalTime());
+            if (sameName && sameArrivalTime){
+                return true;
+            }
+        }
+        return false;
     }
 }

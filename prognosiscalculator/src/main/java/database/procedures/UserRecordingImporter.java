@@ -88,8 +88,7 @@ public class UserRecordingImporter {
     }
 
     private static void importLocationData(UserRecordingData data) {
-        ArrayList<Trip> legs = data.getConnection().getLegs();
-        ArrayList<StopPoint> stops = extractStopsFromConnection(legs);
+        ArrayList<StopPoint> stops = data.getConnection().extractAllStops();
 
         try {
             GTFS.getLocationDataForStopList(stops);
@@ -104,7 +103,7 @@ public class UserRecordingImporter {
 
     private static ArrayList<StopPoint> findNearestStations(UserRecordingData data) {
         ArrayList<CustomLocation> locations = data.getLocations();
-        ArrayList<StopPoint> stops = extractStopsFromConnection(data.getConnection());
+        ArrayList<StopPoint> stops = data.getConnection().extractAllStops();
         ArrayList<StopPoint> stopsWithUpdatedData = new ArrayList<>();
 
         for (CustomLocation l : locations) {
@@ -131,7 +130,7 @@ public class UserRecordingImporter {
             }
 
             if (closestStopPoint != null) {
-                if (!isAlighting(data, closestStopPoint)) {
+                if (!data.getConnection().isAnAlighting(closestStopPoint)) {
                     closestStopPoint.setDelay(l.getTime());
                 }
                 closestStopPoint.setMinDistance((int) currentDistance);
@@ -139,30 +138,5 @@ public class UserRecordingImporter {
             }
         }
         return stopsWithUpdatedData;
-    }
-
-    private static boolean isAlighting(UserRecordingData data, StopPoint closestStopPoint) {
-        for (Trip t : data.getConnection().getLegs()) {
-            if (t.getAlighting() == closestStopPoint) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static ArrayList<StopPoint> extractStopsFromConnection(Connection c) {
-        return extractStopsFromConnection(c.getLegs());
-    }
-
-    private static ArrayList<StopPoint> extractStopsFromConnection(ArrayList<Trip> legs) {
-        ArrayList<StopPoint> stops = new ArrayList<>();
-
-        for (Trip t : legs) {
-            stops.add(t.getBoarding());
-            stops.addAll(t.getIntermediates());
-            stops.add(t.getAlighting());
-        }
-
-        return stops;
     }
 }
