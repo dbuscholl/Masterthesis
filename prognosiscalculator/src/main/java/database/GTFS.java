@@ -1,8 +1,8 @@
 package database;
 
-import entities.gtfs.IgnoreService;
-import entities.network.StopPoint;
-import entities.network.Trip;
+import common.gtfs.IgnoreService;
+import common.network.StopPoint;
+import common.network.Trip;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -101,7 +101,7 @@ public class GTFS {
         return stops;
     }
 
-    public static void addStopSequencesForConnection(entities.network.Connection connection) throws SQLException {
+    public static void addStopSequencesForConnection(common.network.Connection connection) throws SQLException {
         for (Trip t : connection.getLegs()) {
             String tripId = t.getGTFSTripId();
             if (tripId == null) {

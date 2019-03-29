@@ -1,8 +1,8 @@
 package database.procedures;
 
 import database.GTFS;
-import database.UserData;
-import entities.network.*;
+import database.UserDataDatabase;
+import common.network.*;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
 import utilities.Chronometer;
@@ -62,7 +62,7 @@ public class UserRecordingImporter {
                 Answer answer = data.getAnswers().get(i);
                 String nextTripId = i + 1 >= legs.size() ? null : legs.get(i + 1).getGTFSTripId();
 
-                UserData.addAnswer(gtfsTripId, answer, nextTripId);
+                UserDataDatabase.addAnswer(gtfsTripId, answer, nextTripId);
             }
         }
     }
@@ -72,17 +72,17 @@ public class UserRecordingImporter {
             String tripId = t.getGTFSTripId();
 
             if (t.getBoarding().hasCalculatedDelay()) {
-                UserData.addRecordingData(tripId, t.getBoarding());
+                UserDataDatabase.addRecordingData(tripId, t.getBoarding());
             }
 
             for (StopPoint s : t.getIntermediates()) {
                 if (s.hasCalculatedDelay()) {
-                    UserData.addRecordingData(tripId, s);
+                    UserDataDatabase.addRecordingData(tripId, s);
                 }
             }
 
             if (t.getAlighting().hasCalculatedDelay()) {
-                UserData.addRecordingData(tripId, t.getAlighting());
+                UserDataDatabase.addRecordingData(tripId, t.getAlighting());
             }
         }
     }

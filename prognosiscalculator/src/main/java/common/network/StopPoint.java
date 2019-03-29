@@ -1,4 +1,4 @@
-package entities.network;
+package common.network;
 
 import database.SQLFormatTools;
 import org.json.JSONException;

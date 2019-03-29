@@ -1,4 +1,4 @@
-package entities.network;
+package common.network;
 
 import org.json.JSONException;
 import org.json.JSONObject;

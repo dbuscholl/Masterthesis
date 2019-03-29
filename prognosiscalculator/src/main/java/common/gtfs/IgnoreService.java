@@ -1,4 +1,4 @@
-package entities.gtfs;
+package common.gtfs;
 
 /**
  * This class is used to determine wheter a trip is scheduled for a specific date or not. This class is usually provided

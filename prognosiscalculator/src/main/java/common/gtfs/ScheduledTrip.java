@@ -1,4 +1,4 @@
-package entities.gtfs;
+package common.gtfs;
 
 /**
  * Contains a lot of information on a trip which is scheduled

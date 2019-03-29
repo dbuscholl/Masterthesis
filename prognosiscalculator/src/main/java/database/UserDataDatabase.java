@@ -1,13 +1,13 @@
 package database;
 
-import entities.network.Answer;
-import entities.network.StopPoint;
+import common.network.Answer;
+import common.network.StopPoint;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-public class UserData {
+public class UserDataDatabase {
     public static void addAnswer(String tripId, Answer answer, String nextTripId) throws SQLException {
         Connection c = DataSource.getConnection();
         PreparedStatement s = c.prepareStatement("INSERT INTO `user_answers`(`trip_id`, `capacity`, `cleanness`, `delay`, `successfullyInterchanged`, `interchangeToTripId`) VALUES (?,?,?,?,?,?)");

@@ -1,4 +1,4 @@
-package entities.gtfs;
+package common.gtfs;
 
 import org.apache.commons.text.similarity.JaroWinklerDistance;
 import org.apache.log4j.Logger;

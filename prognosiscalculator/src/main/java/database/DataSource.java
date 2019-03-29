@@ -16,7 +16,7 @@ public class DataSource {
     }
 
     /**
-     * @return a connection with which we can prepare statements on the database if one is free.
+     * @return a connection with which we can verifyIds statements on the database if one is free.
      * @throws SQLException
      */
     public static Connection getConnection() throws SQLException {
