@@ -1,10 +1,20 @@
 package common.prognosis;
 
+import common.network.Connection;
+
 public abstract class PrognosisFactor extends Thread {
+    protected Connection connection;
     protected int weight = 1;
     protected PrognosisFactorType type = null;
+    protected PronosisFactorCalculationModel calculationModel = PronosisFactorCalculationModel.NEUTRAL;
     private CalculationCompletedEvent calculationCompletedEvent;
     private boolean doneExecuting = false;
+    private PrognosisCalculationResult result = null;
+
+    public PrognosisFactor(Connection connection) {
+        super();
+        this.connection = connection;
+    }
 
     @Override
     public void run() {
@@ -21,9 +31,16 @@ public abstract class PrognosisFactor extends Thread {
         GOOGLE_CURRENT_TRAFFIC;
     }
 
+    public enum PronosisFactorCalculationModel {
+        OPTIMISTIC,
+        NEUTRAL,
+        PESSIMISTIC;
+    }
 
-    protected void notifyExecutionFinished(int result) {
+
+    protected void notifyExecutionFinished(PrognosisCalculationResult result) {
         doneExecuting = true;
+        this.result = result;
         if(calculationCompletedEvent != null) {
             calculationCompletedEvent.onCalculationComplete(result);
 
@@ -40,6 +57,14 @@ public abstract class PrognosisFactor extends Thread {
      */
     public void setCalculationCompletedEvent(CalculationCompletedEvent calculationCompletedEvent) {
         this.calculationCompletedEvent = calculationCompletedEvent;
+    }
+
+    public PrognosisCalculationResult getResult() {
+        return result;
+    }
+
+    public PronosisFactorCalculationModel getCalculationModel() {
+        return calculationModel;
     }
 
     public PrognosisFactorType getType() {

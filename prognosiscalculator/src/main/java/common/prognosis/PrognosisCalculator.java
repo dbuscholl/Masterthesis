@@ -31,22 +31,20 @@ public class PrognosisCalculator extends Thread implements CalculationCompletedE
     public void execute() throws SQLException, InterruptedException {
         verifyIds();
 
-        TriasSamedayFactor tsf = new TriasSamedayFactor();
+        TriasSamedayFactor tsf = new TriasSamedayFactor(connection);
         factory.add(tsf);
         tsf.setCalculationCompletedEvent(this);
 
-        Thread.sleep(1000);
-
-        onCalculationComplete(1);
+        onCalculationComplete(null);
     }
 
     @Override
-    public void onCalculationComplete(int result) {
-        /*for(PrognosisFactor f : factory) {
+    public void onCalculationComplete(PrognosisCalculationResult result) {
+        for(PrognosisFactor f : factory) {
             if(!f.isDoneExecuting()) {
                 return;
             }
-        }*/
+        }
         if(calculationCompletedEvent!=null) {
             calculationCompletedEvent.onCalculationComplete(result);
         }
@@ -64,5 +62,9 @@ public class PrognosisCalculator extends Thread implements CalculationCompletedE
                 PrognosisDatabase.insertBlank(tripId);
             }
         }
+    }
+
+    public ArrayList<PrognosisFactor> getFactory() {
+        return factory;
     }
 }
