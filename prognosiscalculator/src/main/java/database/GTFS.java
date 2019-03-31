@@ -3,6 +3,7 @@ package database;
 import common.gtfs.Delay;
 import common.gtfs.IgnoreService;
 import common.gtfs.TripStop;
+import common.network.Service;
 import common.network.StopPoint;
 import common.network.Trip;
 
@@ -63,7 +64,7 @@ public class GTFS {
     public static ArrayList<String> getGTFSTripIds(StopPoint stop, boolean arrival) throws SQLException {
         Connection c = DataSource.getConnection();
         String time, date, column;
-        if(arrival) {
+        if (arrival) {
             time = SQLFormatTools.makeTimeForGtfs(stop.getArrivalTime());
             date = SQLFormatTools.makeDateForGtfs(stop.getArrivalTime());
             column = "arrival_time";
@@ -75,7 +76,6 @@ public class GTFS {
 
         ArrayList<IgnoreService> ignoringServices = getIgnoringServiceIds(date);
 
-
         PreparedStatement s = c.prepareStatement("SELECT trips.service_id, trips.trip_id, arrival_time, departure_time, stop_sequence, stop_name, trip_headsign, route_short_name FROM vvs.stop_times LEFT JOIN stops ON stop_times.stop_id = stops.stop_id LEFT JOIN trips ON trips.trip_id = stop_times.trip_id LEFT JOIN routes ON routes.route_id = trips.route_id WHERE stop_name = ? AND " + column + " = ?");
         s.setString(1, stop.getName());
         s.setString(2, time);
@@ -86,6 +86,40 @@ public class GTFS {
         s.close();
         c.close();
 
+        return tripIds;
+    }
+
+    public static ArrayList<String> getGTFSTripIds(StopPoint stop, Service service, boolean everything) throws SQLException {
+        Connection c = DataSource.getConnection();
+        ArrayList<String> tripIds = new ArrayList<>();
+        ArrayList<IgnoreService> ignoringServices = new ArrayList<>();
+
+        if (!everything) {
+            String date = SQLFormatTools.makeDateForGtfs(stop.getDepartureTime());
+            ignoringServices = getIgnoringServiceIds(date);
+        }
+
+        String stopname = stop.getName();
+        String linename = service.getLineName();
+        String headsign = service.getDesitnation();
+
+        PreparedStatement s = c.prepareStatement("SELECT trips.service_id, trips.trip_id FROM vvs.stop_times LEFT JOIN stops ON stop_times.stop_id = stops.stop_id LEFT JOIN trips ON trips.trip_id = stop_times.trip_id LEFT JOIN routes ON routes.route_id = trips.route_id WHERE stop_name = ? AND route_short_name = ? AND trip_headsign = ?");
+        s.setString(1, stopname);
+        s.setString(2, linename);
+        s.setString(3, headsign);
+        ResultSet rs = s.executeQuery();
+
+        if (!everything) {
+            tripIds = getTripIds(ignoringServices, rs);
+        } else {
+            while(rs.next()) {
+                tripIds.add(rs.getString("trip_id"));
+            }
+        }
+
+        rs.close();
+        s.close();
+        c.close();
         return tripIds;
     }
 
@@ -186,20 +220,20 @@ public class GTFS {
         ArrayList<Delay> delays = new ArrayList<>();
 
         StringBuilder builder = new StringBuilder();
-        for(String id : ids) {
+        for (String id : ids) {
             builder.append("tripId = ? OR");
         }
-        builder.delete(builder.length()-3, builder.length());
+        builder.delete(builder.length() - 3, builder.length());
 
         Connection c = DataSource.getConnection();
         PreparedStatement s = c.prepareStatement("SELECT * FROM vvs.delays WHERE " + builder.toString());
-        for(int i = 1; i <= ids.size(); i++) {
-            String id = ids.get(i-1);
+        for (int i = 1; i <= ids.size(); i++) {
+            String id = ids.get(i - 1);
             s.setString(i, id);
         }
         ResultSet rs = s.executeQuery();
 
-        while(rs.next()) {
+        while (rs.next()) {
             Delay d = new Delay();
             d.setDelayId(rs.getInt("id"));
             d.setTripId(rs.getString("tripId"));
@@ -230,7 +264,7 @@ public class GTFS {
         s.setString(1, tripId);
         ResultSet rs = s.executeQuery();
 
-        while(rs.next()) {
+        while (rs.next()) {
             TripStop tripStop = new TripStop();
             tripStop.setArrival_time(rs.getString("arrival_time"));
             tripStop.setDeparture_time(rs.getString("departure_time"));
@@ -300,5 +334,42 @@ public class GTFS {
         }
 
         return s.deleteCharAt(s.length() - 1).toString();
+    }
+
+    public static void removeTripIdsOfWrongDirection(ArrayList<String> boardingIds, Trip t) throws SQLException {
+        ArrayList<String> toRemove = new ArrayList<>();
+
+        for (String id : boardingIds) {
+            // get full trip so we can check with the next stop
+            ArrayList<TripStop> trip = GTFS.getFullTrip(id);
+
+            // find boarding stop and check if the next station after boarding matches the one got by tripId
+            // if not matching then it travels in other direction so it has to be removed
+            for (int i = 0; i < trip.size(); i++) {
+                TripStop ts = trip.get(i);
+
+                // when reached boarding but not reached end of stops in trip
+                if (ts.getStop_name().equals(t.getBoarding().getName()) && i < trip.size() - 1) {
+                    TripStop next = trip.get(i + 1);
+                    StopPoint check;
+
+                    // we might have trips without interchange
+                    if (t.getIntermediates().size() > 0) {
+                        check = t.getIntermediates().get(0);
+                    } else {
+                        check = t.getAlighting();
+                    }
+
+                    // if name of the next stop doesn't match the one from the connection
+                    if (!check.getName().equals(next.getStop_name())) {
+                        toRemove.add(id);
+                    }
+                }
+            }
+        }
+
+        for (String item : toRemove) {
+            boardingIds.remove(item);
+        }
     }
 }

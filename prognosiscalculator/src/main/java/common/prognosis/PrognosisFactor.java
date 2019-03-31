@@ -1,15 +1,17 @@
 package common.prognosis;
 
 import common.network.Connection;
+import utilities.Chronometer;
 
 public abstract class PrognosisFactor extends Thread {
     protected Connection connection;
-    protected int weight = 1;
+    protected double weight = 1;
     protected PrognosisFactorType type = null;
     protected PronosisFactorCalculationModel calculationModel = PronosisFactorCalculationModel.NEUTRAL;
     private CalculationCompletedEvent calculationCompletedEvent;
     private boolean doneExecuting = false;
     private PrognosisCalculationResult result = null;
+    private long executionTime = 0;
 
     public PrognosisFactor(Connection connection) {
         super();
@@ -18,7 +20,11 @@ public abstract class PrognosisFactor extends Thread {
 
     @Override
     public void run() {
+        Chronometer chronometer = new Chronometer();
+        chronometer.addNow();
         execute();
+        chronometer.addNow();
+        executionTime = chronometer.getLastDifferece();
     }
 
     protected abstract void execute();
@@ -26,6 +32,7 @@ public abstract class PrognosisFactor extends Thread {
     public enum PrognosisFactorType {
         TRIASRECORDING_SAMEDAY,
         TRIASRECORDING_EVERYDAY,
+        TRIASRECORDING_ALLDAY,
         USERRECORDING_SAMEDAY,
         USERRECORDING_EVERYDAY,
         GOOGLE_CURRENT_TRAFFIC;
@@ -38,12 +45,11 @@ public abstract class PrognosisFactor extends Thread {
     }
 
 
-    protected void notifyExecutionFinished(PrognosisCalculationResult result) {
+    protected void notifyExecutionFinished(PrognosisFactor factor) {
         doneExecuting = true;
         this.result = result;
         if(calculationCompletedEvent != null) {
-            calculationCompletedEvent.onCalculationComplete(result);
-
+            calculationCompletedEvent.onCalculationComplete(factor);
         }
     }
 
@@ -75,11 +81,15 @@ public abstract class PrognosisFactor extends Thread {
         this.type = type;
     }
 
-    public int getWeight() {
+    public double getWeight() {
         return weight;
     }
 
-    public void setWeight(int weight) {
+    public void setWeight(double weight) {
         this.weight = weight;
+    }
+
+    public long getExecutionTime() {
+        return executionTime;
     }
 }

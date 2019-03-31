@@ -73,7 +73,7 @@ public class PrognosisCalculatorServlet extends HttpServlet implements Calculati
     }
 
     @Override
-    public void onCalculationComplete(PrognosisCalculationResult result) {
+    public void onCalculationComplete(PrognosisFactor factor) {
         lock.lock();
         System.out.println("Singal fired");
         data.signal();

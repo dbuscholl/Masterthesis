@@ -4,11 +4,13 @@ import common.network.Connection;
 import common.network.Trip;
 import database.GTFS;
 import database.PrognosisDatabase;
+import org.apache.log4j.Logger;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 
 public class PrognosisCalculator extends Thread implements CalculationCompletedEvent {
+    private Logger logger = Logger.getLogger(this.getClass().getName());
     private Connection connection;
     private ArrayList<PrognosisFactor> factory = new ArrayList<>();
     private CalculationCompletedEvent calculationCompletedEvent;
@@ -31,22 +33,41 @@ public class PrognosisCalculator extends Thread implements CalculationCompletedE
     public void execute() throws SQLException, InterruptedException {
         verifyIds();
 
-        TriasSamedayFactor tsf = new TriasSamedayFactor(connection);
-        factory.add(tsf);
-        tsf.setCalculationCompletedEvent(this);
+        TriasFactor triasSameday = new TriasFactor(connection);
+        triasSameday.setType(PrognosisFactor.PrognosisFactorType.TRIASRECORDING_SAMEDAY);
+        triasSameday.setWeight(3);
+        triasSameday.setCalculationCompletedEvent(this);
+        factory.add(triasSameday);
+
+        TriasFactor triasEveryday = new TriasFactor(connection);
+        triasEveryday.setType(PrognosisFactor.PrognosisFactorType.TRIASRECORDING_EVERYDAY);
+        triasEveryday.setCalculationCompletedEvent(this);
+        factory.add(triasEveryday);
+
+        TriasFactor triasAllday = new TriasFactor(connection);
+        triasEveryday.setType(PrognosisFactor.PrognosisFactorType.TRIASRECORDING_ALLDAY);
+        triasAllday.setWeight(0.5);
+        triasEveryday.setCalculationCompletedEvent(this);
+        factory.add(triasAllday);
+
+        for (PrognosisFactor f : factory) {
+            f.start();
+        }
 
         onCalculationComplete(null);
     }
 
     @Override
-    public void onCalculationComplete(PrognosisCalculationResult result) {
-        for(PrognosisFactor f : factory) {
-            if(!f.isDoneExecuting()) {
+    public void onCalculationComplete(PrognosisFactor factor) {
+        logger.info(factor.getType().toString() + " has finished execution in " + ((double) factor.getExecutionTime() / 1000) + "s");
+
+        for (PrognosisFactor f : factory) {
+            if (!f.isDoneExecuting()) {
                 return;
             }
         }
-        if(calculationCompletedEvent!=null) {
-            calculationCompletedEvent.onCalculationComplete(result);
+        if (calculationCompletedEvent != null) {
+            calculationCompletedEvent.onCalculationComplete(null);
         }
     }
 
@@ -55,8 +76,8 @@ public class PrognosisCalculator extends Thread implements CalculationCompletedE
     }
 
     public void verifyIds() throws SQLException {
-        for(Trip t : connection.getLegs()) {
-            if(t.getGTFSTripId() == null) {
+        for (Trip t : connection.getLegs()) {
+            if (t.getGTFSTripId() == null) {
                 String tripId = GTFS.getTripId(t);
                 t.setGTFSTripId(tripId);
                 PrognosisDatabase.insertBlank(tripId);

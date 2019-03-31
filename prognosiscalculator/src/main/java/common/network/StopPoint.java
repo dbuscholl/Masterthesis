@@ -1,8 +1,12 @@
 package common.network;
 
+import common.gtfs.TripStop;
 import database.SQLFormatTools;
+import javafx.scene.paint.Stop;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
 
 public class StopPoint {
     private int position;
@@ -78,6 +82,36 @@ public class StopPoint {
 
     public boolean hasCalculatedDelay() {
         return delay != 0;
+    }
+
+    public boolean isMemberOf(Trip t) {
+        if(t.getBoarding().equals(this) || t.getAlighting().equals(this)) {
+            return true;
+        }
+
+        for(StopPoint stop : t.getIntermediates()) {
+            if(stop.equals(this)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if(other == null) return false;
+        if(other == this) return true;
+        if(other instanceof StopPoint) {
+            StopPoint otherStop = (StopPoint) other;
+            return position == otherStop.position &&
+                    name.equals(otherStop.name) &&
+                    arrivalTime.equals(otherStop.arrivalTime) &&
+                    departureTime.equals(otherStop.departureTime) &&
+                    ref.equals(otherStop.ref);
+        }
+
+        return false;
     }
 
     public int getPosition() {
@@ -195,5 +229,14 @@ public class StopPoint {
 
     public void setStopSequence(int stopSequence) {
         this.stopSequence = stopSequence;
+    }
+
+    public int getStopSequenceInGTFSTrip(ArrayList<TripStop> fullTrip) {
+        for (TripStop ts : fullTrip) {
+            if (ts.getStop_name().equals(name)) {
+                return ts.getStop_sequence();
+            }
+        }
+        return -1;
     }
 }

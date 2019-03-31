@@ -1,5 +1,10 @@
 package common.gtfs;
 
+import common.network.StopPoint;
+import common.network.Trip;
+import database.GTFS;
+
+import java.sql.SQLException;
 import java.util.ArrayList;
 
 public class Delay {
@@ -120,6 +125,29 @@ public class Delay {
         for(Delay d : stack) {
             if(d.getDelay() > threshhold) {
                 filteredDelays.add(d);
+            }
+        }
+
+        return filteredDelays;
+    }
+
+    public static ArrayList<Delay> getDelaysForStopPoint(Trip t, StopPoint s, ArrayList<Delay> stack) throws SQLException {
+        ArrayList<Delay> filteredDelays = new ArrayList<>();
+
+        if(! s.isMemberOf(t)) {
+            return filteredDelays;
+        }
+
+        // get stop sequence from GTFS Trip for Delay values
+        ArrayList<TripStop> fullTrip = GTFS.getFullTrip(t.getGTFSTripId());
+        int stopSequence = s.getStopSequenceInGTFSTrip(fullTrip);
+
+        // for every date of the delays list get the delay of the stop sequence
+        ArrayList<String> dateValues = Delay.getDateValues(stack);
+        for (String value : dateValues) {
+            ArrayList<Delay> delaysAtDate = Delay.getDelaysAtDate(value, stack);
+            if (delaysAtDate != null && !delaysAtDate.isEmpty()) {
+                filteredDelays.add(Delay.getDelayForStopSequence(stopSequence, delaysAtDate));
             }
         }
 
