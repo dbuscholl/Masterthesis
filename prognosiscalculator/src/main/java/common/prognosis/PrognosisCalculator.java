@@ -80,7 +80,7 @@ public class PrognosisCalculator extends Thread implements CalculationCompletedE
             if (t.getGTFSTripId() == null) {
                 String tripId = GTFS.getTripId(t);
                 t.setGTFSTripId(tripId);
-                PrognosisDatabase.insertBlank(tripId);
+                PrognosisDatabase.insertBlank(tripId, t.getService().getOperatingDayRef(), t.getService().getJourneyRef());
             }
         }
     }

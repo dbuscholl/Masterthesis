@@ -10,6 +10,6 @@ public class ErrorResponse extends JSONObject {
     public ErrorResponse(String description) {
         super();
         put("Error",true);
-        put("Error Description","");
+        put("Error Description",description);
     }
 }

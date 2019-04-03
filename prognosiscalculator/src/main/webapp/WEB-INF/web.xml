@@ -5,10 +5,6 @@
          version="4.0">
 
     <servlet>
-        <servlet-name>TesetServlet</servlet-name>
-        <servlet-class>TesetServlet</servlet-class>
-    </servlet>
-    <servlet>
         <servlet-name>UserDataImporter</servlet-name>
         <servlet-class>servlets.UserRecordingServlet</servlet-class>
     </servlet>
@@ -16,11 +12,11 @@
         <servlet-name>PrognosisCalculatorServlet</servlet-name>
         <servlet-class>servlets.PrognosisCalculatorServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>InitServlet</servlet-name>
+        <servlet-class>servlets.InitServlet</servlet-class>
+    </servlet>
 
-    <servlet-mapping>
-        <servlet-name>TesetServlet</servlet-name>
-        <url-pattern>/test/</url-pattern>
-    </servlet-mapping>
     <servlet-mapping>
         <servlet-name>UserDataImporter</servlet-name>
         <url-pattern>/import</url-pattern>
@@ -28,6 +24,10 @@
     <servlet-mapping>
         <servlet-name>PrognosisCalculatorServlet</servlet-name>
         <url-pattern>/calculate</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>InitServlet</servlet-name>
+        <url-pattern>/init</url-pattern>
     </servlet-mapping>
 
 </web-app>

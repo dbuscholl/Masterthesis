@@ -10,7 +10,9 @@ import common.prognosis.PrognosisFactor;
 import database.GTFS;
 import database.PrognosisDatabase;
 import org.apache.log4j.Logger;
+import org.json.JSONArray;
 import org.json.JSONObject;
+import utilities.Chronometer;
 import utilities.MathToolbox;
 
 import javax.servlet.ServletException;
@@ -20,8 +22,11 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -31,9 +36,15 @@ public class PrognosisCalculatorServlet extends HttpServlet implements Calculati
     final Lock lock = new ReentrantLock();
     final Condition data = lock.newCondition();
     private Logger logger = Logger.getLogger(getClass().getName());
+    private PrognosisCalculator prognosisCalculator = null;
+    private Connection connection = null;
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        Chronometer chronometer = new Chronometer();
+        chronometer.addNow();
         doGet(request, response);
+        chronometer.addNow();
+        logger.info("Execution done in " + ((double) chronometer.getLastDifferece() /1000) + "s");
     }
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -45,17 +56,22 @@ public class PrognosisCalculatorServlet extends HttpServlet implements Calculati
                 response.getWriter().close();
             } else {
                 UserRecordingData urd = new UserRecordingData(jsonObject);
-                Connection connection = urd.getConnection();
+                connection = urd.getConnection();
 
-                // TODO: check if there either already is a result or a result is being calculated at the moment !!!
+                if(checkAlreadyExisting(response)) {
+                    return;
+                }
 
                 for (Trip t : connection.getLegs()) {
+                    String operatingDay = t.getService().getOperatingDayRef();
+                    String journeyRef = t.getService().getJourneyRef();
+
                     String tripId = GTFS.getTripId(t);
                     t.setGTFSTripId(tripId);
-                    PrognosisDatabase.insertBlank(tripId);
+                    PrognosisDatabase.insertBlank(tripId, operatingDay, journeyRef);
 
                 }
-                PrognosisCalculator prognosisCalculator = new PrognosisCalculator(connection);
+                prognosisCalculator = new PrognosisCalculator(connection);
                 prognosisCalculator.setCalculationCompletedEvent(this);
                 prognosisCalculator.start();
 
@@ -65,50 +81,10 @@ public class PrognosisCalculatorServlet extends HttpServlet implements Calculati
                 lock.unlock();
 
                 // this is executing after signal is fired
-                ArrayList<PrognosisFactor> factory = prognosisCalculator.getFactory();
+                JSONArray output = createOutput(true);
+                PrognosisDatabase.update(connection.getLegs(), output);
 
-                ArrayList<Trip> legs = connection.getLegs();
-                for (int i = 0; i < legs.size(); i++) {
-                    Trip leg = legs.get(i);
-                    int delayBoarding = 0;
-                    int delayAlighting = 0;
-                    ArrayList<Integer> delaysException = new ArrayList<>();
-                    double exceptionPropability = 0;
-
-                    for (PrognosisFactor f : factory) {
-                        ArrayList<PrognosisCalculationResult.Item> items = f.getResult().getItems();
-
-                        if (i < items.size()) {
-                            PrognosisCalculationResult.Item item = items.get(i);
-                            delayBoarding += item.getDelayBoardingRegular() * f.getWeight();
-                            delayAlighting += item.getDelayAlightingRegular() * f.getWeight();
-                            if (item.getDelayException() > 0) {
-                                delaysException.add(item.getDelayException());
-                            }
-                            exceptionPropability += item.getExceptionPropability() * f.getWeight();
-
-                            logger.info("-----------------------------------------------------------------");
-                            logger.info(f.getType() + " for " + leg.getService().getLineName() + ":");
-                            logger.info("Delay at " + leg.getBoarding().getName() + ": " + item.getDelayBoardingRegular());
-                            logger.info("Delay at " + leg.getAlighting().getName() + ": " + item.getDelayAlightingRegular());
-                            logger.info("Delay Exception: " + item.getDelayException());
-                            logger.info("Exception Propability: " + item.getExceptionPropability());
-                        }
-                    }
-
-                    delayAlighting = delayAlighting / factory.size();
-                    delayBoarding = delayBoarding / factory.size();
-                    int delayException = (int) MathToolbox.mean(delaysException);
-                    exceptionPropability = exceptionPropability / factory.size();
-
-                    logger.info("-----------------------------------------------------------------");
-                    logger.info("Total Boarding Delay for " + leg.getService().getLineName() + " at " + leg.getBoarding().getName() + ": " + delayBoarding + "s!");
-                    logger.info("Total Alighting Delay for " + leg.getService().getLineName() + " at " + leg.getAlighting().getName() + ": " + delayAlighting + "s!");
-                    logger.info("Total Exception Delay for " + leg.getService().getLineName() + " at " + leg.getAlighting().getName() + ": " + delayException + "s!");
-                    logger.info("Propability for Exception for " + leg.getService().getLineName() + " at " + leg.getAlighting().getName() + ": " + new DecimalFormat("#.##").format(exceptionPropability) + "%!");
-                }
-
-                System.out.println("lalalala");
+                response.getWriter().print(output.toString());
                 response.getWriter().close();
             }
         } catch (Exception e) {
@@ -117,11 +93,115 @@ public class PrognosisCalculatorServlet extends HttpServlet implements Calculati
         }
     }
 
+    private boolean checkAlreadyExisting(HttpServletResponse response) throws SQLException, IOException {
+        ArrayList<JSONObject> existingJsons = new ArrayList<>();
+        for (Trip t : connection.getLegs()) {
+            String operatingDay = t.getService().getOperatingDayRef();
+            String journeyRef = t.getService().getJourneyRef();
+
+            PrognosisDatabase.PrognosisItem prognosis = PrognosisDatabase.getBlank(operatingDay, journeyRef);
+
+            if (prognosis == null) {
+                break;
+            }
+            if(prognosis.getJson() == null || prognosis.getJson().equals("")) {
+                response.getWriter().print(new ErrorResponse("Prognosis is being calculated. Please be patient!"));
+                response.getWriter().close();
+                return true;
+            }
+
+            long differenceInHour = (new Date().getTime() - prognosis.getTimestamp()) / 1000;
+            if (differenceInHour < 24 * 3600) {
+                existingJsons.add(new JSONObject(prognosis.getJson()));
+            }
+        }
+        if (existingJsons.size() > 0) {
+            JSONArray output = new JSONArray(existingJsons);
+            response.getWriter().print(output.toString());
+            response.getWriter().close();
+            return true;
+        }
+        return false;
+    }
+
+    private JSONArray createOutput(boolean console) {
+        ArrayList<PrognosisFactor> factory = prognosisCalculator.getFactory();
+        ArrayList<Trip> legs = connection.getLegs();
+
+        JSONArray output = new JSONArray();
+
+        for (int i = 0; i < legs.size(); i++) {
+            Trip leg = legs.get(i);
+
+            int delayBoarding = 0;
+            int delayAlighting = 0;
+            ArrayList<Integer> delaysException = new ArrayList<>();
+            double exceptionPropability = 0;
+
+            for (PrognosisFactor f : factory) {
+                ArrayList<PrognosisCalculationResult.Item> items = f.getResult().getItems();
+
+                if (i < items.size()) {
+                    PrognosisCalculationResult.Item item = items.get(i);
+                    delayBoarding += item.getDelayBoardingRegular() * f.getWeight();
+                    delayAlighting += item.getDelayAlightingRegular() * f.getWeight();
+                    if (item.getDelayException() > 0) {
+                        delaysException.add(item.getDelayException());
+                    }
+                    exceptionPropability += item.getExceptionPropability() * f.getWeight();
+
+                    if (console) {
+                        logger.info("-----------------------------------------------------------------");
+                        logger.info(f.getType() + " for " + leg.getService().getLineName() + ":");
+                        logger.info("Delay at " + leg.getBoarding().getName() + ": " + item.getDelayBoardingRegular());
+                        logger.info("Delay at " + leg.getAlighting().getName() + ": " + item.getDelayAlightingRegular());
+                        logger.info("Delay Exception: " + item.getDelayException());
+                        logger.info("Exception Propability: " + item.getExceptionPropability());
+                    }
+                }
+            }
+
+            delayAlighting = delayAlighting / factory.size();
+            delayBoarding = delayBoarding / factory.size();
+            int delayException = (int) MathToolbox.mean(delaysException);
+            exceptionPropability = exceptionPropability / factory.size();
+
+            if (console) {
+                logger.info("-----------------------------------------------------------------");
+                logger.info("Total Boarding Delay for " + leg.getService().getLineName() + " at " + leg.getBoarding().getName() + ": " + delayBoarding + "s!");
+                logger.info("Total Alighting Delay for " + leg.getService().getLineName() + " at " + leg.getAlighting().getName() + ": " + delayAlighting + "s!");
+                logger.info("Total Exception Delay for " + leg.getService().getLineName() + " at " + leg.getAlighting().getName() + ": " + delayException + "s!");
+                logger.info("Propability for Exception for " + leg.getService().getLineName() + " at " + leg.getAlighting().getName() + ": " + new DecimalFormat("#.##").format(exceptionPropability) + "%!");
+            }
+
+            JSONObject prognosis = new JSONObject();
+            prognosis.put("delayBoarding", delayBoarding);
+            prognosis.put("delayAlighting", delayAlighting);
+            prognosis.put("delayException", delayException);
+            prognosis.put("exceptionPropability", String.format(Locale.US, "%.2f", exceptionPropability));
+
+            JSONObject outputitem = new JSONObject();
+            outputitem.put("service", leg.getService().toJSON());
+            outputitem.put("boarding", leg.getBoarding().toJSON());
+            outputitem.put("alighting", leg.getAlighting().toJSON());
+            outputitem.put("prognosis", prognosis);
+
+            output.put(outputitem);
+        }
+
+        return output;
+    }
+
     @Override
     public void onCalculationComplete(PrognosisFactor factor) {
         lock.lock();
         System.out.println("Singal fired");
         data.signal();
         lock.unlock();
+    }
+
+    private void printPrognosis(String out, HttpServletResponse response) throws IOException {
+        response.getWriter().print(out);
+        response.getWriter().close();
     }
 }
