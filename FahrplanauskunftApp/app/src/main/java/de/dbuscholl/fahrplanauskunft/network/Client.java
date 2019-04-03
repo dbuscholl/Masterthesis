@@ -58,7 +58,7 @@ public class Client {
         int length = out.length;
 
         http.setFixedLengthStreamingMode(length);
-        http.setRequestProperty("content-type", "application/json");
+        http.setRequestProperty("content-type", "application/json; charset=UTF-8");
 
         OutputStreamWriter writer = new OutputStreamWriter( http.getOutputStream());
         writer.write(json);

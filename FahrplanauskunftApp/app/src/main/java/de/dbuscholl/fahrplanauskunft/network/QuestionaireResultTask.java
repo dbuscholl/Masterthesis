@@ -24,7 +24,7 @@ public class QuestionaireResultTask extends AsyncTask<String, Void, String> {
 
     private SuccessEvent successEvent;
     private ProgressDialog dialog;
-    private static String response = null;
+    private String response = null;
     private static String request = null;
 
     public QuestionaireResultTask() {
@@ -41,7 +41,7 @@ public class QuestionaireResultTask extends AsyncTask<String, Void, String> {
     @Override
     protected void onPreExecute() {
         if (dialog != null) {
-            dialog.setMessage("Suche nach Fahrten...");
+            dialog.setMessage("Sende Fahrtendaten...");
             dialog.show();
         }
     }
@@ -50,14 +50,10 @@ public class QuestionaireResultTask extends AsyncTask<String, Void, String> {
     @Override
     protected String doInBackground(String... strings) {
         try {
-            Client c = new Client("http://busbilder.net:8080/masterthesis/userrecord");
+            Client c = new Client("http://busbilder.net:8080/prognosiscalculator/import");
             request = strings[0];
             String response = c.sendPostJSON(strings[0]);
-            QuestionaireResultTask.response = response;
-
-            if (successEvent != null) {
-                successEvent.onSuccess(response);
-            }
+            this.response = response;
             return null;
         } catch (IOException e) {
             e.printStackTrace();
@@ -69,6 +65,9 @@ public class QuestionaireResultTask extends AsyncTask<String, Void, String> {
     protected void onPostExecute(String response) {
         if (dialog != null && dialog.isShowing()) {
             dialog.dismiss();
+        }
+        if (successEvent != null) {
+            successEvent.onSuccess(this.response);
         }
         super.onPostExecute(response);
     }

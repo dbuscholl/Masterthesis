@@ -1,7 +1,6 @@
 package de.dbuscholl.fahrplanauskunft.gui.adapters;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,7 +8,6 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import de.dbuscholl.fahrplanauskunft.FormatTools;
@@ -17,7 +15,6 @@ import de.dbuscholl.fahrplanauskunft.R;
 import de.dbuscholl.fahrplanauskunft.gui.activities.Questionnaire;
 import de.dbuscholl.fahrplanauskunft.gui.services.TripRecordingService.FinishedRecording;
 import de.dbuscholl.fahrplanauskunft.network.entities.Connection;
-import de.dbuscholl.fahrplanauskunft.network.entities.Trip;
 
 public class RecordingListAdapter extends ArrayAdapter<FinishedRecording> {
 
@@ -92,8 +89,8 @@ public class RecordingListAdapter extends ArrayAdapter<FinishedRecording> {
                             q.setFinishedRecording(f);
                             q.setSuccessfullySendHandler(new Questionnaire.SuccessfullySendHandler() {
                                 @Override
-                                public void onSuccessfullySend() {
-                                    qse.onQuestionnaireSolved(f);
+                                public void onSuccessfullySend(String result) {
+                                    qse.onQuestionnaireSolved(f, result);
                                 }
                             });
                             q.startForPastConnection();
@@ -124,7 +121,7 @@ public class RecordingListAdapter extends ArrayAdapter<FinishedRecording> {
         }
 
         public interface QuestionnaireSolvedEvent {
-            void onQuestionnaireSolved(FinishedRecording f);
+            void onQuestionnaireSolved(FinishedRecording f, String response);
         }
 
         public void setQuestionnaireSolvedEvent(QuestionnaireSolvedEvent qse) {

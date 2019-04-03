@@ -1,9 +1,7 @@
 package de.dbuscholl.fahrplanauskunft.gui.activities;
 
-import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
-import android.location.Location;
 import android.text.Html;
 import android.util.Log;
 import android.view.View;
@@ -117,7 +115,7 @@ public class Questionnaire {
             @Override
             public void onSuccess(String result) {
                 if(successfullySendHandler != null) {
-                    successfullySendHandler.onSuccessfullySend();
+                    successfullySendHandler.onSuccessfullySend(result);
                 }
                 Toast.makeText(activity,"Done sending!",Toast.LENGTH_LONG).show();
             }
@@ -128,10 +126,6 @@ public class Questionnaire {
             return;
         }
         Log.d(this.getClass().getName(),results.toString());
-        // TODO: Remove after webapp implementation
-        if(successfullySendHandler != null) {
-            successfullySendHandler.onSuccessfullySend();
-        }
         qrt.execute(results.toString());
     }
 
@@ -458,6 +452,6 @@ public class Questionnaire {
     }
 
     public interface SuccessfullySendHandler {
-        void onSuccessfullySend();
+        void onSuccessfullySend(String result);
     }
 }

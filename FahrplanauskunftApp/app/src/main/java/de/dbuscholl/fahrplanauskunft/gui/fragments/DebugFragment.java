@@ -7,14 +7,17 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.List;
 
@@ -38,7 +41,7 @@ public class DebugFragment extends Fragment {
         BottomNavigationView bottomNavigationView = getActivity().findViewById(R.id.navigation);
         bottomNavigationView.getMenu().getItem(1).setChecked(true);
 
-         finishedRecordings = null;
+        finishedRecordings = null;
 
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
         String json = sharedPref.getString("recordings", null);
@@ -56,11 +59,11 @@ public class DebugFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
     }
 
-    public void buildAdapter(){
+    public void buildAdapter() {
         RecordingListAdapter rla = new RecordingListAdapter(finishedRecordings, getContext());
         rla.setQuestionnaireSolvedEvent(new RecordingListAdapter.QuestionnaireSolvedEvent() {
             @Override
-            public void onQuestionnaireSolved(FinishedRecording f) {
+            public void onQuestionnaireSolved(FinishedRecording f, String response) {
                 finishedRecordings.remove(f);
 
                 SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
@@ -70,6 +73,24 @@ public class DebugFragment extends Fragment {
                 editor.putString("recordings", recordings).apply();
 
                 buildAdapter();
+
+                JSONObject json = null;
+                double time = -1;
+                try {
+                    json = new JSONObject(response);
+                    if (json.has("success")) {
+                        time = json.getDouble("execution time");
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+
+                new AlertDialog.Builder(getContext())
+                        .setTitle("Antwort angekommen!")
+                        .setMessage(time >= 0 ? "Die Daten wurden in " + String.valueOf(time) + "s vom Server barbeitet." : "... aber es gab einen Fehler in der Bearbeitung")
+                        .setPositiveButton("Okay",null)
+                        .show();
             }
         });
 
