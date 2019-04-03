@@ -15,11 +15,11 @@ import java.util.TimeZone;
 public class SQLFormatTools {
     private static Logger log = Logger.getLogger(SQLFormatTools.class);
 
-    public static final DateFormat sqlDateFormat = new SimpleDateFormat("yyyy-MM-dd");
-    public static final DateFormat sqlDatetimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    public static final DateFormat deDateFormat = new SimpleDateFormat("dd.MM.yyyy");
-    public static final DateFormat deDatetimeFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
-    public static final DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
+    public static final String datePattern = "yyyy-MM-dd";
+    public static final String dateTimePattern = "yyyy-MM-dd HH:mm:ss";
+    public static final String deDatePattern = "dd.MM.yyyy";
+    public static final String deDatetimePattern = "dd.MM.yyyy HH:mm:ss";
+    public static final String timePattern = "HH:mm:ss";
 
     /**
      * returns a String representation of the Calendar's Day which is provided as int
@@ -53,13 +53,16 @@ public class SQLFormatTools {
      * @return a Date Object in TRIAS UTC Time representation
      */
     public static String formatTrias(Date date) {
-        sqlDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-        timeFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-        String dateString = sqlDateFormat.format(date);
-        String timeString = timeFormat.format(date);
+        SimpleDateFormat datesdf = new SimpleDateFormat(datePattern);
+        SimpleDateFormat timesdf = new SimpleDateFormat(timePattern);
+
+        datesdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+        timesdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+        String dateString = datesdf.format(date);
+        String timeString = timesdf.format(date);
         String utc = dateString + "T" + timeString + "Z";
-        sqlDateFormat.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
-        timeFormat.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
+        datesdf.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
+        timesdf.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
         return utc;
     }
 
@@ -86,9 +89,10 @@ public class SQLFormatTools {
      * @throws ParseException
      */
     public static String makeTimeForGtfs(String time) {
+        SimpleDateFormat timesdf = new SimpleDateFormat(timePattern);
         Date d = parseTriasTime(time);
-        timeFormat.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
-        return timeFormat.format(d);
+        timesdf.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
+        return timesdf.format(d);
     }
 
     /**
@@ -98,8 +102,9 @@ public class SQLFormatTools {
      * @throws ParseException
      */
     public static String makeDatetimeForGtfs(String datetime) throws ParseException {
-        sqlDatetimeFormat.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
-        return sqlDatetimeFormat.format(parseTriasTime(datetime));
+        SimpleDateFormat datetimesdf = new SimpleDateFormat(dateTimePattern);
+        datetimesdf.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
+        return datetimesdf.format(parseTriasTime(datetime));
     }
 
     /**
@@ -109,15 +114,17 @@ public class SQLFormatTools {
      * @throws ParseException
      */
     public static Date parseTriasTime(String time) {
+        SimpleDateFormat datetimesdf = new SimpleDateFormat(dateTimePattern);
+
         try {
             String[] ts1 = time.substring(0, time.length() - 1).split("T");
-            sqlDatetimeFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+            datetimesdf.setTimeZone(TimeZone.getTimeZone("UTC"));
             String toParse = ts1[0] + " " + ts1[1];
             if (toParse.equals("")) {
                 int i = 0;
             }
-            Date parse = sqlDatetimeFormat.parse(toParse);
-            sqlDatetimeFormat.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
+            Date parse = datetimesdf.parse(toParse);
+            datetimesdf.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
             return parse;
         } catch (ParseException e) {
             int i = 0;
@@ -129,8 +136,9 @@ public class SQLFormatTools {
     }
 
     public static String makeDateForGtfs(String date) {
+        SimpleDateFormat datesdf = new SimpleDateFormat(datePattern);
         Date parse = parseTriasTime(date);
-        sqlDateFormat.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
-        return sqlDateFormat.format(parse);
+        datesdf.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
+        return datesdf.format(parse);
     }
 }

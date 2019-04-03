@@ -12,6 +12,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -112,7 +113,7 @@ public class GTFS {
         if (!everything) {
             tripIds = getTripIds(ignoringServices, rs);
         } else {
-            while(rs.next()) {
+            while (rs.next()) {
                 tripIds.add(rs.getString("trip_id"));
             }
         }
@@ -173,6 +174,10 @@ public class GTFS {
             }
         }
 
+        rs.close();
+        s.close();
+        c.close();
+
         return stops;
     }
 
@@ -191,6 +196,9 @@ public class GTFS {
 
             HashMap<String, Integer> sequenceMap = buildSequenceMap(rs);
             fillStops(sequenceMap, t);
+            rs.close();
+            s.close();
+            c.close();
         }
     }
 
@@ -220,10 +228,19 @@ public class GTFS {
         ArrayList<Delay> delays = new ArrayList<>();
 
         StringBuilder builder = new StringBuilder();
-        for (String id : ids) {
-            builder.append("tripId = ? OR");
+        if (ids.size() < 5) {
+            for (String id : ids) {
+                builder.append("tripId = ? OR ");
+            }
+            builder.delete(builder.length() - 4, builder.length());
+        } else {
+            builder.append("tripId IN(");
+            for (String id : ids) {
+                builder.append("?,");
+            }
+            builder.delete(builder.length() - 1, builder.length());
+            builder.append(")");
         }
-        builder.delete(builder.length() - 3, builder.length());
 
         Connection c = DataSource.getConnection();
         PreparedStatement s = c.prepareStatement("SELECT * FROM vvs.delays WHERE " + builder.toString());
@@ -242,6 +259,10 @@ public class GTFS {
             d.setStop_sequence(rs.getInt("stop_sequence"));
             delays.add(d);
         }
+
+        rs.close();
+        s.close();
+        c.close();
 
         return delays;
     }
@@ -275,6 +296,10 @@ public class GTFS {
             fullTrip.add(tripStop);
         }
 
+        rs.close();
+        s.close();
+        c.close();
+
         return fullTrip;
     }
 
@@ -286,13 +311,14 @@ public class GTFS {
      * @throws SQLException
      */
     public static ArrayList<IgnoreService> getIgnoringServiceIds(String date) throws SQLException {
+        SimpleDateFormat datesdf = new SimpleDateFormat(SQLFormatTools.datePattern);
         ArrayList<IgnoreService> ignoringServices = new ArrayList<>();
 
         // set date to now if date is not provided or date is invalid
         Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("Europe/Berlin"));
         if (date != null) {
             try {
-                cal.setTime(SQLFormatTools.sqlDateFormat.parse(date));
+                cal.setTime(datesdf.parse(date));
             } catch (ParseException e) {
                 cal = Calendar.getInstance(TimeZone.getTimeZone("Europe/Berlin"));
             }
@@ -302,10 +328,10 @@ public class GTFS {
         Connection ds = DataSource.getConnection();
         //PreparedStatement s = ds.prepareStatement("SELECT DISTINCT calendar_dates.service_id, exception_type FROM `calendar_dates` LEFT JOIN calendar ON calendar_dates.service_id = calendar.service_id where `date` = ? OR (date != ? AND exception_type = 1) and start_date <= ? AND end_date >= ? AND " + dowColumn + " = 1 ORDER BY `date` ASC");
         PreparedStatement s = ds.prepareStatement("SELECT DISTINCT calendar.service_id, exception_type FROM `calendar` LEFT JOIN calendar_dates ON calendar_dates.service_id = calendar.service_id WHERE ((start_date >= ? OR end_date <= ? OR " + dowColumn + " = 0) AND calendar.service_id NOT IN (SELECT service_id FROM calendar_dates WHERE exception_type = 1 AND date = ?)) OR (date = ? AND exception_type = 2)");
-        s.setString(1, SQLFormatTools.sqlDateFormat.format(cal.getTime()));
-        s.setString(2, SQLFormatTools.sqlDateFormat.format(cal.getTime()));
-        s.setString(3, SQLFormatTools.sqlDateFormat.format(cal.getTime()));
-        s.setString(4, SQLFormatTools.sqlDateFormat.format(cal.getTime()));
+        s.setString(1, datesdf.format(cal.getTime()));
+        s.setString(2, datesdf.format(cal.getTime()));
+        s.setString(3, datesdf.format(cal.getTime()));
+        s.setString(4, datesdf.format(cal.getTime()));
         ResultSet rs = s.executeQuery();
         while (rs.next()) {
             ignoringServices.add(new IgnoreService(rs.getString("service_id"), rs.getInt("exception_type")));

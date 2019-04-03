@@ -45,22 +45,22 @@ public class PrognosisCalculator extends Thread implements CalculationCompletedE
         factory.add(triasEveryday);
 
         TriasFactor triasAllday = new TriasFactor(connection);
-        triasEveryday.setType(PrognosisFactor.PrognosisFactorType.TRIASRECORDING_ALLDAY);
+        triasAllday.setType(PrognosisFactor.PrognosisFactorType.TRIASRECORDING_ALLDAY);
         triasAllday.setWeight(0.5);
-        triasEveryday.setCalculationCompletedEvent(this);
+        triasAllday.setCalculationCompletedEvent(this);
         factory.add(triasAllday);
 
         for (PrognosisFactor f : factory) {
             f.start();
         }
 
-        onCalculationComplete(null);
     }
 
     @Override
     public void onCalculationComplete(PrognosisFactor factor) {
-        logger.info(factor.getType().toString() + " has finished execution in " + ((double) factor.getExecutionTime() / 1000) + "s");
-
+        if(factor != null) {
+            logger.info(factor.getType().toString() + " has finished execution in " + ((double) factor.getExecutionTime() / 1000) + "s");
+        }
         for (PrognosisFactor f : factory) {
             if (!f.isDoneExecuting()) {
                 return;

@@ -8,6 +8,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 
 public class Delay {
+    // define the maximum allowed delay. All Delays which are bigger will be ignored
+    private static final int MAX_DELAY_HOURS = 4;
+
     private long delayId;
     private String tripId;
     private int delay;
@@ -123,7 +126,7 @@ public class Delay {
         ArrayList<Delay> filteredDelays = new ArrayList<>();
 
         for(Delay d : stack) {
-            if(d.getDelay() > threshhold) {
+            if(d.getDelay() >= threshhold && d.getDelay() < MAX_DELAY_HOURS * 3600) {
                 filteredDelays.add(d);
             }
         }

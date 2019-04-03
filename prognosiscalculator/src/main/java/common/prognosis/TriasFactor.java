@@ -5,9 +5,11 @@ import common.network.Connection;
 import common.network.Trip;
 import database.GTFS;
 import database.SQLFormatTools;
+import org.apache.log4j.Logger;
 import utilities.MathToolbox;
 
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class TriasFactor extends PrognosisFactor {
@@ -24,23 +26,24 @@ public class TriasFactor extends PrognosisFactor {
     @Override
     protected void execute() {
         try {
-            PrognosisCalculationResult result = new PrognosisCalculationResult();
             result.setConnection(connection);
 
             ArrayList<Trip> legs = connection.getLegs();
             for (currentProcessingIndex = 0; currentProcessingIndex < legs.size(); currentProcessingIndex++) {
                 Trip t = legs.get(currentProcessingIndex);
-                delayMap.put(currentProcessingIndex,new ArrayList<>());
-                ArrayList<Delay> delays = delayMap.get(currentProcessingIndex);
+                delayMap.put(currentProcessingIndex, new ArrayList<>());
 
                 // possible tripIds for all trips which depart at same time and same stop
                 currentBoardingIds = GTFS.getGTFSTripIds(t.getBoarding(), false);
                 GTFS.removeTripIdsOfWrongDirection(currentBoardingIds, t);
 
-                if(delays == null || delays.isEmpty()) {
+                ArrayList<Delay> delays = getDelays();
+
+                if (delays == null || delays.isEmpty()) {
                     notifyExecutionFinished(null);
-                    return;
+                    continue;
                 }
+                delayMap.put(currentProcessingIndex, delays);
 
                 ArrayList<Delay> delaysAtBoarding = Delay.getDelaysForStopPoint(t, t.getBoarding(), delays);
                 ArrayList<Delay> delaysAtAlighting = Delay.getDelaysForStopPoint(t, t.getAlighting(), delays);
@@ -60,19 +63,27 @@ public class TriasFactor extends PrognosisFactor {
                 // calculate exception
                 double threshhold = getThreshholdByInterchangeTime();
                 ArrayList<Delay> bigDelays = Delay.getDelaysGreaterThan((int) threshhold, delays);
-                int[] mode = MathToolbox.mode(Delay.getDelayValues(bigDelays));
+                if (bigDelays.size() != 0) {
+                    int[] mode = MathToolbox.mode(Delay.getDelayValues(bigDelays));
 
-                resultItem.setDelayException(mode[0]);
-                resultItem.setExceptionPropability(((double) mode[1] / bigDelays.size()) * 100);
-
+                    resultItem.setDelayException(mode[0]);
+                    double thisBigProp = (double) mode[1] / bigDelays.size();
+                    double thisinAny = (double) mode[1] / delays.size();
+                    double anyBigProp = (double) bigDelays.size() / delays.size();
+                    resultItem.setExceptionPropability(((thisBigProp + thisinAny * 2 + anyBigProp) / 4) * 100);
+                } else {
+                    resultItem.setDelayException(0);
+                    resultItem.setExceptionPropability(0);
+                }
                 result.add(resultItem);
             }
 
             notifyExecutionFinished(this);
             return;
         } catch (Exception e) {
+            Logger logger = Logger.getLogger(this.getClass().getName());
+            logger.info(type + ": " + e.getMessage(), e);
             notifyExecutionFinished(null);
-            e.printStackTrace();
         }
 
         notifyExecutionFinished(null);
@@ -89,10 +100,10 @@ public class TriasFactor extends PrognosisFactor {
                 return min / 2;
 
             } catch (Exception e) {
-                return 3;
+                return 180;
             }
         } else {
-            return 3;
+            return 180;
         }
     }
 
@@ -112,11 +123,12 @@ public class TriasFactor extends PrognosisFactor {
     private ArrayList<Delay> getSamedayDelays() throws SQLException {
         ArrayList<Delay> delaysTemporary = GTFS.getDelaysForIds(currentBoardingIds);
         ArrayList<Delay> delays = new ArrayList<>();
+        SimpleDateFormat datesdf = new SimpleDateFormat(SQLFormatTools.datePattern);
 
         Calendar calendar = Calendar.getInstance();
         for (int i = 0; i < AMOUNT_WEEKRS; i++) {
             calendar.set(Calendar.DAY_OF_MONTH, calendar.get(Calendar.DAY_OF_MONTH) - 7);
-            String date = SQLFormatTools.sqlDateFormat.format(calendar.getTime());
+            String date = datesdf.format(calendar.getTime());
 
             for (Delay d : delaysTemporary) {
                 if (d.getTimestamp().contains(date)) {

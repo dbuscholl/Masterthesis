@@ -8,10 +8,11 @@ public abstract class PrognosisFactor extends Thread {
     protected double weight = 1;
     protected PrognosisFactorType type = null;
     protected PronosisFactorCalculationModel calculationModel = PronosisFactorCalculationModel.NEUTRAL;
+    protected PrognosisCalculationResult result = new PrognosisCalculationResult();
+    protected long executionTime = 0;
+    private Chronometer chronometer = new Chronometer();
     private CalculationCompletedEvent calculationCompletedEvent;
     private boolean doneExecuting = false;
-    private PrognosisCalculationResult result = null;
-    private long executionTime = 0;
 
     public PrognosisFactor(Connection connection) {
         super();
@@ -20,11 +21,8 @@ public abstract class PrognosisFactor extends Thread {
 
     @Override
     public void run() {
-        Chronometer chronometer = new Chronometer();
         chronometer.addNow();
         execute();
-        chronometer.addNow();
-        executionTime = chronometer.getLastDifferece();
     }
 
     protected abstract void execute();
@@ -46,6 +44,8 @@ public abstract class PrognosisFactor extends Thread {
 
 
     protected void notifyExecutionFinished(PrognosisFactor factor) {
+        chronometer.addNow();
+        executionTime = chronometer.getLastDifferece();
         doneExecuting = true;
         this.result = result;
         if(calculationCompletedEvent != null) {
