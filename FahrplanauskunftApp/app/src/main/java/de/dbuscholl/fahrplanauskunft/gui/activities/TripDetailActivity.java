@@ -1,6 +1,5 @@
 package de.dbuscholl.fahrplanauskunft.gui.activities;
 
-import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -21,6 +20,10 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.TimeZone;
 
@@ -30,10 +33,13 @@ import de.dbuscholl.fahrplanauskunft.common.App;
 import de.dbuscholl.fahrplanauskunft.gui.ConnectionsListView;
 import de.dbuscholl.fahrplanauskunft.gui.services.TripRecordingService;
 import de.dbuscholl.fahrplanauskunft.gui.fragments.ConnectionsFragment;
-import de.dbuscholl.fahrplanauskunft.network.TripInfoDownloadTask;
+import de.dbuscholl.fahrplanauskunft.network.entities.PrognosisCalculationItem;
+import de.dbuscholl.fahrplanauskunft.network.entities.PrognosisCalculationResult;
+import de.dbuscholl.fahrplanauskunft.network.tasks.PrognosisTask;
+import de.dbuscholl.fahrplanauskunft.network.tasks.TripInfoDownloadTask;
 import de.dbuscholl.fahrplanauskunft.network.entities.Connection;
 
-public class ResultDetailActivity extends AppCompatActivity {
+public class TripDetailActivity extends AppCompatActivity implements PrognosisTask.SuccessEvent {
     private static final int REQUEST_PERMISSIONS = 100;
     boolean boolean_permission;
     ScrollView layout;
@@ -56,6 +62,8 @@ public class ResultDetailActivity extends AppCompatActivity {
             onBackPressed();
         }
         connection = ConnectionsFragment.getCurrentResult().get(position);
+
+        getPrognosis();
 
         TextView startStation = findViewById(R.id.result_tripstart_text);
         TextView endStation = findViewById(R.id.result_tripend_text);
@@ -85,7 +93,7 @@ public class ResultDetailActivity extends AppCompatActivity {
                     make.setAction("Ja!", new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
-                            Questionnaire q = new Questionnaire(ResultDetailActivity.this, connection);
+                            Questionnaire q = new Questionnaire(TripDetailActivity.this, connection);
                             q.startForPastConnection();
                         }
                     });
@@ -109,11 +117,36 @@ public class ResultDetailActivity extends AppCompatActivity {
 
     }
 
+    private void getPrognosis() {
+        try {
+            JSONObject sendingData = new JSONObject();
+            JSONObject c = connection.toJSON();
+            sendingData.put("connection", c==null?"":c);
+            PrognosisTask pt = new PrognosisTask(this, getApplicationContext());
+            pt.execute(sendingData.toString());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    @Override
+    public void onSuccess(ArrayList<PrognosisCalculationResult> items) {
+        if(layout.getChildCount() > 0) {
+            layout.removeAllViews();
+
+            ConnectionsListView clv = new ConnectionsListView(getApplicationContext());
+            clv.setPrognosis(items);
+            clv.build(connection);
+            layout.addView(clv);
+        }
+    }
+
     private void fn_permission() {
         if ((ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)) {
-            if ((ActivityCompat.shouldShowRequestPermissionRationale(ResultDetailActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION))) {
+            if ((ActivityCompat.shouldShowRequestPermissionRationale(TripDetailActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION))) {
             } else {
-                ActivityCompat.requestPermissions(ResultDetailActivity.this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_PERMISSIONS);
+                ActivityCompat.requestPermissions(TripDetailActivity.this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_PERMISSIONS);
             }
             Toast.makeText(getApplicationContext(), "Please enable the gps", Toast.LENGTH_SHORT).show();
         } else {
@@ -168,10 +201,10 @@ public class ResultDetailActivity extends AppCompatActivity {
             if (boolean_permission) {
                 Intent intent = new Intent(getApplicationContext(), TripRecordingService.class);
                 if (!App.isMyServiceRunning(TripRecordingService.class, getApplicationContext())) {
-                    Log.d(ResultDetailActivity.this.getClass().getName(), "started service");
+                    Log.d(TripDetailActivity.this.getClass().getName(), "started service");
                     ContextCompat.startForegroundService(getApplicationContext(), intent);
                 }
-                Log.d(ResultDetailActivity.this.getClass().getName(), "Service seems to be running");
+                Log.d(TripDetailActivity.this.getClass().getName(), "Service seems to be running");
                 if (!isBound) {
                     serviceConnectedCallback = new ServiceConnectedCallback() {
                         @Override
@@ -189,7 +222,7 @@ public class ResultDetailActivity extends AppCompatActivity {
                     };
 
                     bindService(intent, gpsConnection, Context.BIND_AUTO_CREATE);
-                    Log.d(ResultDetailActivity.this.getClass().getName(), "Bound service");
+                    Log.d(TripDetailActivity.this.getClass().getName(), "Bound service");
                 }
             } else {
                 Toast.makeText(getApplicationContext(), "Please enable the gps", Toast.LENGTH_SHORT).show();

@@ -1,11 +1,9 @@
-package de.dbuscholl.fahrplanauskunft.network;
+package de.dbuscholl.fahrplanauskunft.network.tasks;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
-import android.widget.Toast;
 
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
@@ -15,6 +13,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import de.dbuscholl.fahrplanauskunft.common.Constants;
+import de.dbuscholl.fahrplanauskunft.network.Client;
 import de.dbuscholl.fahrplanauskunft.network.entities.Service;
 import de.dbuscholl.fahrplanauskunft.network.entities.StopPoint;
 import de.dbuscholl.fahrplanauskunft.network.entities.Trip;

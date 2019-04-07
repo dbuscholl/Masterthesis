@@ -1,5 +1,7 @@
 package de.dbuscholl.fahrplanauskunft.network;
 
+import android.util.Log;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -18,6 +20,10 @@ public class Client {
         http = (HttpURLConnection) con;
     }
 
+    public void setLongTimeout() {
+        http.setConnectTimeout(120000);
+        http.setReadTimeout(120000);
+    }
 
     public String sendPostXML(String xml) throws IOException {
         http.setRequestMethod("POST");
@@ -31,13 +37,13 @@ public class Client {
         http.setFixedLengthStreamingMode(length);
         http.setRequestProperty("content-type", "text/xml; charset=UTF-8");
 
-        OutputStreamWriter writer = new OutputStreamWriter( http.getOutputStream());
+        OutputStreamWriter writer = new OutputStreamWriter(http.getOutputStream());
         writer.write(xml);
         writer.flush();
 
         StringBuilder s = new StringBuilder();
         BufferedReader reader = new BufferedReader(new InputStreamReader(http.getInputStream()));
-        for (String line; (line = reader.readLine()) != null;) {
+        for (String line; (line = reader.readLine()) != null; ) {
             s.append(line);
         }
 
@@ -60,18 +66,23 @@ public class Client {
         http.setFixedLengthStreamingMode(length);
         http.setRequestProperty("content-type", "application/json; charset=UTF-8");
 
-        OutputStreamWriter writer = new OutputStreamWriter( http.getOutputStream());
+        OutputStreamWriter writer = new OutputStreamWriter(http.getOutputStream());
         writer.write(json);
         writer.flush();
 
         StringBuilder s = new StringBuilder();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(http.getInputStream()));
-        for (String line; (line = reader.readLine()) != null;) {
-            s.append(line);
-        }
 
+        int status = http.getResponseCode();
+        if (status != 200) {
+            Log.d(this.getClass().getName(), "Received status of " + String.valueOf(status));
+        } else {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(http.getInputStream()));
+            for (String line; (line = reader.readLine()) != null; ) {
+                s.append(line);
+            }
+            reader.close();
+        }
         writer.close();
-        reader.close();
         http.disconnect();
 
         return s.toString();

@@ -35,10 +35,10 @@ import java.util.TimeZone;
 
 import de.dbuscholl.fahrplanauskunft.FormatTools;
 import de.dbuscholl.fahrplanauskunft.R;
-import de.dbuscholl.fahrplanauskunft.gui.activities.ResultDetailActivity;
+import de.dbuscholl.fahrplanauskunft.gui.activities.TripDetailActivity;
 import de.dbuscholl.fahrplanauskunft.gui.adapters.AutoCompleteAdapter;
 import de.dbuscholl.fahrplanauskunft.gui.adapters.ConnectionsListAdapter;
-import de.dbuscholl.fahrplanauskunft.network.TripInfoDownloadTask;
+import de.dbuscholl.fahrplanauskunft.network.tasks.TripInfoDownloadTask;
 import de.dbuscholl.fahrplanauskunft.network.entities.Station;
 import de.dbuscholl.fahrplanauskunft.network.entities.Connection;
 import de.dbuscholl.fahrplanauskunft.network.xml.TripInfoRequest;
@@ -218,7 +218,7 @@ public class ConnectionsFragment extends Fragment {
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
             Connection c = currentResult.get(position);
 
-            Intent intent = new Intent(getActivity(), ResultDetailActivity.class);
+            Intent intent = new Intent(getActivity(), TripDetailActivity.class);
             intent.putExtra("position", position);
             startActivity(intent);
         }

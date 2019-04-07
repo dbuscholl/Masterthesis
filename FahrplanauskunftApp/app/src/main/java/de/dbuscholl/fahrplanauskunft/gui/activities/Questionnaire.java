@@ -20,7 +20,7 @@ import java.util.ArrayList;
 
 import de.dbuscholl.fahrplanauskunft.R;
 import de.dbuscholl.fahrplanauskunft.gui.services.TripRecordingService;
-import de.dbuscholl.fahrplanauskunft.network.QuestionaireResultTask;
+import de.dbuscholl.fahrplanauskunft.network.tasks.QuestionaireResultTask;
 import de.dbuscholl.fahrplanauskunft.network.entities.Connection;
 import de.dbuscholl.fahrplanauskunft.network.entities.CustomLocation;
 import de.dbuscholl.fahrplanauskunft.network.entities.Service;

@@ -41,6 +41,21 @@ public class Service implements Parcelable {
         desitnation = in.readString();
     }
 
+    public Service(JSONObject json) {
+        try {
+            operatingDayRef = json.has("operatingDayRef") ? json.getString("operatingDayRef") : null;
+            journeyRef = json.has("journeyRef") ? json.getString("journeyRef") : null;
+            lineRef = json.has("lineRef") ? json.getString("lineRef") : null;
+            railType = json.has("railType") ? json.getString("railType") : null;
+            railName = json.has("railName") ? json.getString("railName") : null;
+            lineName = json.has("lineName") ? json.getString("lineName") : null;
+            route = json.has("route") ? json.getString("route") : null;
+            desitnation = json.has("desitnation") ? json.getString("desitnation") : null;
+        } catch (JSONException e) {
+            throw new NullPointerException(e.getMessage());
+        }
+    }
+
     public static final Creator<Service> CREATOR = new Creator<Service>() {
         @Override
         public Service createFromParcel(Parcel in) {

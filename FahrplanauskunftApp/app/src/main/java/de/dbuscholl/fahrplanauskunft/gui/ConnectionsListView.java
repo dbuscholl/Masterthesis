@@ -8,9 +8,12 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Locale;
 
 import de.dbuscholl.fahrplanauskunft.FormatTools;
 import de.dbuscholl.fahrplanauskunft.network.entities.Connection;
+import de.dbuscholl.fahrplanauskunft.network.entities.PrognosisCalculationItem;
+import de.dbuscholl.fahrplanauskunft.network.entities.PrognosisCalculationResult;
 import de.dbuscholl.fahrplanauskunft.network.entities.Service;
 import de.dbuscholl.fahrplanauskunft.network.entities.StopPoint;
 import de.dbuscholl.fahrplanauskunft.network.entities.Trip;
@@ -19,6 +22,7 @@ public class ConnectionsListView extends LinearLayout {
     private Context context;
     private int stdFontsize = 14;
     private int bigFontsize = 18;
+    private ArrayList<PrognosisCalculationResult> prognosis;
 
     public ConnectionsListView(Context context) {
         super(context);
@@ -26,12 +30,25 @@ public class ConnectionsListView extends LinearLayout {
         setOrientation(LinearLayout.VERTICAL);
     }
 
+    public void setPrognosis(ArrayList<PrognosisCalculationResult> prognosis) {
+        this.prognosis = prognosis;
+    }
+
     public ConnectionsListView build(Connection connection) {
         ArrayList<Trip> legs = connection.getLegs();
         for (int i = 0; i < legs.size(); i++) {
             Trip t = legs.get(i);
             if (t.getType() == Trip.TripType.TIMED) {
-                LinearLayout tripLayout = getTimedTripLayout(t);
+                PrognosisCalculationItem p = null;
+                if (prognosis != null) {
+                    for (PrognosisCalculationResult r : prognosis) {
+                        if (r.getService().getLineName().equals(t.getService().getLineName())) {
+                            p = r.getPrognosis();
+                        }
+                    }
+                }
+
+                LinearLayout tripLayout = getTimedTripLayout(t, p);
                 addView(tripLayout);
             } else {
                 LinearLayout interchangeLayout = getInterchangeTripLayout(t);
@@ -94,7 +111,7 @@ public class ConnectionsListView extends LinearLayout {
         return interchangeLayout;
     }
 
-    private LinearLayout getTimedTripLayout(Trip trip) {
+    private LinearLayout getTimedTripLayout(Trip trip, PrognosisCalculationItem prognosis) {
         LinearLayout tripLayout = new LinearLayout(context);
         tripLayout.setOrientation(LinearLayout.VERTICAL);
 
@@ -105,6 +122,12 @@ public class ConnectionsListView extends LinearLayout {
         headerText.setText(s.getRailName() + " " + s.getLineName() + " -> " + s.getDesitnation());
         tripLayout.addView(headerText);
 
+        if (prognosis != null) {
+            String boarding = String.valueOf(prognosis.getDelayBoardingRegular() / 60);
+            TextView boardingPrognosis = getPrognosis(boarding + " Minuten erwartete Verspätung bei der Abfahrt");
+            tripLayout.addView(boardingPrognosis);
+        }
+
         tripLayout.addView(getStopPointLayout(trip.getBoarding()));
 
         tripLayout.addView(getDivider());
@@ -114,6 +137,18 @@ public class ConnectionsListView extends LinearLayout {
             tripLayout.addView(getDivider());
         }
         tripLayout.addView(getStopPointLayout(trip.getAlighting()));
+
+        if (prognosis != null) {
+            String alighting = String.valueOf(prognosis.getDelayAlightingRegular() / 60);
+            String exception = String.valueOf(prognosis.getDelayException() / 60);
+            String propability = String.format(Locale.GERMANY, "%.2f", prognosis.getExceptionPropability());
+
+            TextView alightingPrognosis = getPrognosis(alighting + " Minuten erwartete Verspätung bei der Ankunft");
+            TextView exceptionPrognosis = getPrognosis("Zu " + propability + "% tritt eine Verspätung von maximal " + exception + " Minuten auf!");
+
+            tripLayout.addView(alightingPrognosis);
+            tripLayout.addView(exceptionPrognosis);
+        }
 
         return tripLayout;
     }
@@ -196,5 +231,18 @@ public class ConnectionsListView extends LinearLayout {
         v.setBackgroundColor(Color.parseColor("#B3B3B3"));
 
         return v;
+    }
+
+    public TextView getPrognosis(String text) {
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        params.setMargins(0, 12, 0, 12);
+
+        TextView textView = new TextView(context);
+        textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, stdFontsize);
+        textView.setTextColor(Color.BLACK);
+        textView.setLayoutParams(params);
+        textView.setText(text);
+
+        return textView;
     }
 }

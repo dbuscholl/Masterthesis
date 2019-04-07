@@ -31,7 +31,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".gui.activities.ResultDetailActivity"
+            android:name=".gui.activities.TripDetailActivity"
             android:label="@string/result_activity_title"
             android:parentActivityName=".gui.activities.MainActivity" >
             <!-- The meta-data element is needed for versions lower than 4.1 -->

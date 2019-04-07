@@ -35,7 +35,7 @@ import de.dbuscholl.fahrplanauskunft.FormatTools;
 import de.dbuscholl.fahrplanauskunft.R;
 import de.dbuscholl.fahrplanauskunft.gui.activities.MainActivity;
 import de.dbuscholl.fahrplanauskunft.gui.activities.Questionnaire;
-import de.dbuscholl.fahrplanauskunft.network.TripInfoDownloadTask;
+import de.dbuscholl.fahrplanauskunft.network.tasks.TripInfoDownloadTask;
 import de.dbuscholl.fahrplanauskunft.network.entities.Connection;
 import de.dbuscholl.fahrplanauskunft.network.entities.CustomLocation;
 import de.dbuscholl.fahrplanauskunft.network.entities.StopPoint;
