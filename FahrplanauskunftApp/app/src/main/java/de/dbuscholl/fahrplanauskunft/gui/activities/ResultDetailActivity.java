@@ -170,27 +170,27 @@ public class ResultDetailActivity extends AppCompatActivity {
                 if (!App.isMyServiceRunning(TripRecordingService.class, getApplicationContext())) {
                     Log.d(ResultDetailActivity.this.getClass().getName(), "started service");
                     ContextCompat.startForegroundService(getApplicationContext(), intent);
-                    if (!isBound) {
-                        serviceConnectedCallback = new ServiceConnectedCallback() {
-                            @Override
-                            public void onConnected() {
-                                boolean added = gpsService.addConnection(connection);
-                                if (!added) {
-                                    Toast.makeText(getApplicationContext(), "Kann nicht aufgenommen werden.", Toast.LENGTH_LONG).show();
-                                    return;
-                                }
-                                String request = TripInfoDownloadTask.getRequest();
-                                if (request != null) {
-                                    gpsService.addRequestString(request);
-                                }
-                            }
-                        };
-
-                        bindService(intent, gpsConnection, Context.BIND_AUTO_CREATE);
-                        Log.d(ResultDetailActivity.this.getClass().getName(), "Bound service");
-                    }
                 }
                 Log.d(ResultDetailActivity.this.getClass().getName(), "Service seems to be running");
+                if (!isBound) {
+                    serviceConnectedCallback = new ServiceConnectedCallback() {
+                        @Override
+                        public void onConnected() {
+                            boolean added = gpsService.addConnection(connection);
+                            if (!added) {
+                                Toast.makeText(getApplicationContext(), "Kann nicht aufgenommen werden.", Toast.LENGTH_LONG).show();
+                                return;
+                            }
+                            String request = TripInfoDownloadTask.getRequest();
+                            if (request != null) {
+                                gpsService.addRequestString(request);
+                            }
+                        }
+                    };
+
+                    bindService(intent, gpsConnection, Context.BIND_AUTO_CREATE);
+                    Log.d(ResultDetailActivity.this.getClass().getName(), "Bound service");
+                }
             } else {
                 Toast.makeText(getApplicationContext(), "Please enable the gps", Toast.LENGTH_SHORT).show();
             }

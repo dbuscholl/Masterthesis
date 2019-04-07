@@ -6,26 +6,28 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
-import android.os.Debug;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Toast;
 
 import de.dbuscholl.fahrplanauskunft.R;
 import de.dbuscholl.fahrplanauskunft.common.App;
 import de.dbuscholl.fahrplanauskunft.gui.fragments.ConnectionsFragment;
-import de.dbuscholl.fahrplanauskunft.gui.fragments.DebugFragment;
+import de.dbuscholl.fahrplanauskunft.gui.fragments.RecordedTripsFragment;
 import de.dbuscholl.fahrplanauskunft.gui.services.TripRecordingService;
 
 public class MainActivity extends AppCompatActivity implements BottomNavigationView.OnNavigationItemSelectedListener {
     private static Activity context;
     BottomNavigationView navigation;
     private Menu menu;
+
+    private boolean hasAction = false;
+    private boolean isBound = false;
 
     public static Activity getAppContext() {
         return context;
@@ -37,6 +39,10 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
         public void onServiceConnected(ComponentName name, IBinder service) {
             TripRecordingService.GpsBinder binder = (TripRecordingService.GpsBinder) service;
             gpsService = binder.getService();
+            isBound = true;
+            if(hasAction) {
+                stopRecording();
+            }
         }
 
         @Override
@@ -61,7 +67,7 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
 
         String fragment = getIntent().getStringExtra("fragment");
         if (fragment != null) {
-            loadFragment(new DebugFragment());
+            loadFragment(new RecordedTripsFragment());
         } else {
             loadFragment(new ConnectionsFragment());
         }
@@ -71,16 +77,35 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
     protected void onNewIntent(Intent intent) {
         String fragment = intent.getStringExtra("fragment");
         if (fragment != null) {
-            loadFragment(new DebugFragment());
+            loadFragment(new RecordedTripsFragment());
         } else {
             loadFragment(new ConnectionsFragment());
         }
+
+        String action = intent.getStringExtra("action");
+        if(action != null) {
+            hasAction = true;
+            if(!isBound) {
+                if (App.isMyServiceRunning(TripRecordingService.class, getApplicationContext())) {
+                    Intent serviceIntent = new Intent(getApplicationContext(), TripRecordingService.class);
+                    bindService(serviceIntent, gpsConnection, Context.BIND_AUTO_CREATE);
+                }
+            } else {
+                stopRecording();
+            }
+        }
+    }
+
+    private void stopRecording() {
+        hasAction = false;
+        gpsService.stopRecording();
+        Log.d(this.getClass().getName(), "Stopping tracking Service!");
     }
 
     private boolean loadFragment(Fragment f) {
         if (f == null) return false;
         getSupportFragmentManager().beginTransaction().replace(R.id.screenscontainer, f).commitAllowingStateLoss();
-        if (f instanceof DebugFragment) {
+        if (f instanceof RecordedTripsFragment) {
             if (App.isMyServiceRunning(TripRecordingService.class, getApplicationContext())) {
                 Intent intent = new Intent(getApplicationContext(), TripRecordingService.class);
                 bindService(intent, gpsConnection, Context.BIND_AUTO_CREATE);
@@ -96,7 +121,7 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
             case R.id.navigation_connections:
                 return loadFragment(new ConnectionsFragment());
             case R.id.navigation_debug:
-                return loadFragment(new DebugFragment());
+                return loadFragment(new RecordedTripsFragment());
         }
         return false;
     }
@@ -104,7 +129,10 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
     @Override
     protected void onDestroy() {
         if (App.isMyServiceRunning(TripRecordingService.class, getApplicationContext())) {
-            unbindService(gpsConnection);
+            if(isBound) {
+                unbindService(gpsConnection);
+                isBound = false;
+            }
         }
         super.onDestroy();
     }

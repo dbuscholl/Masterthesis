@@ -66,6 +66,7 @@ public class TripRecordingService extends Service implements LocationListener {
     private String currentlyRecordingTripRequest;
     private String realtimeArrival;
     private long lastRealtimeObtain;
+    private boolean running = false;
 
     public TripRecordingService() {
 
@@ -81,10 +82,6 @@ public class TripRecordingService extends Service implements LocationListener {
     @Override
     public void onCreate() {
         super.onCreate();
-
-        mTimer = new Timer();
-        mTimer.schedule(new TimerTaskToGetLocation(), 5, notify_interval);
-        intent = new Intent(str_receiver);
     }
 
     @Override
@@ -117,13 +114,25 @@ public class TripRecordingService extends Service implements LocationListener {
         Toast.makeText(this, String.valueOf(highScore), Toast.LENGTH_LONG).show();
         */
 
-        Intent notificationIntent = new Intent(this, MainActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+        if(!running) {
+            mTimer = new Timer();
+            mTimer.schedule(new TimerTaskToGetLocation(), 5, notify_interval);
+            intent = new Intent(str_receiver);
+        }
+
+        Intent notificationClickIntent = new Intent(this, MainActivity.class);
+        PendingIntent notificationClickPendingIntent = PendingIntent.getActivity(this, 0, notificationClickIntent, 0);
+
+        Intent stopClickIntent = new Intent(this, MainActivity.class);
+        stopClickIntent.putExtra("action", "stop");
+        PendingIntent stopClickPendingIntent = PendingIntent.getActivity(this, 0, stopClickIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
         Notification not = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("ÖPNV Location Tracker")
                 .setContentText("Tracking Trip")
+                .addAction(R.drawable.ic_stop_black_24dp, "Stop", stopClickPendingIntent)
                 .setSmallIcon(R.drawable.ic_notifications_black_24dp)
-                .setContentIntent(pendingIntent)
+                .setContentIntent(notificationClickPendingIntent)
                 .build();
 
         startForeground(1, not);
@@ -135,6 +144,7 @@ public class TripRecordingService extends Service implements LocationListener {
     private class TimerTaskToGetLocation extends TimerTask {
         @Override
         public void run() {
+            running = true;
 
             mHandler.post(new Runnable() {
                 @Override
@@ -165,14 +175,7 @@ public class TripRecordingService extends Service implements LocationListener {
                     if (currentlyRecordingTrip != null) {
                         getlocation();
                         if (isTripEnding()) {
-                            newFinishedRecording();
-                            endCurrentTripRecording();
-                            if(recordingQueue.isEmpty()) {
-                                mTimer.cancel();
-                                mTimer.purge();
-                                stopForeground(true);
-                                stopSelf();
-                            }
+                            stopRecording();
                         }
                     }
 
@@ -188,7 +191,20 @@ public class TripRecordingService extends Service implements LocationListener {
         }
     }
 
-    private void newFinishedRecording(){
+    public void stopRecording() {
+        newFinishedRecording();
+        endCurrentTripRecording();
+        if (recordingQueue.isEmpty()) {
+            mTimer.cancel();
+            mTimer.purge();
+            stopForeground(true);
+            running = false;
+            stopSelf();
+            Log.d(this.getClass().getName(), "Service stopped");
+        }
+    }
+
+    private void newFinishedRecording() {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         String json = sharedPref.getString("recordings", null);
 
@@ -305,10 +321,6 @@ public class TripRecordingService extends Service implements LocationListener {
 
     private boolean isTripEnding() {
         try {
-            if(locations.size()>3) {
-                return true;
-            }
-
             long time = Calendar.getInstance().getTimeInMillis();
             if (currentlyRecordingTrip != null) {
                 String arrivalTimeEstimated = currentlyRecordingTrip.getLegs().get(currentlyRecordingTrip.getLegs().size() - 1).getAlighting().getArrivalTimeEstimated();
@@ -348,19 +360,19 @@ public class TripRecordingService extends Service implements LocationListener {
     }
 
     private void sendNotification() {
-        if(finishedRecordings == null || finishedRecordings.size()<=0) {
+        if (finishedRecordings == null || finishedRecordings.size() <= 0) {
             return;
         }
 
         Connection connection = finishedRecordings.get(finishedRecordings.size() - 1).getConnection();
-        if(connection.getLegs() == null || connection.getLegs().size() <= 0) {
+        if (connection.getLegs() == null || connection.getLegs().size() <= 0) {
             return;
         }
         StopPoint boarding = connection.getLegs().get(0).getBoarding();
         StopPoint alighting = connection.getLegs().get(connection.getLegs().size() - 1).getAlighting();
 
         Intent notificationIntent = new Intent(this, MainActivity.class);
-        notificationIntent.putExtra("fragment","queue");
+        notificationIntent.putExtra("fragment", "queue");
         notificationIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID_DONE_CHANNEL)
@@ -372,7 +384,7 @@ public class TripRecordingService extends Service implements LocationListener {
 
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(Service.NOTIFICATION_SERVICE);
-        notificationManager.notify(2,notification);
+        notificationManager.notify(2, notification);
     }
 
     private void startQuestionaire() {

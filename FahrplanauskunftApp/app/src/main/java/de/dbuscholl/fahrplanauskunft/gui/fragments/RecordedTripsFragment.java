@@ -25,7 +25,7 @@ import de.dbuscholl.fahrplanauskunft.R;
 import de.dbuscholl.fahrplanauskunft.gui.adapters.RecordingListAdapter;
 import de.dbuscholl.fahrplanauskunft.gui.services.TripRecordingService.FinishedRecording;
 
-public class DebugFragment extends Fragment {
+public class RecordedTripsFragment extends Fragment {
 
     List<FinishedRecording> finishedRecordings;
     ListView recordingListView;
@@ -33,7 +33,7 @@ public class DebugFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_debug, null);
+        return inflater.inflate(R.layout.fragment_recordedtrips, null);
     }
 
     @Override

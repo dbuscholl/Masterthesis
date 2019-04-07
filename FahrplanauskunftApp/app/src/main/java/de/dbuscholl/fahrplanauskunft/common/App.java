@@ -36,7 +36,9 @@ public class App extends Application {
         ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
         for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
             if (serviceClass.getName().equals(service.service.getClassName())) {
-                return true;
+                if(service.foreground) {
+                    return true;
+                }
             }
         }
         return false;

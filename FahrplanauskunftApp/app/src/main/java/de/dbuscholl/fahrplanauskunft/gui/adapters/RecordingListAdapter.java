@@ -58,10 +58,10 @@ public class RecordingListAdapter extends ArrayAdapter<FinishedRecording> {
             }
 
             // get items
-            viewHolder.boardingStopTextView = convertView.findViewById(R.id.recording_alighting);
-            viewHolder.boardingTimeTextView = convertView.findViewById(R.id.recording_alighting_time);
-            viewHolder.alightingStopTextView = convertView.findViewById(R.id.recording_boarding);
-            viewHolder.alightingTimeTextView = convertView.findViewById(R.id.recording_boarding_time);
+            viewHolder.boardingStopTextView = convertView.findViewById(R.id.recording_boarding);
+            viewHolder.boardingTimeTextView = convertView.findViewById(R.id.recording_boarding_time);
+            viewHolder.alightingStopTextView = convertView.findViewById(R.id.recording_alighting);
+            viewHolder.alightingTimeTextView = convertView.findViewById(R.id.recording_alighting_time);
             viewHolder.questionnaireImageButton = convertView.findViewById(R.id.recording_questionnaire_button);
 
             lastPosition = position;
