@@ -2,11 +2,8 @@ package servlets;
 
 import common.network.Connection;
 import common.network.Trip;
-import common.prognosis.CalculationCompletedEvent;
-import common.prognosis.PrognosisCalculationResult;
-import common.prognosis.PrognosisCalculator;
+import common.prognosis.*;
 import common.network.UserRecordingData;
-import common.prognosis.PrognosisFactor;
 import database.GTFS;
 import database.PrognosisDatabase;
 import org.apache.log4j.Logger;
@@ -88,7 +85,8 @@ public class PrognosisCalculatorServlet extends HttpServlet implements Calculati
                 response.getWriter().close();
             }
         } catch (Exception e) {
-            response.getWriter().println(new ErrorResponse("Invalid JSON as POST Data").toString());
+            response.getWriter().println(new ErrorResponse(e.getMessage()).toString());
+            response.getWriter().println(NetworkToolbox.readRequest(request));
             response.getWriter().close();
         }
     }
@@ -113,6 +111,10 @@ public class PrognosisCalculatorServlet extends HttpServlet implements Calculati
             long differenceInHour = (new Date().getTime() - prognosis.getTimestamp()) / 1000;
             if (differenceInHour < 24 * 3600) {
                 existingJsons.add(new JSONObject(prognosis.getJson()));
+            } else {
+                if(! PrognosisDatabase.removeEntry(operatingDay, journeyRef)){
+                    throw new SQLException("Seomthing went wrong while removing the cached item " + operatingDay + " - " + journeyRef);
+                }
             }
         }
         if (existingJsons.size() > 0) {
@@ -139,10 +141,10 @@ public class PrognosisCalculatorServlet extends HttpServlet implements Calculati
             double exceptionPropability = 0;
 
             for (PrognosisFactor f : factory) {
-                ArrayList<PrognosisCalculationResult.Item> items = f.getResult().getItems();
+                ArrayList<PrognosisCalculationItem> items = f.getResult().getItems();
 
                 if (i < items.size()) {
-                    PrognosisCalculationResult.Item item = items.get(i);
+                    PrognosisCalculationItem item = items.get(i);
                     delayBoarding += item.getDelayBoardingRegular() * f.getWeight();
                     delayAlighting += item.getDelayAlightingRegular() * f.getWeight();
                     if (item.getDelayException() > 0) {
@@ -178,7 +180,7 @@ public class PrognosisCalculatorServlet extends HttpServlet implements Calculati
             prognosis.put("delayBoarding", delayBoarding);
             prognosis.put("delayAlighting", delayAlighting);
             prognosis.put("delayException", delayException);
-            prognosis.put("exceptionPropability", String.format(Locale.US, "%.2f", exceptionPropability));
+            prognosis.put("exceptionPropability", exceptionPropability);
 
             JSONObject outputitem = new JSONObject();
             outputitem.put("service", leg.getService().toJSON());

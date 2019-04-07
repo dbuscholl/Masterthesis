@@ -34,7 +34,7 @@ public class PrognosisDatabase {
         s.setString(1, operatingDay);
         s.setString(2, journeyRef);
         ResultSet rs = s.executeQuery();
-        if(rs.next()){
+        if (rs.next()) {
             item.setJson(rs.getString("prognosted_delay"));
             item.setTimestamp(rs.getTimestamp("timestamp").getTime());
         } else {
@@ -68,11 +68,25 @@ public class PrognosisDatabase {
             s.close();
             c.close();
 
-            if(execute == 0) {
+            if (execute == 0) {
                 return false;
             }
         }
         return true;
+    }
+
+    public static boolean removeEntry(String operatingDay, String journeyRef) throws SQLException {
+        Connection c = DataSource.getConnection();
+
+        PreparedStatement s = c.prepareStatement("DELETE FROM `prognosis` WHERE `operatingDayRef` = ? AND `journeyRef` = ?");
+        s.setString(1, operatingDay);
+        s.setString(2, journeyRef);
+        int affected = s.executeUpdate();
+
+        s.close();
+        c.close();
+
+        return affected > 0;
     }
 
     public static void createUserAnswersTable() throws SQLException {
@@ -127,7 +141,8 @@ public class PrognosisDatabase {
         private long timestamp;
         private String json;
 
-        public PrognosisItem() {}
+        public PrognosisItem() {
+        }
 
         public PrognosisItem(long timestamp, String json) {
             this.timestamp = timestamp;

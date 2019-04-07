@@ -6,13 +6,13 @@ import java.util.ArrayList;
 
 public class PrognosisCalculationResult {
     private Connection connection;
-    private ArrayList<Item> items = new ArrayList<>();
+    private ArrayList<PrognosisCalculationItem> items = new ArrayList<>();
 
-    public void add(Item resultItem) {
+    public void add(PrognosisCalculationItem resultItem) {
         items.add(resultItem);
     }
 
-    public ArrayList<Item> getItems() {
+    public ArrayList<PrognosisCalculationItem> getItems() {
         return items;
     }
 
@@ -22,45 +22,5 @@ public class PrognosisCalculationResult {
 
     public Connection getConnection() {
         return connection;
-    }
-
-    public static class Item {
-        private int delayBoardingRegular;
-        private int delayAlightingRegular;
-
-        private int delayException;
-        private double exceptionPropability;
-
-        protected void setDelayBoardingRegular(int delayBoardingRegular) {
-            this.delayBoardingRegular = delayBoardingRegular;
-        }
-
-        protected void setDelayAlightingRegular(int delayAlightingRegular) {
-            this.delayAlightingRegular = delayAlightingRegular;
-        }
-
-        protected void setDelayException(int delayException) {
-            this.delayException = delayException;
-        }
-
-        protected void setExceptionPropability(double exceptionPropability) {
-            this.exceptionPropability = exceptionPropability;
-        }
-
-        public int getDelayBoardingRegular() {
-            return delayBoardingRegular;
-        }
-
-        public int getDelayAlightingRegular() {
-            return delayAlightingRegular;
-        }
-
-        public int getDelayException() {
-            return delayException;
-        }
-
-        public double getExceptionPropability() {
-            return exceptionPropability;
-        }
     }
 }

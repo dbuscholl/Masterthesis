@@ -35,6 +35,9 @@ public class Connection {
 
                 for (int i = 0; i < legs.length(); i++) {
                     JSONObject leg = legs.getJSONObject(i);
+                    if (leg.getString("type").equalsIgnoreCase("interchange")) {
+                        continue;
+                    }
                     Trip t = new Trip(leg);
                     this.legs.add(t);
                 }
@@ -173,7 +176,7 @@ public class Connection {
 
             boolean sameName = alighting.getName().equals(s.getName());
             boolean sameArrivalTime = alighting.getArrivalTime().equals(s.getArrivalTime());
-            if (sameName && sameArrivalTime){
+            if (sameName && sameArrivalTime) {
                 return true;
             }
         }

@@ -26,7 +26,7 @@ public class ScheduledTrip {
      * @param route_id ID that uniquely identifies a route
      * @param trip_id ID that identifies a trip
      * @param service_id ID that uniquely identifies a set of dates when service is available for one or more routes.
-     *                   This value is referenced from the IgnoreService class.
+     *                   This value is referenced from the OccurringService class.
      * @param stop_id ID that uniquely identifies a stop from which the service departs
      * @param stop_name contains the name of a stop, station, or station entrance, a name that people understand in the local and tourist vernacular.
      * @param route_short_name contains the short name of a route. This will often be a short, abstract identifier like
@@ -83,7 +83,7 @@ public class ScheduledTrip {
     /**
      *
      * @return ID that uniquely identifies a set of dates when service is available for one or more routes.
-     * This value is referenced from the IgnoreService class.
+     * This value is referenced from the OccurringService class.
      */
     public String getService_id() {
         return service_id;
@@ -92,7 +92,7 @@ public class ScheduledTrip {
     /**
      *
      * @param service_id ID that uniquely identifies a set of dates when service is available for one or more routes.
-     *                   This value is referenced from the IgnoreService class
+     *                   This value is referenced from the OccurringService class
      */
     public void setService_id(String service_id) {
         this.service_id = service_id;

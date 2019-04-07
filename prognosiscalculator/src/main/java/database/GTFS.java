@@ -1,7 +1,7 @@
 package database;
 
 import common.gtfs.Delay;
-import common.gtfs.IgnoreService;
+import common.gtfs.OccurringService;
 import common.gtfs.TripStop;
 import common.network.Service;
 import common.network.StopPoint;
@@ -31,29 +31,36 @@ public class GTFS {
         String departureTime = SQLFormatTools.makeTimeForGtfs(trip.getBoarding().getDepartureTime());
         String arrivalTime = SQLFormatTools.makeTimeForGtfs(trip.getAlighting().getArrivalTime());
         String date = SQLFormatTools.makeDateForGtfs(trip.getBoarding().getDepartureTime());
+        boolean hasRefs = trip.getBoarding().getRef() != null && !trip.getBoarding().getRef().equals("") && trip.getAlighting().getRef() != null && !trip.getAlighting().getRef().equals("");
 
-        ArrayList<IgnoreService> ignoringServices = getIgnoringServiceIds(date);
+        String stopIdentification = "stop_name = ?";
+        if (hasRefs) {
+            stopIdentification = "stop_times.stop_id LIKE ?";
+        }
 
-        PreparedStatement s = c.prepareStatement("SELECT trips.service_id, trips.trip_id, arrival_time, departure_time, stop_sequence, stop_name, trip_headsign, route_short_name FROM vvs.stop_times LEFT JOIN stops ON stop_times.stop_id = stops.stop_id LEFT JOIN trips ON trips.trip_id = stop_times.trip_id LEFT JOIN routes ON routes.route_id = trips.route_id WHERE stop_name = ? AND departure_time = ?");
-        s.setString(1, trip.getBoarding().getName());
+        ArrayList<String> occurringServices = getOccurringServiceIds(date);
+
+        PreparedStatement s = c.prepareStatement("SELECT trips.service_id, trips.trip_id, arrival_time, departure_time, stop_sequence, stop_name, trip_headsign, route_short_name FROM vvs.stop_times LEFT JOIN stops ON stop_times.stop_id = stops.stop_id LEFT JOIN trips ON trips.trip_id = stop_times.trip_id LEFT JOIN routes ON routes.route_id = trips.route_id WHERE " + stopIdentification + " AND departure_time = ?");
+        s.setString(1, hasRefs ? trip.getBoarding().getRef() + "%" : trip.getBoarding().getName());
         s.setString(2, departureTime);
         ResultSet rs = s.executeQuery();
-        ArrayList<String> temporary = getTripIds(ignoringServices, rs);
+        ArrayList<String> temporary = getTripIds(occurringServices, rs);
 
         rs.close();
-        s = c.prepareStatement("SELECT trips.service_id, trips.trip_id, arrival_time, departure_time, stop_sequence, stop_name, trip_headsign, route_short_name FROM vvs.stop_times LEFT JOIN stops ON stop_times.stop_id = stops.stop_id LEFT JOIN trips ON trips.trip_id = stop_times.trip_id LEFT JOIN routes ON routes.route_id = trips.route_id WHERE stop_name = ? AND arrival_time = ?");
-        s.setString(1, trip.getAlighting().getName());
+        s = c.prepareStatement("SELECT trips.service_id, trips.trip_id, arrival_time, departure_time, stop_sequence, stop_name, trip_headsign, route_short_name FROM vvs.stop_times LEFT JOIN stops ON stop_times.stop_id = stops.stop_id LEFT JOIN trips ON trips.trip_id = stop_times.trip_id LEFT JOIN routes ON routes.route_id = trips.route_id WHERE " + stopIdentification + " AND arrival_time = ?");
+        s.setString(1, hasRefs ? trip.getAlighting().getRef() + "%" : trip.getAlighting().getName());
         s.setString(2, arrivalTime);
         rs = s.executeQuery();
 
         // add tripIds which are already found and of which the service IDs are not ignored
         while (rs.next()) {
             String service_id = rs.getString("service_id");
-            if (isIgnoredService(service_id, ignoringServices)) continue;
-
-            if (temporary.contains(rs.getString("trip_id"))) {
-                tripIds.add(rs.getString("trip_id"));
+            if (isOccuringService(service_id, occurringServices)) {
+                if (temporary.contains(rs.getString("trip_id"))) {
+                    tripIds.add(rs.getString("trip_id"));
+                }
             }
+
         }
         rs.close();
         s.close();
@@ -64,6 +71,7 @@ public class GTFS {
 
     public static ArrayList<String> getGTFSTripIds(StopPoint stop, boolean arrival) throws SQLException {
         Connection c = DataSource.getConnection();
+        boolean hasRef = stop.getRef() != null && !stop.getRef().equals("");
         String time, date, column;
         if (arrival) {
             time = SQLFormatTools.makeTimeForGtfs(stop.getArrivalTime());
@@ -75,14 +83,18 @@ public class GTFS {
             column = "departure_time";
         }
 
-        ArrayList<IgnoreService> ignoringServices = getIgnoringServiceIds(date);
+        ArrayList<String> occurringServices = getOccurringServiceIds(date);
 
-        PreparedStatement s = c.prepareStatement("SELECT trips.service_id, trips.trip_id, arrival_time, departure_time, stop_sequence, stop_name, trip_headsign, route_short_name FROM vvs.stop_times LEFT JOIN stops ON stop_times.stop_id = stops.stop_id LEFT JOIN trips ON trips.trip_id = stop_times.trip_id LEFT JOIN routes ON routes.route_id = trips.route_id WHERE stop_name = ? AND " + column + " = ?");
-        s.setString(1, stop.getName());
+        String stopQuery = "stop_name = ?";
+        if (hasRef) {
+            stopQuery = "stop_times.stop_id LIKE ?";
+        }
+        PreparedStatement s = c.prepareStatement("SELECT trips.service_id, trips.trip_id, arrival_time, departure_time, stop_sequence, stop_name, trip_headsign, route_short_name FROM vvs.stop_times LEFT JOIN stops ON stop_times.stop_id = stops.stop_id LEFT JOIN trips ON trips.trip_id = stop_times.trip_id LEFT JOIN routes ON routes.route_id = trips.route_id WHERE " + stopQuery + " AND " + column + " = ?");
+        s.setString(1, hasRef ? stop.getRef() + "%" : stop.getName());
         s.setString(2, time);
         ResultSet rs = s.executeQuery();
 
-        ArrayList<String> tripIds = getTripIds(ignoringServices, rs);
+        ArrayList<String> tripIds = getTripIds(occurringServices, rs);
         rs.close();
         s.close();
         c.close();
@@ -93,25 +105,27 @@ public class GTFS {
     public static ArrayList<String> getGTFSTripIds(StopPoint stop, Service service, boolean everything) throws SQLException {
         Connection c = DataSource.getConnection();
         ArrayList<String> tripIds = new ArrayList<>();
-        ArrayList<IgnoreService> ignoringServices = new ArrayList<>();
+        ArrayList<String> occurringServices = new ArrayList<>();
+        boolean hasRef = stop.getRef() != null && !stop.getRef().equals("");
 
         if (!everything) {
             String date = SQLFormatTools.makeDateForGtfs(stop.getDepartureTime());
-            ignoringServices = getIgnoringServiceIds(date);
+            occurringServices = getOccurringServiceIds(date);
         }
 
-        String stopname = stop.getName();
+        String stopname = hasRef ? stop.getRef() + "%" : stop.getName();
         String linename = service.getLineName();
         String headsign = service.getDesitnation();
+        String stopQuery = hasRef ? "stop_times.stop_id LIKE ?" : "stop_name = ?";
 
-        PreparedStatement s = c.prepareStatement("SELECT trips.service_id, trips.trip_id FROM vvs.stop_times LEFT JOIN stops ON stop_times.stop_id = stops.stop_id LEFT JOIN trips ON trips.trip_id = stop_times.trip_id LEFT JOIN routes ON routes.route_id = trips.route_id WHERE stop_name = ? AND route_short_name = ? AND trip_headsign = ?");
+        PreparedStatement s = c.prepareStatement("SELECT trips.service_id, trips.trip_id FROM vvs.stop_times LEFT JOIN stops ON stop_times.stop_id = stops.stop_id LEFT JOIN trips ON trips.trip_id = stop_times.trip_id LEFT JOIN routes ON routes.route_id = trips.route_id WHERE " + stopQuery + " AND route_short_name = ? AND trip_headsign = ?");
         s.setString(1, stopname);
         s.setString(2, linename);
         s.setString(3, headsign);
         ResultSet rs = s.executeQuery();
 
         if (!everything) {
-            tripIds = getTripIds(ignoringServices, rs);
+            tripIds = getTripIds(occurringServices, rs);
         } else {
             while (rs.next()) {
                 tripIds.add(rs.getString("trip_id"));
@@ -124,23 +138,22 @@ public class GTFS {
         return tripIds;
     }
 
-    private static ArrayList<String> getTripIds(ArrayList<IgnoreService> ignoringServices, ResultSet rs) throws SQLException {
+    private static ArrayList<String> getTripIds(ArrayList<String> ignoringServices, ResultSet rs) throws SQLException {
         ArrayList<String> tripIds = new ArrayList<>();
 
         // add tripIds of which the service IDs are not ignored
         while (rs.next()) {
             String service_id = rs.getString("service_id");
-            if (isIgnoredService(service_id, ignoringServices)) continue;
-            tripIds.add(rs.getString("trip_id"));
+            if (isOccuringService(service_id, ignoringServices)) {
+                tripIds.add(rs.getString("trip_id"));
+            }
         }
         return tripIds;
     }
 
-    private static boolean isIgnoredService(String serviceId, ArrayList<IgnoreService> stack) {
-        for (IgnoreService ignoreService : stack) {
-            if (ignoreService.getService_id().equals(serviceId)) {
-                return true;
-            }
+    private static boolean isOccuringService(String serviceId, ArrayList<String> stack) {
+        if (stack.contains(serviceId)) {
+            return true;
         }
         return false;
     }
@@ -273,8 +286,8 @@ public class GTFS {
      * @return List of IgnorService items, so if a TripStop contains a serviceId which is in this list, it can be removed
      * @throws SQLException
      */
-    public static ArrayList<IgnoreService> getIgnoringServiceIds() throws SQLException {
-        return getIgnoringServiceIds(null);
+    public static ArrayList<String> getOccurringServiceIds() throws SQLException {
+        return getOccurringServiceIds(null);
     }
 
     public static ArrayList<TripStop> getFullTrip(String tripId) throws SQLException {
@@ -310,9 +323,9 @@ public class GTFS {
      * @return List of IgnorService items, so if a TripStop contains a serviceId which is in this list, it can be removed
      * @throws SQLException
      */
-    public static ArrayList<IgnoreService> getIgnoringServiceIds(String date) throws SQLException {
+    public static ArrayList<String> getOccurringServiceIds(String date) throws SQLException {
         SimpleDateFormat datesdf = new SimpleDateFormat(SQLFormatTools.datePattern);
-        ArrayList<IgnoreService> ignoringServices = new ArrayList<>();
+        ArrayList<String> occurringServices = new ArrayList<>();
 
         // set date to now if date is not provided or date is invalid
         Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("Europe/Berlin"));
@@ -327,19 +340,20 @@ public class GTFS {
         String dowColumn = SQLFormatTools.getColumnStringDayOfWeek(cal.get(Calendar.DAY_OF_WEEK));
         Connection ds = DataSource.getConnection();
         //PreparedStatement s = ds.prepareStatement("SELECT DISTINCT calendar_dates.service_id, exception_type FROM `calendar_dates` LEFT JOIN calendar ON calendar_dates.service_id = calendar.service_id where `date` = ? OR (date != ? AND exception_type = 1) and start_date <= ? AND end_date >= ? AND " + dowColumn + " = 1 ORDER BY `date` ASC");
-        PreparedStatement s = ds.prepareStatement("SELECT DISTINCT calendar.service_id, exception_type FROM `calendar` LEFT JOIN calendar_dates ON calendar_dates.service_id = calendar.service_id WHERE ((start_date >= ? OR end_date <= ? OR " + dowColumn + " = 0) AND calendar.service_id NOT IN (SELECT service_id FROM calendar_dates WHERE exception_type = 1 AND date = ?)) OR (date = ? AND exception_type = 2)");
+        //PreparedStatement s = ds.prepareStatement("SELECT DISTINCT calendar.service_id, exception_type FROM `calendar` LEFT JOIN calendar_dates ON calendar_dates.service_id = calendar.service_id WHERE ((start_date >= ? OR end_date <= ? OR " + dowColumn + " = 0) AND calendar.service_id NOT IN (SELECT service_id FROM calendar_dates WHERE exception_type = 1 AND date = ?)) OR (date = ? AND exception_type = 2)");
+        PreparedStatement s = ds.prepareStatement("SELECT DISTINCT calendar.service_id FROM vvs.calendar LEFT JOIN calendar_dates ON calendar_dates.service_id = calendar.service_id WHERE " + dowColumn + " = 1 AND start_date <= ? AND end_date >= ? AND calendar.service_id NOT IN (SELECT service_id FROM vvs.calendar_dates WHERE date = ? AND exception_type = 2) OR calendar.service_id IN (SELECT service_id FROM vvs.calendar_dates WHERE date = ? AND exception_type = 1) ");
         s.setString(1, datesdf.format(cal.getTime()));
         s.setString(2, datesdf.format(cal.getTime()));
         s.setString(3, datesdf.format(cal.getTime()));
         s.setString(4, datesdf.format(cal.getTime()));
         ResultSet rs = s.executeQuery();
         while (rs.next()) {
-            ignoringServices.add(new IgnoreService(rs.getString("service_id"), rs.getInt("exception_type")));
+            occurringServices.add(rs.getString("service_id"));
         }
         rs.close();
         s.close();
         ds.close();
-        return ignoringServices;
+        return occurringServices;
     }
 
     private static ArrayList<String> getStopNamesAsList(ArrayList<StopPoint> stops) {

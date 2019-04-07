@@ -8,6 +8,15 @@ import java.io.BufferedReader;
 
 public class NetworkToolbox {
     public static JSONObject readJSONObjectFromRequestBody(HttpServletRequest request) {
+        try {
+            return new JSONObject(readRequest(request));
+        } catch (JSONException e) {
+            // crash and burn
+            return null;
+        }
+    }
+
+    public static String readRequest(HttpServletRequest request) {
         StringBuilder jb = new StringBuilder();
         String line = null;
         try {
@@ -16,11 +25,6 @@ public class NetworkToolbox {
                 jb.append(line);
         } catch (Exception e) { /*report an error*/ }
 
-        try {
-            return new JSONObject(jb.toString());
-        } catch (JSONException e) {
-            // crash and burn
-            return null;
-        }
+        return jb.toString();
     }
 }

@@ -49,7 +49,7 @@ public class TriasFactor extends PrognosisFactor {
                 ArrayList<Delay> delaysAtAlighting = Delay.getDelaysForStopPoint(t, t.getAlighting(), delays);
 
                 // calculate regular
-                PrognosisCalculationResult.Item resultItem = new PrognosisCalculationResult.Item();
+                PrognosisCalculationItem resultItem = new PrognosisCalculationItem();
                 if (calculationModel == PronosisFactorCalculationModel.NEUTRAL || calculationModel == PronosisFactorCalculationModel.OPTIMISTIC) {
                     // get values, get their median, round it, cast to Int, add it to the result item in one line...
                     resultItem.setDelayBoardingRegular(MathToolbox.castToIntWithPossibleLoss(Math.round(MathToolbox.median(Delay.getDelayValues(delaysAtBoarding)))));
@@ -126,6 +126,7 @@ public class TriasFactor extends PrognosisFactor {
         SimpleDateFormat datesdf = new SimpleDateFormat(SQLFormatTools.datePattern);
 
         Calendar calendar = Calendar.getInstance();
+        // TODO: Set date to date of request. It currently always uses today. Thats wrong!
         for (int i = 0; i < AMOUNT_WEEKRS; i++) {
             calendar.set(Calendar.DAY_OF_MONTH, calendar.get(Calendar.DAY_OF_MONTH) - 7);
             String date = datesdf.format(calendar.getTime());

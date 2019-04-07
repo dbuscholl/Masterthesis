@@ -33,16 +33,18 @@ public class Trip {
             type = json.has("type") ? TripType.valueOf(json.getString("type")) : null;
             interchangeType = json.has("interchangeType") ? json.getString("interchangeType") : null;
 
-            service = json.has("service") ? new Service(json.getJSONObject("service")) : null;
+            if (type != null && !type.name().equalsIgnoreCase("INTERCHANGE")) {
+                service = json.has("service") ? new Service(json.getJSONObject("service")) : null;
+            }
 
             boarding = new StopPoint(json.getJSONObject("boarding"));
             alighting = new StopPoint(json.getJSONObject("alighting"));
 
-            if(json.has("intermediates") && json.getJSONArray("intermediates").length() > 0) {
+            if (json.has("intermediates") && json.getJSONArray("intermediates").length() > 0) {
                 this.intermediates = new ArrayList<>();
                 JSONArray intermediates = json.getJSONArray("intermediates");
 
-                for(int i = 0; i < intermediates.length(); i++) {
+                for (int i = 0; i < intermediates.length(); i++) {
                     JSONObject intermediate = intermediates.getJSONObject(i);
                     StopPoint stop = new StopPoint(intermediate);
                     this.intermediates.add(stop);
