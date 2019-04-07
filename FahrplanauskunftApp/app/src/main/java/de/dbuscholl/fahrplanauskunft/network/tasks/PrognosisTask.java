@@ -58,15 +58,16 @@ public class PrognosisTask extends AsyncTask<String, Void, String> {
                 if(error.has("Error Description")) {
                     this.error = error.getString("Error Description");
                 }
+            } else {
+                JSONArray array = new JSONArray(response);
+                for (int i = 0; i < array.length(); i++) {
+                    JSONObject o = array.getJSONObject(i);
+                    PrognosisCalculationItem p = new PrognosisCalculationItem(o.getJSONObject("prognosis"));
+                    Service s = new Service(o.getJSONObject("service"));
+                    items.add(new PrognosisCalculationResult(p, s));
+                }
+                this.items = items;
             }
-            JSONArray array = new JSONArray(response);
-            for (int i = 0; i < array.length(); i++) {
-                JSONObject o = array.getJSONObject(i);
-                PrognosisCalculationItem p = new PrognosisCalculationItem(o.getJSONObject("prognosis"));
-                Service s = new Service(o.getJSONObject("service"));
-                items.add(new PrognosisCalculationResult(p, s));
-            }
-            this.items = items;
             return null;
         } catch (IOException e) {
             e.printStackTrace();
