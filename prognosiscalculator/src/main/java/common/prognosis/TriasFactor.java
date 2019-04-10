@@ -19,6 +19,8 @@ public class TriasFactor extends PrognosisFactor {
     private int currentProcessingIndex = 0;
     private ArrayList<String> currentBoardingIds = new ArrayList<>();
 
+    private Logger logger = Logger.getLogger(this.getClass());
+
     public TriasFactor(Connection connection) {
         super(connection);
     }
@@ -124,9 +126,16 @@ public class TriasFactor extends PrognosisFactor {
         ArrayList<Delay> delaysTemporary = GTFS.getDelaysForIds(currentBoardingIds);
         ArrayList<Delay> delays = new ArrayList<>();
         SimpleDateFormat datesdf = new SimpleDateFormat(SQLFormatTools.datePattern);
+        Trip trip = connection.getLegs().get(currentProcessingIndex);
+        Date originalDate = SQLFormatTools.parseTriasTime(trip.getBoarding().getDepartureTime());
+        if(originalDate == null) {
+            logger.warn(type.toString() + " did not find date for Connection " + trip.getService().getLineName() + " -> " + trip.getService().getDesitnation());
+            return delays;
+        }
 
         Calendar calendar = Calendar.getInstance();
-        // TODO: Set date to date of request. It currently always uses today. Thats wrong!
+        calendar.setLenient(true);
+        calendar.setTime(originalDate);
         for (int i = 0; i < AMOUNT_WEEKRS; i++) {
             calendar.set(Calendar.DAY_OF_MONTH, calendar.get(Calendar.DAY_OF_MONTH) - 7);
             String date = datesdf.format(calendar.getTime());
