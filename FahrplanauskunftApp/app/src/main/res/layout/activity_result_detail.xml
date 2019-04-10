@@ -8,7 +8,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="4dp">
+        android:paddingTop="4dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -71,21 +71,36 @@
                 android:text="24.02.2019" />
         </LinearLayout>
 
+        <LinearLayout
+            android:id="@+id/result_spinner"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <ProgressBar
+                style="?android:attr/progressBarStyleSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/progressBar"
+                android:progressDrawable="@drawable/circular_progress_spinner" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp"
+                android:layout_weight="0.85"
+                android:text="Lade Verspätungsprognose..."/>
+        </LinearLayout>
+
         <View
-            android:id="@+id/divider"
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:layout_marginTop="4dp"
-            android:layout_weight="1"
-            android:background="#ababab"
-            android:visibility="visible" />
+            android:background="@android:color/darker_gray"/>
 
         <ScrollView
             android:id="@+id/result_content"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="64dp" />
-
-
+            android:paddingBottom="48dp" />
     </LinearLayout>
 </android.support.design.widget.CoordinatorLayout>

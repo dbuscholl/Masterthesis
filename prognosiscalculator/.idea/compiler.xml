@@ -9,5 +9,8 @@
         <module name="prognosiscalculator" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="prognosiscalculator" target="8" />
+    </bytecodeTargetLevel>
   </component>
 </project>

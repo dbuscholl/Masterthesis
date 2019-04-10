@@ -16,6 +16,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -49,6 +50,8 @@ public class TripDetailActivity extends AppCompatActivity implements PrognosisTa
     SharedPreferences mPref;
     SharedPreferences.Editor medit;
     ServiceConnectedCallback serviceConnectedCallback;
+    PrognosisTask pt;
+    LinearLayout spinner;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -68,6 +71,7 @@ public class TripDetailActivity extends AppCompatActivity implements PrognosisTa
         TextView startStation = findViewById(R.id.result_tripstart_text);
         TextView endStation = findViewById(R.id.result_tripend_text);
         TextView dateTextView = findViewById(R.id.result_tripdate);
+        spinner = findViewById(R.id.result_spinner);
 
         startStation.setText(connection.getLegs().get(0).getBoarding().getName());
         endStation.setText(connection.getLegs().get(connection.getLegs().size() - 1).getAlighting().getName());
@@ -122,7 +126,7 @@ public class TripDetailActivity extends AppCompatActivity implements PrognosisTa
             JSONObject sendingData = new JSONObject();
             JSONObject c = connection.toJSON();
             sendingData.put("connection", c==null?"":c);
-            PrognosisTask pt = new PrognosisTask(this, getApplicationContext());
+            pt = new PrognosisTask(this, getApplicationContext());
             pt.execute(sendingData.toString());
         } catch (JSONException e) {
             e.printStackTrace();
@@ -132,6 +136,7 @@ public class TripDetailActivity extends AppCompatActivity implements PrognosisTa
 
     @Override
     public void onSuccess(ArrayList<PrognosisCalculationResult> items) {
+        spinner.setVisibility(View.GONE);
         if(layout.getChildCount() > 0) {
             layout.removeAllViews();
 
@@ -139,6 +144,7 @@ public class TripDetailActivity extends AppCompatActivity implements PrognosisTa
             clv.setPrognosis(items);
             clv.build(connection);
             layout.addView(clv);
+
         }
     }
 
@@ -232,5 +238,13 @@ public class TripDetailActivity extends AppCompatActivity implements PrognosisTa
 
     private interface ServiceConnectedCallback {
         void onConnected();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if(pt!=null) {
+            pt.cancel(true);
+        }
     }
 }
