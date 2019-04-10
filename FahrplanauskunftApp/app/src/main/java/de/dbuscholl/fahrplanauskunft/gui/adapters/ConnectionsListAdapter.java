@@ -12,6 +12,7 @@ import java.util.ArrayList;
 
 import de.dbuscholl.fahrplanauskunft.FormatTools;
 import de.dbuscholl.fahrplanauskunft.R;
+import de.dbuscholl.fahrplanauskunft.common.Constants;
 import de.dbuscholl.fahrplanauskunft.network.entities.Connection;
 import de.dbuscholl.fahrplanauskunft.network.entities.Trip;
 
@@ -56,12 +57,12 @@ public class ConnectionsListAdapter extends ArrayAdapter<Connection> {
         }
 
         // get items
-        viewHolder.startTime = (TextView) convertView.findViewById(R.id.resultStartTime);
-        viewHolder.startTimeDelay = (TextView) convertView.findViewById(R.id.resultStartTimeDelay);
-        viewHolder.endTime = (TextView) convertView.findViewById(R.id.resultEndTime);
-        viewHolder.endTimeDelay = (TextView) convertView.findViewById(R.id.resultEndTimeDelay);
-        viewHolder.services = (TextView) convertView.findViewById(R.id.services);
-        viewHolder.duration = (TextView) convertView.findViewById(R.id.duration);
+        viewHolder.startTime = convertView.findViewById(R.id.resultStartTime);
+        viewHolder.startTimeDelay = convertView.findViewById(R.id.resultStartTimeDelay);
+        viewHolder.endTime = convertView.findViewById(R.id.resultEndTime);
+        viewHolder.endTimeDelay = convertView.findViewById(R.id.resultEndTimeDelay);
+        viewHolder.services = convertView.findViewById(R.id.services);
+        viewHolder.duration = convertView.findViewById(R.id.duration);
 
         lastPosition = position;
         String departureTime = c.getLegs().get(0).getBoarding().getDepartureTime();
@@ -75,7 +76,7 @@ public class ConnectionsListAdapter extends ArrayAdapter<Connection> {
             if (startTimeEstimated != null) {
                 long diff = getDelayForTextView(departureTime, startTimeEstimated);
                 if (diff > 5) {
-                    viewHolder.startTimeDelay.setTextColor(Color.rgb(244, 37, 30));
+                    viewHolder.startTimeDelay.setTextColor(Constants.COLOR_DELAY_LATE);
                 }
                 viewHolder.startTimeDelay.setText("+" + String.valueOf(diff));
             }
@@ -87,7 +88,7 @@ public class ConnectionsListAdapter extends ArrayAdapter<Connection> {
             if (endTimeEstimated != null) {
                 long diff = getDelayForTextView(arrivalTime, endTimeEstimated);
                 if (diff > 5) {
-                    viewHolder.endTimeDelay.setTextColor(Color.rgb(244, 37, 30));
+                    viewHolder.endTimeDelay.setTextColor(Constants.COLOR_DELAY_LATE);
                 }
                 viewHolder.endTimeDelay.setText("+" + String.valueOf(diff));
             }

@@ -6,6 +6,7 @@ import android.os.AsyncTask;
 
 import java.io.IOException;
 
+import de.dbuscholl.fahrplanauskunft.common.Constants;
 import de.dbuscholl.fahrplanauskunft.network.Client;
 
 public class QuestionaireResultTask extends AsyncTask<String, Void, String> {
@@ -29,7 +30,7 @@ public class QuestionaireResultTask extends AsyncTask<String, Void, String> {
     @Override
     protected void onPreExecute() {
         if (dialog != null) {
-            dialog.setMessage("Sende Fahrtendaten...");
+            dialog.setMessage(Constants.MSG_SENDING_QUESTIONNAIRE_RESULTS);
             dialog.show();
         }
     }
@@ -38,7 +39,7 @@ public class QuestionaireResultTask extends AsyncTask<String, Void, String> {
     @Override
     protected String doInBackground(String... strings) {
         try {
-            Client c = new Client("http://busbilder.net:8080/prognosiscalculator/import");
+            Client c = new Client(Constants.URL_USERDATA_IMPORTER);
             request = strings[0];
             String response = c.sendPostJSON(strings[0]);
             this.response = response;

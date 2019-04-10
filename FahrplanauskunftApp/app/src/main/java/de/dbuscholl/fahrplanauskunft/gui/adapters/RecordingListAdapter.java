@@ -12,6 +12,7 @@ import java.util.List;
 
 import de.dbuscholl.fahrplanauskunft.FormatTools;
 import de.dbuscholl.fahrplanauskunft.R;
+import de.dbuscholl.fahrplanauskunft.common.Constants;
 import de.dbuscholl.fahrplanauskunft.gui.activities.Questionnaire;
 import de.dbuscholl.fahrplanauskunft.gui.services.TripRecordingService.FinishedRecording;
 import de.dbuscholl.fahrplanauskunft.network.entities.Connection;
@@ -98,11 +99,11 @@ public class RecordingListAdapter extends ArrayAdapter<FinishedRecording> {
                     });
 
                 } else {
-                    viewHolder.boardingStopTextView.setText("No Connection Data!");
+                    viewHolder.boardingStopTextView.setText(Constants.ERRORMSG_NO_CONNECTION_DATA);
                 }
 
             } else {
-                viewHolder.boardingStopTextView.setText("No Connection Data!");
+                viewHolder.boardingStopTextView.setText(Constants.ERRORMSG_NO_CONNECTION_DATA);
             }
 
 

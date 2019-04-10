@@ -12,6 +12,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import de.dbuscholl.fahrplanauskunft.common.Constants;
 import de.dbuscholl.fahrplanauskunft.network.Client;
 import de.dbuscholl.fahrplanauskunft.network.entities.PrognosisCalculationItem;
 import de.dbuscholl.fahrplanauskunft.network.entities.PrognosisCalculationResult;
@@ -47,7 +48,7 @@ public class PrognosisTask extends AsyncTask<String, Void, String> {
     @Override
     protected String doInBackground(String... strings) {
         try {
-            Client c = new Client("http://busbilder.net:8080/prognosiscalculator/calculate");
+            Client c = new Client(Constants.URL_PROGNOSISCALCULATOR);
             c.setLongTimeout();
             request = strings[0];
             String response = c.sendPostJSON(strings[0]);

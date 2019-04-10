@@ -31,6 +31,7 @@ import java.util.TimeZone;
 import de.dbuscholl.fahrplanauskunft.FormatTools;
 import de.dbuscholl.fahrplanauskunft.R;
 import de.dbuscholl.fahrplanauskunft.common.App;
+import de.dbuscholl.fahrplanauskunft.common.Constants;
 import de.dbuscholl.fahrplanauskunft.gui.ConnectionsListView;
 import de.dbuscholl.fahrplanauskunft.gui.services.TripRecordingService;
 import de.dbuscholl.fahrplanauskunft.gui.fragments.ConnectionsFragment;
@@ -88,12 +89,12 @@ public class TripDetailActivity extends AppCompatActivity implements PrognosisTa
         String departureTime = connection.getLegs().get(0).getBoarding().getDepartureTime();
         long diffAlight = (FormatTools.parseTrias(arrivalTime, null).getTime() - cal.getTime().getTime()) / 1000 / 60;
         long diffBoarding = (FormatTools.parseTrias(departureTime, null).getTime() - cal.getTime().getTime()) / 1000 / 60;
-        if (diffAlight > -60 && diffAlight < 0) {
+        if (diffAlight > (Constants.TRIP_QUESTIONNAIRE_MINDIFF * -1) && diffAlight < Constants.TRIP_QUESTIONNAIRE_MAXDIFF) {
             final Handler handler = new Handler();
             handler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    Snackbar make = Snackbar.make(layout, "Bist du mit dieser Verbindung gefahren?", Snackbar.LENGTH_INDEFINITE);
+                    Snackbar make = Snackbar.make(layout, Constants.MSG_TAKEN_TRIP_PROMPT, Snackbar.LENGTH_INDEFINITE);
                     make.setAction("Ja!", new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
@@ -106,12 +107,12 @@ public class TripDetailActivity extends AppCompatActivity implements PrognosisTa
             }, 2000);
         }
 
-        if (diffBoarding > -2 && diffBoarding < 25) {
+        if (diffBoarding > (Constants.TRIP_RECORIDNG_MINDIFF * -1) && Constants.TRIP_RECORDING_MAXDIFF < 25) {
             final Handler handler = new Handler();
             handler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    Snackbar make = Snackbar.make(layout, "Möchtest du diese Verbindung aufzeichnen?", Snackbar.LENGTH_INDEFINITE);
+                    Snackbar make = Snackbar.make(layout, Constants.MSG_RECORD_TRIP_PROMPT, Snackbar.LENGTH_INDEFINITE);
                     make.setAction("Ja!", new Action() {
                     });
                     make.show();
@@ -154,7 +155,7 @@ public class TripDetailActivity extends AppCompatActivity implements PrognosisTa
             } else {
                 ActivityCompat.requestPermissions(TripDetailActivity.this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_PERMISSIONS);
             }
-            Toast.makeText(getApplicationContext(), "Please enable the gps", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), Constants.ERRORMSG_GPS_NOPERMISSION, Toast.LENGTH_SHORT).show();
         } else {
             boolean_permission = true;
         }
@@ -168,12 +169,12 @@ public class TripDetailActivity extends AppCompatActivity implements PrognosisTa
             case REQUEST_PERMISSIONS: {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     boolean_permission = true;
-                    Snackbar make = Snackbar.make(layout, "Möchtest du diese Verbindung aufzeichnen?", Snackbar.LENGTH_INDEFINITE);
+                    Snackbar make = Snackbar.make(layout, Constants.MSG_RECORD_TRIP_PROMPT, Snackbar.LENGTH_INDEFINITE);
                     make.setAction("Ja!", new Action() {
                     });
                     make.show();
                 } else {
-                    Toast.makeText(getApplicationContext(), "Please allow the permission", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(), Constants.MSG_GPS_ALLOW_PROMPT, Toast.LENGTH_LONG).show();
 
                 }
             }
@@ -217,7 +218,7 @@ public class TripDetailActivity extends AppCompatActivity implements PrognosisTa
                         public void onConnected() {
                             boolean added = gpsService.addConnection(connection);
                             if (!added) {
-                                Toast.makeText(getApplicationContext(), "Kann nicht aufgenommen werden.", Toast.LENGTH_LONG).show();
+                                Toast.makeText(getApplicationContext(), Constants.ERRORMSG_NOT_ADDED_TO_SERVICE, Toast.LENGTH_LONG).show();
                                 return;
                             }
                             String request = TripInfoDownloadTask.getRequest();
@@ -231,7 +232,7 @@ public class TripDetailActivity extends AppCompatActivity implements PrognosisTa
                     Log.d(TripDetailActivity.this.getClass().getName(), "Bound service");
                 }
             } else {
-                Toast.makeText(getApplicationContext(), "Please enable the gps", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), Constants.MSG_GPS_ALLOW_PROMPT, Toast.LENGTH_SHORT).show();
             }
         }
     }

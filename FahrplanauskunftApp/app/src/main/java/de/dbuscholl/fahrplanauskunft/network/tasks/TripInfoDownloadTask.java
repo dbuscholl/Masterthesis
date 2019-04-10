@@ -46,7 +46,7 @@ public class TripInfoDownloadTask extends AsyncTask<String, Void, ArrayList<Conn
     @Override
     protected void onPreExecute() {
         if (dialog != null) {
-            dialog.setMessage("Suche nach Fahrten...");
+            dialog.setMessage(Constants.MSG_SEARCHINGTRIPS);
             dialog.show();
         }
     }
@@ -56,7 +56,7 @@ public class TripInfoDownloadTask extends AsyncTask<String, Void, ArrayList<Conn
     protected ArrayList<Connection> doInBackground(String... strings) {
         try {
             results = new ArrayList<>();
-            Client c = new Client("http://efastatic.vvs.de/kleinanfrager/trias");
+            Client c = new Client(Constants.URL_TRIASAPI);
             request = strings[0];
             String response = c.sendPostXML(strings[0]);
             TripInfoDownloadTask.response = response;
@@ -157,10 +157,10 @@ public class TripInfoDownloadTask extends AsyncTask<String, Void, ArrayList<Conn
         Element endTime = interchangeElement.getChild("TimeWindowStart", Constants.NAMESPACE);
 
         if (stopPointRefStart == null && stopNameStart == null) {
-            throw new NullPointerException("Name and Ref of Start is null");
+            throw new NullPointerException(Constants.ERRORMSG_TRIAS_NOREFS);
         }
         if (stopPointRefEnd == null && stopNameEnd == null) {
-            throw new NullPointerException("Name and Ref of End is null");
+            throw new NullPointerException(Constants.ERRORMSG_TRIAS_NOREFS);
         }
 
         StopPoint start = new StopPoint();
@@ -258,9 +258,9 @@ public class TripInfoDownloadTask extends AsyncTask<String, Void, ArrayList<Conn
     }
 
     private String getSubmode(Element mode) {
-        String[] types = {"RailSubmode", "CoachSubmode", "MetroSubmode", "BusSubmode", "TramSubmode", "WaterSubmode", "AirSubmode", "TelecabinSubmode", "FunicularSubmode", "TaxiSubmode"};
 
-        for (String s : types) {
+
+        for (String s : Constants.TRIAS_SUBPMODE_TYPES) {
             Element e = mode.getChild(s, Constants.NAMESPACE);
             if (e != null) {
                 return e.getTextNormalize();

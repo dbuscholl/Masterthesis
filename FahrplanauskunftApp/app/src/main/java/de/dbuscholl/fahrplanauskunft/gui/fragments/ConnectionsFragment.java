@@ -35,6 +35,7 @@ import java.util.TimeZone;
 
 import de.dbuscholl.fahrplanauskunft.FormatTools;
 import de.dbuscholl.fahrplanauskunft.R;
+import de.dbuscholl.fahrplanauskunft.common.Constants;
 import de.dbuscholl.fahrplanauskunft.gui.activities.TripDetailActivity;
 import de.dbuscholl.fahrplanauskunft.gui.adapters.AutoCompleteAdapter;
 import de.dbuscholl.fahrplanauskunft.gui.adapters.ConnectionsListAdapter;
@@ -103,7 +104,7 @@ public class ConnectionsFragment extends Fragment {
             public void onClick(View v) {
                 Calendar cal = Calendar.getInstance();
                 int year = cal.get(Calendar.YEAR);
-                int month = cal.get(Calendar.MONTH) + 1;
+                int month = cal.get(Calendar.MONTH);
                 int day = cal.get(Calendar.DAY_OF_MONTH);
 
                 DatePickerDialog dpd = new DatePickerDialog(getActivity(), android.R.style.Theme_DeviceDefault_Dialog_MinWidth, dateSetListener, year, month, day);
@@ -167,7 +168,9 @@ public class ConnectionsFragment extends Fragment {
                 timeValue = timeButton.getText().toString();
 
                 if (fromRef == null || toRef == null) {
-                    Toast.makeText(getContext(), "Invalid refs. Please retype stations to get results!", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getContext(), Constants.ERRORMSG_STOP_REFS_LOST, Toast.LENGTH_LONG).show();
+                    fromTextView.setText("");
+                    toTextView.setText("");
                     return;
                 }
 

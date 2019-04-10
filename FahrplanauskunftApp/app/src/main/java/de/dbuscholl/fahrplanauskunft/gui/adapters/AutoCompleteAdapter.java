@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import de.dbuscholl.fahrplanauskunft.R;
+import de.dbuscholl.fahrplanauskunft.common.Constants;
 import de.dbuscholl.fahrplanauskunft.network.Client;
 import de.dbuscholl.fahrplanauskunft.network.xml.LocationAutocompleteRequest;
 import de.dbuscholl.fahrplanauskunft.network.entities.Station;
@@ -89,7 +90,7 @@ public class AutoCompleteAdapter extends ArrayAdapter<String> implements Filtera
             try {
                 LocationAutocompleteRequest lar = new LocationAutocompleteRequest(context.getResources().openRawResource(R.raw.stop_autocomplete_request));
                 lar.buildRequest(constraint[0]);
-                Client client = new Client("http://efastatic.vvs.de/kleinanfrager/trias");
+                Client client = new Client(Constants.URL_TRIASAPI);
                 String response = client.sendPostXML(lar.toString());
                 stations = Station.stationListFromTriasResult(response);
             } catch (IOException | JDOMException e) {
