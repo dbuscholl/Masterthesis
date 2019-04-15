@@ -1,16 +1,13 @@
 package database;
 
 import common.gtfs.Delay;
-import common.gtfs.OccurringService;
 import common.gtfs.TripStop;
 import common.network.Service;
 import common.network.StopPoint;
 import common.network.Trip;
+import common.prognosis.PrognosisFactor;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -20,7 +17,7 @@ import java.util.TimeZone;
 
 public class GTFS {
 
-    public static String getTripId(Trip trip) throws SQLException {
+    public static String getGTFSTripId(Trip trip) throws SQLException {
         ArrayList<String> tripIds = getGTFSTripIds(trip);
         return tripIds.size() > 0 ? tripIds.get(0) : null;
     }
@@ -198,7 +195,7 @@ public class GTFS {
         for (Trip t : connection.getLegs()) {
             String tripId = t.getGTFSTripId();
             if (tripId == null) {
-                tripId = getTripId(t);
+                tripId = getGTFSTripId(t);
                 t.setGTFSTripId(tripId);
             }
 
@@ -237,8 +234,17 @@ public class GTFS {
         }
     }
 
+    public static ArrayList<Delay> getUserDelaysForIds(ArrayList<String> ids) throws SQLException {
+        return getDelaysForIds(ids, true);
+    }
+
     public static ArrayList<Delay> getDelaysForIds(ArrayList<String> ids) throws SQLException {
+        return getDelaysForIds(ids, false);
+    }
+
+    private static ArrayList<Delay> getDelaysForIds(ArrayList<String> ids, boolean userDelays) throws SQLException {
         ArrayList<Delay> delays = new ArrayList<>();
+        String table = userDelays ? "user_recordings" : "delays";
 
         StringBuilder builder = new StringBuilder();
         if (ids.size() < 5) {
@@ -256,7 +262,7 @@ public class GTFS {
         }
 
         Connection c = DataSource.getConnection();
-        PreparedStatement s = c.prepareStatement("SELECT * FROM vvs.delays WHERE " + builder.toString());
+        PreparedStatement s = c.prepareStatement("SELECT * FROM " + table + " WHERE " + builder.toString());
         for (int i = 1; i <= ids.size(); i++) {
             String id = ids.get(i - 1);
             s.setString(i, id);
@@ -265,8 +271,10 @@ public class GTFS {
 
         while (rs.next()) {
             Delay d = new Delay();
-            d.setDelayId(rs.getInt("id"));
-            d.setTripId(rs.getString("tripId"));
+            if (!userDelays) {
+                d.setDelayId(rs.getInt("id"));
+            }
+            d.setTripId(userDelays ? rs.getString("trip_id") : rs.getString("tripId"));
             d.setDelay(rs.getInt("delay"));
             d.setTimestamp(rs.getString("timestamp"));
             d.setStop_sequence(rs.getInt("stop_sequence"));
@@ -314,6 +322,61 @@ public class GTFS {
         c.close();
 
         return fullTrip;
+    }
+
+    public static ArrayList<Integer> getInterchangeValues(String fromTripId, String toTripId) throws SQLException {
+        ArrayList<Integer> values = new ArrayList<>();
+
+        Connection c = DataSource.getConnection();
+        PreparedStatement s = c.prepareStatement("SELECT * FROM user_answers WHERE trip_id = ? AND interchangeToTripId = ?");
+        s.setString(1, fromTripId);
+        s.setString(2, toTripId);
+
+        ResultSet rs = s.executeQuery();
+        while(rs.next()) {
+            values.add(rs.getInt("successfullyInterchanged"));
+        }
+
+        rs.close();
+        s.close();
+        c.close();
+
+        return values;
+    }
+
+    public static ArrayList<Integer> getAnswerValues(ArrayList<String> ids, PrognosisFactor.PrognosisFactorType type) throws SQLException {
+        ArrayList<Integer> values = new ArrayList<>();
+        String questionmarks = getParameterListFromArray(ids);
+
+        Connection c = DataSource.getConnection();
+        PreparedStatement s = c.prepareStatement("SELECT * FROM user_answers WHERE trip_id IN(" + questionmarks + ")");
+
+        for (int i = 1; i <= ids.size(); i++) {
+            String id = ids.get(i - 1);
+            s.setString(i, id);
+        }
+
+        ResultSet rs = s.executeQuery();
+        switch (type) {
+            case QUESTIONNAIRE_CAPACITY:
+                while (rs.next())
+                    values.add(rs.getInt("capacity"));
+                break;
+            case QUESTIONNAIRE_CLEANNESS:
+                while(rs.next())
+                    values.add(rs.getInt("cleanness"));
+                break;
+            case QUESTIONNAIRE_DELAY:
+                while(rs.next())
+                    values.add(rs.getInt("delay"));
+                break;
+        }
+
+        rs.close();
+        s.close();
+        c.close();
+
+        return values;
     }
 
     /**

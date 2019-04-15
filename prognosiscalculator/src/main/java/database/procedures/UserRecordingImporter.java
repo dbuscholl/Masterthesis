@@ -47,7 +47,7 @@ public class UserRecordingImporter {
 
     private static void addTripIdsToConnection(Connection c) throws SQLException {
         for (Trip t : c.getLegs()) {
-            String tripId = GTFS.getTripId(t);
+            String tripId = GTFS.getGTFSTripId(t);
             t.setGTFSTripId(tripId);
         }
 
