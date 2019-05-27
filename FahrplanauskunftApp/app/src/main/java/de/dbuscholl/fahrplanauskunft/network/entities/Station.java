@@ -12,7 +12,11 @@ import java.util.ArrayList;
 import de.dbuscholl.fahrplanauskunft.common.Constants;
 import de.dbuscholl.fahrplanauskunft.network.xml.XMLDocument;
 
-public class Station implements Parcelable {
+/**
+ * This entity class contains information about a station. A station can have information like geocoordinates and name.
+ * This class is not used for intermediates of a trip leg. It is used for stations for the autocomplete view.
+ */
+public class Station {
     private String ref;
     private String name;
     private String locationRef;
@@ -20,7 +24,20 @@ public class Station implements Parcelable {
     private float longitude;
     private float latitude;
 
+    /**
+     * empty constructor
+     */
     public Station() {}
+
+    /**
+     * parameterized constructor
+     * @param ref id of the station
+     * @param name name of the station
+     * @param locationRef reference about the location of the station which is usually the city
+     * @param locationName name of the location which is usually the name of the city
+     * @param longitude longitude
+     * @param latitude latitude
+     */
     public Station(String ref, String name, String locationRef, String locationName, float longitude, float latitude) {
         this.ref = ref;
         this.name = name;
@@ -30,80 +47,116 @@ public class Station implements Parcelable {
         this.latitude = latitude;
     }
 
-    protected Station(Parcel in) {
-        ref = in.readString();
-        name = in.readString();
-        locationRef = in.readString();
-        locationName = in.readString();
-        longitude = in.readFloat();
-        latitude = in.readFloat();
-    }
-
-    public static final Creator<Station> CREATOR = new Creator<Station>() {
-        @Override
-        public Station createFromParcel(Parcel in) {
-            return new Station(in);
-        }
-
-        @Override
-        public Station[] newArray(int size) {
-            return new Station[size];
-        }
-    };
-
+    /**
+     * getter
+     * @return id of the station
+     */
     public String getRef() {
         return ref;
     }
 
+    /**
+     * setter
+     * @param ref id of the station
+     */
     public void setRef(String ref) {
         this.ref = ref;
     }
 
+    /**
+     * getter
+     * @return name of the station
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * setter
+     * @param name name of the station
+     */
     public void setName(String name) {
         this.name = name;
     }
 
+    /**
+     * getter
+     * @return reference about the location of the station which is usually the city
+     */
     public String getLocationRef() {
         return locationRef;
     }
 
+    /**
+     * setter
+     * @param locationRef reference about the location of the station which is usually the city
+     */
     public void setLocationRef(String locationRef) {
         this.locationRef = locationRef;
     }
 
+    /**
+     * getter
+     * @return name of the location which is usually the name of the city
+     */
     public String getLocationName() {
         return locationName;
     }
 
+    /**
+     * setter
+     * @param locationName name of the location which is usually the name of the city
+     */
     public void setLocationName(String locationName) {
         this.locationName = locationName;
     }
 
+    /**
+     * getter
+     * @return longitude
+     */
     public float getLongitude() {
         return longitude;
     }
 
+    /**
+     * setter
+     * @param longitude longitude
+     */
     public void setLongitude(float longitude) {
         this.longitude = longitude;
     }
 
+    /**
+     * getter
+     * @return latitude
+     */
     public float getLatitude() {
         return latitude;
     }
 
+    /**
+     * setter
+     * @param latitude latitude
+     */
     public void setLatitude(float latitude) {
         this.latitude = latitude;
     }
 
+    /**
+     * returns name + locationname as a readable string for autocomplete view
+     * @return
+     */
     @Override
     public String toString() {
         return name + ", " + locationName;
     }
 
+    /**
+     * creates a list of station instances by a trias string result.
+     * @param result the xml result string given by trias containing all stops
+     * @return a list of stations
+     */
     public static ArrayList<Station> stationListFromTriasResult(String result) {
         ArrayList<Station> stations = new ArrayList<>();
 
@@ -136,20 +189,5 @@ public class Station implements Parcelable {
 
 
         return stations;
-    }
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(ref);
-        dest.writeString(name);
-        dest.writeString(locationRef);
-        dest.writeString(locationName);
-        dest.writeFloat(longitude);
-        dest.writeFloat(latitude);
     }
 }

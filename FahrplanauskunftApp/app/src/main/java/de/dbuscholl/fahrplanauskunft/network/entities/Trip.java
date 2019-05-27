@@ -1,15 +1,16 @@
 package de.dbuscholl.fahrplanauskunft.network.entities;
 
-import android.os.Parcel;
-import android.os.Parcelable;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 
-public class Trip implements Parcelable {
+/**
+ * entity class representing trip information. A trip contains a service which provides non changing information like linenumber,
+ * departure and arrival stops which are own classes containing more information.
+ */
+public class Trip {
     private Service service;
     private StopPoint boarding;
     private StopPoint alighting;
@@ -18,39 +19,34 @@ public class Trip implements Parcelable {
     private TripType type;
     private String interchangeType;
 
+    /**
+     * empty constructor
+     */
     public Trip() {
     }
 
+    /**
+     * parameterized constructor
+     * @param service provides non changing information like linenumber
+     * @param boarding stop class of boarding
+     * @param alighting stop class of alighting
+     * @param intermediates list of all stops occuring during the trip. Interchanges dont have intermediates
+     * @param legId position inside a connection
+     * @param type type of trip can be timed or interchange
+     */
     public Trip(Service service, StopPoint boarding, StopPoint alighting, ArrayList<StopPoint> intermediates, int legId, TripType type) {
         this.service = service;
         this.boarding = boarding;
         this.alighting = alighting;
         this.intermediates = intermediates;
         this.legId = legId;
+        this.type = type;
     }
 
-    protected Trip(Parcel in) {
-        service = in.readParcelable(Service.class.getClassLoader());
-        boarding = in.readParcelable(StopPoint.class.getClassLoader());
-        alighting = in.readParcelable(StopPoint.class.getClassLoader());
-        intermediates = in.createTypedArrayList(StopPoint.CREATOR);
-        legId = in.readInt();
-        type = TripType.valueOf(in.readString());
-        interchangeType = in.readString();
-    }
-
-    public static final Creator<Trip> CREATOR = new Creator<Trip>() {
-        @Override
-        public Trip createFromParcel(Parcel in) {
-            return new Trip(in);
-        }
-
-        @Override
-        public Trip[] newArray(int size) {
-            return new Trip[size];
-        }
-    };
-
+    /**
+     * creates a json object from the class instance
+     * @return a json object from the class instance
+     */
     public JSONObject toJSON() {
         JSONObject trip = new JSONObject();
         try {
@@ -97,6 +93,10 @@ public class Trip implements Parcelable {
         }
     }
 
+    /**
+     * creates a json string representation of this class instance
+     * @return a json string representation of this class instance
+     */
     @Override
     public String toString() {
         JSONObject json = toJSON();
@@ -108,78 +108,123 @@ public class Trip implements Parcelable {
         }
     }
 
+    /**
+     * getter
+     * @return the type of interchange when the leg is an interchange e.g. walking driving
+     */
     public String getInterchangeType() {
         return interchangeType;
     }
 
+    /**
+     * setter
+     * @param interchangeType the type of interchange when the leg is an interchange e.g. walking driving
+     */
     public void setInterchangeType(String interchangeType) {
         this.interchangeType = interchangeType;
     }
 
+    /**
+     * getter
+     * @return type of trip can be timed or interchange
+     */
     public TripType getType() {
         return type;
     }
 
+    /**
+     * setter
+     * @param type type of trip can be timed or interchange
+     */
     public void setType(TripType type) {
         this.type = type;
     }
 
+    /**
+     * getter
+     * @return service providing non changing information like linenumber
+     */
     public Service getService() {
         return service;
     }
 
+    /**
+     * setter
+     * @param service service providing non changing information like linenumber
+     */
     public void setService(Service service) {
         this.service = service;
     }
 
+    /**
+     * getter
+     * @return stop class of boarding
+     */
     public StopPoint getBoarding() {
         return boarding;
     }
 
+    /**
+     * setter
+     * @param boarding stop class of boarding
+     */
     public void setBoarding(StopPoint boarding) {
         this.boarding = boarding;
     }
 
+    /**
+     * getter
+     * @return stop class of alighting
+     */
     public StopPoint getAlighting() {
         return alighting;
     }
 
+    /**
+     * setter
+     * @param alighting stop class of alighting
+     */
     public void setAlighting(StopPoint alighting) {
         this.alighting = alighting;
     }
 
+    /**
+     * getter
+     * @return list of all stops occuring during the trip. Interchanges dont have intermediates
+     */
     public ArrayList<StopPoint> getIntermediates() {
         return intermediates;
     }
 
+    /**
+     * setter
+     * @param intermediates list of all stops occuring during the trip. Interchanges dont have intermediates
+     */
     public void setIntermediates(ArrayList<StopPoint> intermediates) {
         this.intermediates = intermediates;
     }
 
+    /**
+     * setter
+     * @param legId  position inside a connection
+     */
     public void setLegId(int legId) {
         this.legId = legId;
     }
 
+    /**
+     * getter
+     * @return position inside a connection
+     */
     public int getLegId() {
         return legId;
     }
 
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeParcelable(service,flags);
-        dest.writeParcelable(boarding,flags);
-        dest.writeParcelable(alighting,flags);
-        dest.writeList(intermediates);
-        dest.writeInt(legId);
-        dest.writeString(type.name());
-        dest.writeString(interchangeType);
-    }
-
+    /**
+     * Type of trips which can occur are:<br> TIMED: The standard trip leg. <br>INTERCHANGE: user has to switch vehicle<br>
+     *     CONTINUOUS: user can stay in vehicle although service change.
+     *
+     */
     public enum TripType {
         TIMED, INTERCHANGE, CONTINUOUS;
     }

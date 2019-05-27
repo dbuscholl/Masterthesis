@@ -26,6 +26,16 @@ import de.dbuscholl.fahrplanauskunft.network.entities.CustomLocation;
 import de.dbuscholl.fahrplanauskunft.network.entities.Service;
 import de.dbuscholl.fahrplanauskunft.network.entities.Trip;
 
+/**
+ * <p>This is a more complex logic and not a real activity, but it shows some dialogs, thats why it is in the activity
+ * package. The Questionnaire is a tool to ask the user about his trip experience. It contains the questions and the
+ * connection for which the questions are asked.</p>
+ * <p>Inside a for loop limited by the amount of trip legs the user
+ * gets (currently) four questions.<ol><li>capacity</li><li>cleanliness</li><li>subjective delay</li><li>successful interchange</li></ol>
+ * the last question is only given, when it is not the last leg and there are interchanges inside his trip. As soon as
+ * a question is asked the programm extracts additional information like line number and builds the layout for the dialog.
+ * </p>
+ */
 public class Questionnaire {
     private Connection connection;
     private Context activity;
@@ -42,16 +52,34 @@ public class Questionnaire {
     private boolean hasFinishedRecording = false;
     private SuccessfullySendHandler successfullySendHandler;
 
+    /**
+     * Constructor... nothing special here
+     */
     public Questionnaire() {
 
     }
 
+    /**
+     * Constructor... nothing special except setting the attributes
+     * @param context application context
+     * @param connection Connection for which the questions are asked
+     */
     public Questionnaire(Context context, Connection connection) {
         this.activity = context;
         this.connection = connection;
         answers = new ArrayList<>();
     }
 
+    /**
+     * the trigger which start the actual asking process
+     * <p>we first check whether the last step was reached. If so, we then check whether the last trip leg has already
+     * been reached, because then we send the results to the server! In all other cases we continue asking. We obtain
+     * the next leg and check if it is an interchange which should be skipped. Then we ask the questions step by step.
+     * Delays should only be asked when there were less than three legs / interchanges because a user cannot remember
+     * delays for so many different trip legs. Also we skip interchange question if it is the last trip leg.</p>
+     * <p>The process also synchronizes the connection trip leg index with the array index so thtt the server knows
+     * for which leg a question was answered.</p>
+     */
     public void startForPastConnection() {
         nextHandler = new NextButtonClickHandler() {
             @Override
@@ -109,6 +137,9 @@ public class Questionnaire {
         nextHandler.onNextButtonClick();
     }
 
+    /**
+     * this function sends all collected answers to the server.
+     */
     private void sendResults() {
         QuestionaireResultTask qrt = new QuestionaireResultTask(activity);
         qrt.setOnSuccessEvent(new QuestionaireResultTask.SuccessEvent() {
@@ -129,6 +160,11 @@ public class Questionnaire {
         qrt.execute(results.toString());
     }
 
+    /**
+     * this function converts all data which should be send to the server into json. This also affects the location tracking
+     * data which is send to the questionnaire.
+     * @return the json object containing all data which should be send to the server
+     */
     public JSONObject resultsToJSON() {
         JSONObject sendingData = new JSONObject();
         try {
@@ -182,6 +218,11 @@ public class Questionnaire {
         }
     }
 
+    /**
+     * Showing the Dialog with the Capacity-question. First extract parameters from the leg and then build the dialog
+     * itself. The click listener for the next-button adds the clicked radio items value to the answers array.
+     * @param t the trip (leg) for which the question is asked
+     */
     private void askCapacity(Trip t) {
         Service service = t.getService();
         String railName = service.getRailName();
@@ -224,6 +265,11 @@ public class Questionnaire {
         dialog.show();
     }
 
+    /**
+     * Showing the Dialog with the Cleanness-question. First extract parameters from the leg and then build the dialog
+     * itself. The click listener for the next-button adds the clicked radio items value to the answers array.
+     * @param t the trip (leg) for which the question is asked
+     */
     private void askCleanness(Trip t) {
         Service service = t.getService();
         String railName = service.getRailName();
@@ -266,6 +312,11 @@ public class Questionnaire {
         dialog.show();
     }
 
+    /**
+     * Showing the Dialog with the Capacity-question. First extract parameters from the leg and then build the dialog
+     * itself. The click listener for the next-button adds value of the seekbar to the answers array
+     * @param t the trip (leg) for which the question is asked
+     */
     private void askDelay(Trip t) {
         Service service = t.getService();
         String railName = service.getRailName();
@@ -303,11 +354,15 @@ public class Questionnaire {
             }
         });
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            // showing different texts for grammatical correctness
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 String text = String.valueOf(progress) + " Minuten";
                 if (progress >= 60) {
                     text = "60 Minuten oder mehr";
+                }
+                if (progress == 1) {
+                    text = String.valueOf(progress) + " Minute";
                 }
                 seekBarText.setText(text);
             }
@@ -326,6 +381,12 @@ public class Questionnaire {
         dialog.show();
     }
 
+    /**
+     * Showing the Dialog with the Interchange-question. First check if last trip was reached because there is no interchange
+     * then and after that extract parameters from the leg and then build the dialog
+     * itself. The click listener for the next-button adds the clicked radio items value to the answers array.
+     * @param leg the trip (leg) for which the question is asked
+     */
     private void askInterchange(int leg) {
         if (leg >= connection.getLegs().size() - 1) {
             step++;
@@ -387,6 +448,10 @@ public class Questionnaire {
         dialog.show();
     }
 
+    /**
+     * addds an answer value to the answers array. Creates a new Array synchronized with the trip leg if neccessary.
+     * @param value
+     */
     private void addAnswer(String value) {
         try {
             if (answers.size() <= leg) {
@@ -409,18 +474,35 @@ public class Questionnaire {
         }
     }
 
+    /**
+     * allows the questionnaire to add recording data to the sending data for the server
+     * @param recordingData
+     */
     public void setRecordingData(ArrayList<CustomLocation> recordingData) {
         this.recordingData = recordingData;
     }
 
+    /**
+     *
+     * @param activity the application context
+     */
     public void setContext(Context activity) {
         this.activity = activity;
     }
 
+    /**
+     *
+     * @param connection Setter for connection for which the questionnaire asks the questions
+     */
     public void setConnection(Connection connection) {
         this.connection = connection;
     }
 
+    /**
+     * If the questionnaire should be started by a trip which was done recording, this method should be called so the
+     * questionnaire sets the right parameters itself.
+     * @param finishedRecording
+     */
     public void setFinishedRecording(TripRecordingService.FinishedRecording finishedRecording) {
         if(finishedRecording == null) {
             return;
@@ -433,10 +515,17 @@ public class Questionnaire {
         recordingData = finishedRecording.getRecordingData();
     }
 
+    /**
+     * Sets a callback which is activated when the data has been send successfully to the server.
+     * @param ssh handler
+     */
     public void setSuccessfullySendHandler (SuccessfullySendHandler ssh) {
         this.successfullySendHandler = ssh;
     }
 
+    /**
+     * Cancel button which dissmisses the current open dialog and indicates cancellation
+     */
     private class CancelButton implements View.OnClickListener {
 
         @Override
@@ -447,10 +536,16 @@ public class Questionnaire {
         }
     }
 
+    /**
+     * Handler for the next-button
+     */
     private interface NextButtonClickHandler {
         void onNextButtonClick();
     }
 
+    /**
+     * Handler for the when the questionnaire has send its data successfully to the server
+     */
     public interface SuccessfullySendHandler {
         void onSuccessfullySend(String result);
     }

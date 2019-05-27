@@ -44,6 +44,18 @@ import de.dbuscholl.fahrplanauskunft.network.entities.Station;
 import de.dbuscholl.fahrplanauskunft.network.entities.Connection;
 import de.dbuscholl.fahrplanauskunft.network.xml.TripInfoRequest;
 
+/**
+ * this fragment handles everything that has to do with the connections search at app start. It is instantiated as soon as
+ * the BottomNavigationView triggers the corresponding event, because for example the user clicked the navigation button for
+ * connection.
+ * <p>At start it has nothing to visualize, but after the user enters something inside the stations textview the autocomplete
+ * process starts and tries to guess stations according to the string which was already entered. This is done by the TRIAS-
+ * service Ortsinformationen. It also allows the user to set the time and date by modern date and timepickers which are super
+ * useful</p>
+ * <p>When the user hits seach the TRIAS service Verbindungsauskunft is triggered and returns a bunch of connection which are
+ * visualized by the ConnectionsListAdapter inside the corresponding listview. The user can hit one of  them and gets lots
+ * of detailed information about it. This will start the TripDetailActivitym</p>
+ */
 public class ConnectionsFragment extends Fragment {
     private static ArrayList<Connection> currentResult = new ArrayList<>();
     private static String fromValue;
@@ -59,6 +71,13 @@ public class ConnectionsFragment extends Fragment {
     private Button dateButton;
     private Button timeButton;
 
+    /**
+     * This is called as soon as this fragment gets inflated. Method given by android
+     * @param inflater
+     * @param container
+     * @param savedInstanceState
+     * @return
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -66,6 +85,15 @@ public class ConnectionsFragment extends Fragment {
     }
 
 
+    /**
+     * <p>This is called as soon as all views inside the fragment were successfully created. Given by Android.</p>
+     * <p>It sets all listeners and assigns all values to the corresponding views which are datefield and timefield
+     * with their pickers, departure and destination textfield with autocomplete functionality and the search button
+     * which fires the TripInfoDownloadTask and assigns its value by the ConnectionsListAdapter into the right listview
+     * when the http-request was successful.</p>
+     * @param view
+     * @param savedInstanceState
+     */
     @Override
     public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         fromTextView = getView().findViewById(R.id.startPoint);
@@ -212,10 +240,18 @@ public class ConnectionsFragment extends Fragment {
         });
     }
 
+    /**
+     * returns the list of connections returned by the trias interface. Getter Method.
+     * @return
+     */
     public static ArrayList<Connection> getCurrentResult() {
         return currentResult;
     }
 
+    /**
+     * The click handler for a connection Item for the ConnectionsListView. When you click on a connection the new
+     * activity TripDetailActivity will start.
+     */
     private class ItemClickHandler implements AdapterView.OnItemClickListener {
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {

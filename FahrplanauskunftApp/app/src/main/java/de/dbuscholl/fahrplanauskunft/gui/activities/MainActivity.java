@@ -21,6 +21,11 @@ import de.dbuscholl.fahrplanauskunft.gui.fragments.ConnectionsFragment;
 import de.dbuscholl.fahrplanauskunft.gui.fragments.RecordedTripsFragment;
 import de.dbuscholl.fahrplanauskunft.gui.services.TripRecordingService;
 
+/**
+ * this is the main activity where everything starts from. It contains a BottomNavigationView with two fragments. This is
+ * also the entry point when a user clicked the notification of trip recording. Therefore the service is also bound here.
+ * And thats already it. More functionality is given to the fragments themselves.
+ */
 public class MainActivity extends AppCompatActivity implements BottomNavigationView.OnNavigationItemSelectedListener {
     private static Activity context;
     BottomNavigationView navigation;
@@ -56,6 +61,10 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
         return super.onCreateOptionsMenu(menu);
     }
 
+    /**
+     * Creates the bottomnavigationview with the two fragments depending on which one is clicked
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,6 +82,12 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
         }
     }
 
+    /**
+     * this is usually called from the fixed foreground service notification to make the recording stop. Therefore we
+     * bind the service heere and check wheter the stop action was send or the user only clicked the notification. Tracking
+     * should only stop when it was explicitly clicked inside the notification.
+     * @param intent
+     */
     @Override
     protected void onNewIntent(Intent intent) {
         String fragment = intent.getStringExtra("fragment");
@@ -96,12 +111,21 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
         }
     }
 
+    /**
+     * this causes the service to stop the recording of a trip
+     */
     private void stopRecording() {
         hasAction = false;
         gpsService.stopRecording();
         Log.d(this.getClass().getName(), "Stopping tracking Service!");
     }
 
+    /**
+     * Instantiates the fragments depending of which menuitem was clicked from the bottomnavigationview, the intent from
+     * where the activity was started or other actions.
+     * @param f the fragment to be loaded
+     * @return true where everything succeeded, false if not
+     */
     private boolean loadFragment(Fragment f) {
         if (f == null) return false;
         getSupportFragmentManager().beginTransaction().replace(R.id.screenscontainer, f).commitAllowingStateLoss();
@@ -114,6 +138,11 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
         return true;
     }
 
+    /**
+     * Action Listeners for the BottomNavigationView causing the corresponding fragment to load
+     * @param menuItem item which was selected
+     * @return true if any fragment was loaded (also the same which already was loaded), false if not.
+     */
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
         Context c = getApplicationContext();
@@ -126,6 +155,10 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
         return false;
     }
 
+    /**
+     * called by system when app is stopped or crashes. It is important to unbind the service (not stop) so that we can
+     * bind again the next time, the user opens the app
+     */
     @Override
     protected void onDestroy() {
         if (App.isMyServiceRunning(TripRecordingService.class, getApplicationContext())) {

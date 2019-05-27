@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>JAVA</ID>
+  <OriginalElement>de.dbuscholl.fahrplanauskunft.network.tasks.PrognosisTask</OriginalElement>
+  <nodes>
+    <node x="974.5" y="664.5">de.dbuscholl.fahrplanauskunft.gui.adapters.AutoCompleteAdapter.DownloadStations</node>
+    <node x="2206.25" y="0.0">de.dbuscholl.fahrplanauskunft.gui.activities.Questionnaire</node>
+    <node x="77.5" y="1073.0">de.dbuscholl.fahrplanauskunft.gui.activities.TripDetailActivity</node>
+    <node x="2281.75" y="586.0">de.dbuscholl.fahrplanauskunft.gui.activities.Questionnaire.CancelButton</node>
+    <node x="764.0" y="974.0">de.dbuscholl.fahrplanauskunft.network.tasks.QuestionaireResultTask.SuccessEvent</node>
+    <node x="435.5" y="974.0">de.dbuscholl.fahrplanauskunft.network.tasks.TripInfoDownloadTask.SuccessEvent</node>
+    <node x="982.0" y="2189.0">de.dbuscholl.fahrplanauskunft.network.entities.Station</node>
+    <node x="507.0" y="2605.0">de.dbuscholl.fahrplanauskunft.network.Client</node>
+    <node x="1121.0" y="2605.0">de.dbuscholl.fahrplanauskunft.common.App</node>
+    <node x="744.0" y="2605.0">de.dbuscholl.fahrplanauskunft.gui.fragments.RecordedTripsFragment</node>
+    <node x="2013.0" y="1641.0">de.dbuscholl.fahrplanauskunft.network.entities.StopPoint</node>
+    <node x="0.0" y="2605.0">de.dbuscholl.fahrplanauskunft.Chronometer</node>
+    <node x="1587.0" y="1641.0">de.dbuscholl.fahrplanauskunft.network.entities.Service</node>
+    <node x="1347.75" y="982.0">de.dbuscholl.fahrplanauskunft.gui.services.TripRecordingService.FinishedRecording</node>
+    <node x="903.0" y="1919.0">de.dbuscholl.fahrplanauskunft.gui.adapters.ConnectionsListAdapter.ViewHolder</node>
+    <node x="1210.0" y="1641.0">de.dbuscholl.fahrplanauskunft.gui.fragments.ConnectionsFragment</node>
+    <node x="1622.75" y="993.0">de.dbuscholl.fahrplanauskunft.gui.services.TripRecordingService.TimerTaskToGetLocation</node>
+    <node x="1067.75" y="132.0">de.dbuscholl.fahrplanauskunft.gui.adapters.AutoCompleteAdapter</node>
+    <node x="2143.0" y="2189.0">de.dbuscholl.fahrplanauskunft.FormatTools</node>
+    <node x="209.0" y="2605.0">de.dbuscholl.fahrplanauskunft.network.entities.PrognosisCalculationItem</node>
+    <node x="736.5" y="575.0">de.dbuscholl.fahrplanauskunft.network.tasks.QuestionaireResultTask</node>
+    <node x="2063.75" y="586.0">de.dbuscholl.fahrplanauskunft.gui.activities.Questionnaire.NextButtonClickHandler</node>
+    <node x="1350.0" y="2189.0">de.dbuscholl.fahrplanauskunft.network.entities.Connection</node>
+    <node x="813.0" y="1641.0">de.dbuscholl.fahrplanauskunft.gui.adapters.ConnectionsListAdapter</node>
+    <node x="0.0" y="2467.0">de.dbuscholl.fahrplanauskunft.gui.adapters.RecordingListAdapter.QuestionnaireSolvedEvent</node>
+    <node x="42.0" y="1547.0">de.dbuscholl.fahrplanauskunft.gui.activities.TripDetailActivity.ServiceConnectedCallback</node>
+    <node x="77.5" y="974.0">de.dbuscholl.fahrplanauskunft.network.tasks.PrognosisTask.SuccessEvent</node>
+    <node x="1221.0" y="2027.0">de.dbuscholl.fahrplanauskunft.gui.fragments.ConnectionsFragment.ItemClickHandler</node>
+    <node x="336.5" y="0.0">android.os.AsyncTask</node>
+    <node x="274.0" y="1547.0">de.dbuscholl.fahrplanauskunft.gui.activities.TripDetailActivity.Action</node>
+    <node x="0.0" y="642.0">android.os.AsyncTask.Status</node>
+    <node x="160.5" y="2051.0">de.dbuscholl.fahrplanauskunft.network.entities.Trip.TripType</node>
+    <node x="2443.75" y="586.0">de.dbuscholl.fahrplanauskunft.gui.activities.Questionnaire.SuccessfullySendHandler</node>
+    <node x="106.0" y="553.0">de.dbuscholl.fahrplanauskunft.network.tasks.PrognosisTask</node>
+    <node x="1568.75" y="0.0">de.dbuscholl.fahrplanauskunft.gui.services.TripRecordingService</node>
+    <node x="410.5" y="476.0">de.dbuscholl.fahrplanauskunft.network.tasks.TripInfoDownloadTask</node>
+    <node x="1705.0" y="2189.0">de.dbuscholl.fahrplanauskunft.gui.ConnectionsListView</node>
+    <node x="149.0" y="2189.0">de.dbuscholl.fahrplanauskunft.gui.adapters.RecordingListAdapter</node>
+    <node x="645.0" y="2189.0">de.dbuscholl.fahrplanauskunft.gui.activities.MainActivity</node>
+    <node x="2430.0" y="2189.0">de.dbuscholl.fahrplanauskunft.network.entities.CustomLocation</node>
+    <node x="1840.75" y="993.0">de.dbuscholl.fahrplanauskunft.gui.services.TripRecordingService.GpsBinder</node>
+    <node x="1465.0" y="2605.0">de.dbuscholl.fahrplanauskunft.network.entities.PrognosisCalculationResult</node>
+    <node x="466.0" y="1641.0">de.dbuscholl.fahrplanauskunft.common.Constants</node>
+    <node x="355.0" y="2423.0">de.dbuscholl.fahrplanauskunft.gui.adapters.RecordingListAdapter.ViewHolder</node>
+    <node x="0.0" y="1641.0">de.dbuscholl.fahrplanauskunft.network.entities.Trip</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="de.dbuscholl.fahrplanauskunft.gui.activities.TripDetailActivity.ServiceConnectedCallback" target="de.dbuscholl.fahrplanauskunft.gui.activities.TripDetailActivity">
+      <point x="0.0" y="-24.5" />
+      <point x="148.0" y="1522.0" />
+      <point x="162.0" y="1522.0" />
+      <point x="-84.5" y="212.0" />
+    </edge>
+    <edge source="de.dbuscholl.fahrplanauskunft.gui.activities.Questionnaire.SuccessfullySendHandler" target="de.dbuscholl.fahrplanauskunft.gui.activities.Questionnaire">
+      <point x="0.0" y="-24.5" />
+      <point x="2549.75" y="561.0" />
+      <point x="2450.4166666666665" y="561.0" />
+      <point x="97.66666666666652" y="268.0" />
+    </edge>
+    <edge source="de.dbuscholl.fahrplanauskunft.gui.adapters.AutoCompleteAdapter.DownloadStations" target="de.dbuscholl.fahrplanauskunft.gui.adapters.AutoCompleteAdapter">
+      <point x="70.25" y="-35.5" />
+      <point x="0.0" y="81.0" />
+    </edge>
+    <edge source="de.dbuscholl.fahrplanauskunft.network.tasks.QuestionaireResultTask" target="android.os.AsyncTask">
+      <point x="0.0" y="-125.0" />
+      <point x="845.5" y="456.0" />
+      <point x="654.3000000000001" y="456.0" />
+      <point x="90.80000000000007" y="213.0" />
+    </edge>
+    <edge source="de.dbuscholl.fahrplanauskunft.network.tasks.PrognosisTask.SuccessEvent" target="de.dbuscholl.fahrplanauskunft.network.tasks.PrognosisTask">
+      <point x="0.0" y="-24.5" />
+      <point x="0.0" y="147.0" />
+    </edge>
+    <edge source="de.dbuscholl.fahrplanauskunft.network.entities.Trip.TripType" target="de.dbuscholl.fahrplanauskunft.network.entities.Trip">
+      <point x="0.0" y="-46.5" />
+      <point x="0.0" y="180.0" />
+    </edge>
+    <edge source="de.dbuscholl.fahrplanauskunft.network.tasks.TripInfoDownloadTask.SuccessEvent" target="de.dbuscholl.fahrplanauskunft.network.tasks.TripInfoDownloadTask">
+      <point x="0.0" y="-24.5" />
+      <point x="0.0" y="224.0" />
+    </edge>
+    <edge source="de.dbuscholl.fahrplanauskunft.gui.services.TripRecordingService.TimerTaskToGetLocation" target="de.dbuscholl.fahrplanauskunft.gui.services.TripRecordingService">
+      <point x="0.0" y="-24.5" />
+      <point x="0.0" y="466.0" />
+    </edge>
+    <edge source="de.dbuscholl.fahrplanauskunft.gui.adapters.AutoCompleteAdapter.DownloadStations" target="android.os.AsyncTask">
+      <point x="-70.25" y="-35.5" />
+      <point x="1044.75" y="446.0" />
+      <point x="745.1000000000001" y="446.0" />
+      <point x="181.60000000000014" y="213.0" />
+    </edge>
+    <edge source="de.dbuscholl.fahrplanauskunft.gui.activities.TripDetailActivity" target="de.dbuscholl.fahrplanauskunft.network.tasks.PrognosisTask.SuccessEvent">
+      <point x="0.0" y="-212.0" />
+      <point x="0.0" y="24.5" />
+    </edge>
+    <edge source="de.dbuscholl.fahrplanauskunft.gui.activities.Questionnaire.NextButtonClickHandler" target="de.dbuscholl.fahrplanauskunft.gui.activities.Questionnaire">
+      <point x="0.0" y="-24.5" />
+      <point x="2162.75" y="561.0" />
+      <point x="2255.0833333333335" y="561.0" />
+      <point x="-97.66666666666652" y="268.0" />
+    </edge>
+    <edge source="de.dbuscholl.fahrplanauskunft.gui.services.TripRecordingService.GpsBinder" target="de.dbuscholl.fahrplanauskunft.gui.services.TripRecordingService">
+      <point x="0.0" y="-24.5" />
+      <point x="1929.75" y="957.0" />
+      <point x="1823.75" y="957.0" />
+      <point x="102.0" y="466.0" />
+    </edge>
+    <edge source="de.dbuscholl.fahrplanauskunft.network.tasks.TripInfoDownloadTask" target="android.os.AsyncTask">
+      <point x="0.0" y="-224.0" />
+      <point x="0.0" y="213.0" />
+    </edge>
+    <edge source="de.dbuscholl.fahrplanauskunft.network.tasks.QuestionaireResultTask.SuccessEvent" target="de.dbuscholl.fahrplanauskunft.network.tasks.QuestionaireResultTask">
+      <point x="0.0" y="-24.5" />
+      <point x="0.0" y="125.0" />
+    </edge>
+    <edge source="de.dbuscholl.fahrplanauskunft.gui.activities.Questionnaire.CancelButton" target="de.dbuscholl.fahrplanauskunft.gui.activities.Questionnaire">
+      <point x="0.0" y="-24.5" />
+      <point x="0.0" y="268.0" />
+    </edge>
+    <edge source="android.os.AsyncTask.Status" target="android.os.AsyncTask">
+      <point x="0.0" y="-58.0" />
+      <point x="43.0" y="446.0" />
+      <point x="381.9" y="446.0" />
+      <point x="-181.60000000000002" y="213.0" />
+    </edge>
+    <edge source="de.dbuscholl.fahrplanauskunft.gui.activities.TripDetailActivity.Action" target="de.dbuscholl.fahrplanauskunft.gui.activities.TripDetailActivity">
+      <point x="0.0" y="-24.5" />
+      <point x="345.0" y="1522.0" />
+      <point x="331.0" y="1522.0" />
+      <point x="84.5" y="212.0" />
+    </edge>
+    <edge source="de.dbuscholl.fahrplanauskunft.network.tasks.PrognosisTask" target="android.os.AsyncTask">
+      <point x="0.0" y="-147.0" />
+      <point x="246.5" y="456.0" />
+      <point x="472.70000000000005" y="456.0" />
+      <point x="-90.79999999999995" y="213.0" />
+    </edge>
+    <edge source="de.dbuscholl.fahrplanauskunft.gui.adapters.RecordingListAdapter.QuestionnaireSolvedEvent" target="de.dbuscholl.fahrplanauskunft.gui.adapters.RecordingListAdapter">
+      <point x="0.0" y="-24.5" />
+      <point x="167.5" y="2398.0" />
+      <point x="235.75" y="2398.0" />
+      <point x="-86.75" y="92.0" />
+    </edge>
+    <edge source="de.dbuscholl.fahrplanauskunft.gui.adapters.RecordingListAdapter.ViewHolder" target="de.dbuscholl.fahrplanauskunft.gui.adapters.RecordingListAdapter">
+      <point x="0.0" y="-68.5" />
+      <point x="477.5" y="2398.0" />
+      <point x="409.25" y="2398.0" />
+      <point x="86.75" y="92.0" />
+    </edge>
+    <edge source="de.dbuscholl.fahrplanauskunft.gui.fragments.ConnectionsFragment.ItemClickHandler" target="de.dbuscholl.fahrplanauskunft.gui.fragments.ConnectionsFragment">
+      <point x="0.0" y="-24.5" />
+      <point x="0.0" y="168.0" />
+    </edge>
+    <edge source="de.dbuscholl.fahrplanauskunft.gui.adapters.ConnectionsListAdapter.ViewHolder" target="de.dbuscholl.fahrplanauskunft.gui.adapters.ConnectionsListAdapter">
+      <point x="0.0" y="-79.5" />
+      <point x="0.0" y="114.0" />
+    </edge>
+    <edge source="de.dbuscholl.fahrplanauskunft.gui.services.TripRecordingService.FinishedRecording" target="de.dbuscholl.fahrplanauskunft.gui.services.TripRecordingService">
+      <point x="0.0" y="-35.5" />
+      <point x="1475.25" y="957.0" />
+      <point x="1619.75" y="957.0" />
+      <point x="-102.0" y="466.0" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic Group" zoom="1.0" x="594.0" y="1286.0" />
+  <SelectedNodes>
+    <node>de.dbuscholl.fahrplanauskunft.gui.activities.TripDetailActivity</node>
+  </SelectedNodes>
+  <Categories>
+    <Category>Fields</Category>
+    <Category>Constructors</Category>
+    <Category>Methods</Category>
+    <Category>Properties</Category>
+    <Category>Inner Classes</Category>
+  </Categories>
+  <SCOPE>All</SCOPE>
+  <VISIBILITY>private</VISIBILITY>
+</Diagram>
+

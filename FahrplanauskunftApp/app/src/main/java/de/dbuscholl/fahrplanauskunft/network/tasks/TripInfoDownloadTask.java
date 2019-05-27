@@ -20,6 +20,11 @@ import de.dbuscholl.fahrplanauskunft.network.entities.Trip;
 import de.dbuscholl.fahrplanauskunft.network.entities.Connection;
 import de.dbuscholl.fahrplanauskunft.network.xml.XMLDocument;
 
+/**
+ * This class is respoonsible for searching for connections by calling the corresponding TRIAS interface Verbindungsauskunft.
+ * It also pareses the server result by creating an XMLDocument and extracting the right values from it. During the process
+ * a progress dialog can be displayed. Also a callback can be set which is triggered when processing is done.
+ */
 public class TripInfoDownloadTask extends AsyncTask<String, Void, ArrayList<Connection>> {
 
     private SuccessEvent successEvent;
@@ -28,21 +33,31 @@ public class TripInfoDownloadTask extends AsyncTask<String, Void, ArrayList<Conn
     private static String response = null;
     private static String request = null;
 
+    /**
+     * empty constructor
+     */
     public TripInfoDownloadTask() {
     }
 
     /**
      *  Use this constructor if you want to show a indefinite progress dialog
-     * @param activity
+     * @param activity application context by this activity.
      */
     public TripInfoDownloadTask(Activity activity) {
         dialog = new ProgressDialog(activity);
     }
 
+    /**
+     * getter
+     * @return the request as string which was send to the server.
+     */
     public static String getRequest() {
         return request;
     }
 
+    /**
+     * Things that can be done on the main thread before execution. This is used to display the progress dialog in this case.
+     */
     @Override
     protected void onPreExecute() {
         if (dialog != null) {
@@ -52,6 +67,12 @@ public class TripInfoDownloadTask extends AsyncTask<String, Void, ArrayList<Conn
     }
 
 
+    /**
+     * actual function which is called in a seperate thread to download the trip results. It also parses the result in background
+     * otherwise we may have to much load on the main thread which blocks the GUI.
+     * @param strings the string which will be send as request in this case
+     * @return nothing because we have a callback for that and the function onPostExecute.
+     */
     @Override
     protected ArrayList<Connection> doInBackground(String... strings) {
         try {
@@ -83,6 +104,10 @@ public class TripInfoDownloadTask extends AsyncTask<String, Void, ArrayList<Conn
         return null;
     }
 
+    /**
+     * this will dismiss the progress dialog.
+     * @param connections
+     */
     @Override
     protected void onPostExecute(ArrayList<Connection> connections) {
         if (dialog != null && dialog.isShowing()) {
@@ -91,6 +116,12 @@ public class TripInfoDownloadTask extends AsyncTask<String, Void, ArrayList<Conn
         super.onPostExecute(connections);
     }
 
+    /**
+     * this extracts a connection of the xml response. It is called for every response item because we get more than one
+     * connection from the TRIAS interface.
+     * @param e the element of the connection
+     * @return Connection entity class.
+     */
     private Connection getTripResult(Element e) {
         Connection t = new Connection();
 
@@ -110,6 +141,12 @@ public class TripInfoDownloadTask extends AsyncTask<String, Void, ArrayList<Conn
         return t;
     }
 
+    /**
+     * extracts all trip legs from the connection xml representation. Calls the corresponding function which extract the
+     * actual leg. This function only decides if this is a timed or interchange leg and adds them into the arraylist.
+     * @param xml xml element of the legs
+     * @return ArrayList of Trips containing all the legs that take place during the connection.
+     */
     private ArrayList<Trip> getTripLegs(Element xml) {
         ArrayList<Trip> triplegs = new ArrayList<>();
 
@@ -143,6 +180,13 @@ public class TripInfoDownloadTask extends AsyncTask<String, Void, ArrayList<Conn
         return triplegs;
     }
 
+    /**
+     * this is only called if the element is an interchange. It extracts all information and creates a trip leg of it which
+     * can be inserted at the right position inside the arraylist. This is called by getTripLegs
+     * @param legId
+     * @param interchangeElement
+     * @return
+     */
     private Trip getInterchangeTrip(int legId, Element interchangeElement) {
         Trip t = new Trip();
         t.setLegId(legId);
@@ -192,6 +236,13 @@ public class TripInfoDownloadTask extends AsyncTask<String, Void, ArrayList<Conn
         return t;
     }
 
+    /**
+     * extracts everything which has to do with a timed trip leg. As the stops and the service have their own extraction
+     * method this is only a kind of coordinator for extraction.
+     * @param legId number of the leg inside the arraylist to be inserted at the right place
+     * @param timedLeg the xml representation of the timed leg element from which the infos are being extracted.
+     * @return Trip entity class.
+     */
     private Trip getTimedTrip(int legId, Element timedLeg) {
         Trip t = new Trip();
         t.setLegId(legId);
@@ -224,6 +275,11 @@ public class TripInfoDownloadTask extends AsyncTask<String, Void, ArrayList<Conn
         return t;
     }
 
+    /**
+     * extracts all service information of the corresponding xml element.
+     * @param serviceElement the xml element of which the infos should be extracted.
+     * @return the entity class service with all information.
+     */
     private Service getServiceInfo(Element serviceElement) {
         Service service = new Service();
 
@@ -257,9 +313,12 @@ public class TripInfoDownloadTask extends AsyncTask<String, Void, ArrayList<Conn
         return service;
     }
 
+    /**
+     * detemines the submode of a railtype so we can display the right vehicle type
+     * @param mode element where the information might be stored
+     * @return the String value of the type
+     */
     private String getSubmode(Element mode) {
-
-
         for (String s : Constants.TRIAS_SUBPMODE_TYPES) {
             Element e = mode.getChild(s, Constants.NAMESPACE);
             if (e != null) {
@@ -269,6 +328,12 @@ public class TripInfoDownloadTask extends AsyncTask<String, Void, ArrayList<Conn
         return null;
     }
 
+    /**
+     * extracts all information about a stop from the TRIAS result and creates an entity class of it.
+     * @param timedLegItem the item of which the infos should be extracted from.
+     * @param position the position inside the leg to correctly insert it into the array
+     * @return StopPoint entity class containing all extracted info.
+     */
     private StopPoint getStopPoint(Element timedLegItem, int position) {
         StopPoint stop = new StopPoint();
 
@@ -330,15 +395,26 @@ public class TripInfoDownloadTask extends AsyncTask<String, Void, ArrayList<Conn
         return stop;
     }
 
+    /**
+     * getter
+     * @return the response which was returned by the server as string.
+     */
     public String getResponse() {
         return response;
     }
 
-
+    /**
+     * A callback event which is triggered when response parsed successfully
+     * @param e function to be called
+     */
     public void setOnSuccessEvent(SuccessEvent e) {
         successEvent = e;
     }
 
+    /**
+     * Callback interface which is triggered when the server returned it's response and the client parsed all items
+     * successfully.
+     */
     public interface SuccessEvent {
         public void onSuccess(ArrayList<Connection> result);
     }

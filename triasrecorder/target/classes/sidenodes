@@ -1,7 +1,0 @@
----------------------------------------------------------------------
-Departure Time to "normal" Time when exceeding 24 hours
----------------------------------------------------------------------
-
-int hour = Integer.parseInt(("25:13:00").substring(0,2))%24;
-String h = hour < 10 ? "0" + hour : String.valueOf(hour);
-String time = h + "25:13:00".substring(2,"25:13:00".length());

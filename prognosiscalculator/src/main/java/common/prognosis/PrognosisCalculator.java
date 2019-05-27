@@ -55,6 +55,11 @@ public class PrognosisCalculator extends Thread implements CalculationCompletedE
         userRecordings.setCalculationCompletedEvent(this);
         factory.add(userRecordings);
 
+        FactorGoogleDirections googleTraffic = new FactorGoogleDirections(connection);
+        googleTraffic.setWeight(10);
+        googleTraffic.setCalculationCompletedEvent(this);
+        factory.add(googleTraffic);
+
         FactorAsked cleanness = new FactorAsked(connection);
         cleanness.setCalculationCompletedEvent(this);
         cleanness.setType(PrognosisFactor.PrognosisFactorType.QUESTIONNAIRE_CLEANNESS);

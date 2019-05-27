@@ -43,6 +43,20 @@ import de.dbuscholl.fahrplanauskunft.network.entities.StopPoint;
 import static de.dbuscholl.fahrplanauskunft.common.App.CHANNEL_ID;
 import static de.dbuscholl.fahrplanauskunft.common.App.CHANNEL_ID_DONE_CHANNEL;
 
+/**
+ * <p>This is the main class for recording actual trips. The insane work it does is absolutely important for the whole
+ * application.</p>
+ * <p>As soon as it gets started it runs an almost endless timer which has some things to do. The <b>first thing</b>
+ * is to check if the recording queue is empty. If not it marks the next as currently recording trip. Otherwise it stops
+ * the service because it was started unnecessarily.</p>
+ * <p>The <b>second step</b> is to check wheter the selected trip is already departed. It is not necessary to record data
+ * if not.</p>
+ * <p>The <b>third step</b> when the trip is departed is to get the acutal geolocation data. This contains latitude, longitude,
+ * accuracy and altitude.</p>
+ * <p>As for the <b>last step</b> the service checks whether the trip has reached its ending by checking against the
+ * realtime information provided by TRIAS. This also gets updated every three minutes.</p>
+ * <p>This whole procedure repeats every 20 seconds which can be configured by notify_interval.</p>
+ */
 public class TripRecordingService extends Service implements LocationListener {
     private final IBinder gpsBinder = new GpsBinder();
 
@@ -53,7 +67,7 @@ public class TripRecordingService extends Service implements LocationListener {
 
     private Handler mHandler = new Handler();
     private Timer mTimer = null;
-    long notify_interval = 3000;
+    long notify_interval = 20000;
 
     public static String str_receiver = "service.locationreceiver";
     Intent intent;
@@ -104,17 +118,18 @@ public class TripRecordingService extends Service implements LocationListener {
 
     }
 
+    /**
+     * This function is called when the service is started. It first starts the timer task and then sets itself as a
+     * foreground service by creating the fixed notification including all listeners and stuff.
+     * @param intent the one who initiated the start of the service
+     * @param flags optional additional options
+     * @param startId
+     * @return indicator whether the service has been started successfully or not.
+     */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         //make this foreground service
-        /*
-        SharedPreferences sharedPref = getApplicationContext().getSharedPreferences(
-                getString(R.string.preference_file_key), Context.MODE_PRIVATE);
-        int highScore = sharedPref.getInt("size", -2);
-        Toast.makeText(this, String.valueOf(highScore), Toast.LENGTH_LONG).show();
-        */
-
-        if(!running) {
+        if (!running) {
             mTimer = new Timer();
             mTimer.schedule(new TimerTaskToGetLocation(), 5, notify_interval);
             intent = new Intent(str_receiver);
@@ -141,6 +156,19 @@ public class TripRecordingService extends Service implements LocationListener {
 
     //------------------------- END LIFECYCLE OVERRIDES ---------------------------------------
 
+    /**
+     * This is the main class to do location tracking. It is an inner class because it works only in combination with the
+     * service.
+     * <p>As soon as it gets started it runs an almost endless timer which has some things to do. The <b>first thing</b>
+     * is to check if the recording queue is empty. If not it marks the next as currently recording trip. Otherwise it stops
+     * the service because it was started unnecessarily.</p>
+     * <p>The <b>second step</b> is to check wheter the selected trip is already departed. It is not necessary to record data
+     * if not.</p>
+     * <p>The <b>third step</b> when the trip is departed is to get the acutal geolocation data. This contains latitude, longitude,
+     * accuracy and altitude.</p>
+     * <p>As for the <b>last step</b> the service checks whether the trip has reached its ending by checking against the
+     * realtime information provided by TRIAS. This also gets updated every three minutes.</p>
+     */
     private class TimerTaskToGetLocation extends TimerTask {
         @Override
         public void run() {
@@ -160,6 +188,9 @@ public class TripRecordingService extends Service implements LocationListener {
                             currentlyRecordingTripRequest = null;
                         }
 
+                        if(currentlyRecordingTrip == null) {
+                            stopRecording();
+                        }
                         int size = currentlyRecordingTrip.getLegs().size();
                         if (size > 0) {
                             String arrivalTimeEstimated = currentlyRecordingTrip.getLegs().get(size - 1).getAlighting().getArrivalTimeEstimated();
@@ -171,11 +202,17 @@ public class TripRecordingService extends Service implements LocationListener {
 
                     }
 
+
+                    // check if already departed
                     // repeating procedure for recording
                     if (currentlyRecordingTrip != null) {
-                        getlocation();
-                        if (isTripEnding()) {
-                            stopRecording();
+                        long now = Calendar.getInstance().getTimeInMillis();
+                        long time = FormatTools.parseTrias(currentlyRecordingTrip.getLegs().get(currentlyRecordingTrip.getLegs().size() - 1).getBoarding().getDepartureTime(), null).getTime();
+                        if (time - now < 0) {
+                            getlocation();
+                            if (isTripEnding()) {
+                                stopRecording();
+                            }
                         }
                     }
 
@@ -191,6 +228,10 @@ public class TripRecordingService extends Service implements LocationListener {
         }
     }
 
+    /**
+     * This function stops the whole recording process, closes the fixed navigation and stops the service. As there are
+     * some things to do it became an own function.
+     */
     public void stopRecording() {
         newFinishedRecording();
         endCurrentTripRecording();
@@ -204,6 +245,10 @@ public class TripRecordingService extends Service implements LocationListener {
         }
     }
 
+    /**
+     * This creates a new instance of the finished recording class containing all collected location data. This is being
+     * serialized and stored into the local storage then for the questionnaire.
+     */
     private void newFinishedRecording() {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         String json = sharedPref.getString("recordings", null);
@@ -226,6 +271,11 @@ public class TripRecordingService extends Service implements LocationListener {
         }
     }
 
+    /**
+     * As the connections array is not sorted by departure time this function returns the position inside that array of which
+     * the connection is the next to depart.
+     * @return index of the next departing connection.
+     */
     private int getNextScheduledTripIndex() {
         int index = -1;
         long smallestTime = Long.MAX_VALUE;
@@ -255,6 +305,11 @@ public class TripRecordingService extends Service implements LocationListener {
         return -1;
     }
 
+    /**
+     * This function creates a custom location object and saves it into the collected data array. First it checks if
+     * the service is allowed to access gps because the user can deactivate that at any time in the system settings.
+     * Then it goes for the gps and tries to get location data. If that was not successful it goes for Networklocation.
+     */
     private void getlocation() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             mTimer.cancel();
@@ -297,6 +352,10 @@ public class TripRecordingService extends Service implements LocationListener {
         }
     }
 
+    /**
+     * This function updates the realtime arrival given by the TRIAS-interface to automatically stop a recording at the right
+     * time.
+     */
     private void updateRealtimeArrival() {
         TripInfoDownloadTask tidt = new TripInfoDownloadTask();
         tidt.setOnSuccessEvent(new TripInfoDownloadTask.SuccessEvent() {
@@ -319,6 +378,11 @@ public class TripRecordingService extends Service implements LocationListener {
         tidt.execute(currentlyRecordingTripRequest);
     }
 
+    /**
+     * This function checks if the user reached the end of the trip which he wanted to record. This is currently done by
+     * comparing realtime arrival time of the given connection with the current time.
+     * @return true if he is at the end, false if continue recording
+     */
     private boolean isTripEnding() {
         try {
             long time = Calendar.getInstance().getTimeInMillis();
@@ -333,6 +397,7 @@ public class TripRecordingService extends Service implements LocationListener {
                     endTime = FormatTools.parseTrias(currentlyRecordingTrip.getEndTime(), null).getTime();
                 }
 
+                // TODO: also check if he is close to the destination station by comparing geocordinates.
                 if (endTime != 0) {
                     return endTime <= time;
                 }
@@ -345,6 +410,12 @@ public class TripRecordingService extends Service implements LocationListener {
         return true;
     }
 
+    /**
+     * This function ends the current trips recording. As there are some things to do for that it became an own function.
+     * First it needs to remove the trip from the recordingTrips-Array. Then it removes the TripRequest and actual data
+     * for the realtime arrival as there is no trip to record anymore and then it clears the collected locations array.
+     * As final step it shows the notification that recording has finished and the user should start the questionnaire.
+     */
     private void endCurrentTripRecording() {
         recordingQueue.remove(currentlyRecordingTrip);
         currentlyRecordingTrip = null;
@@ -359,6 +430,12 @@ public class TripRecordingService extends Service implements LocationListener {
         sendNotification();
     }
 
+    /**
+     * Informing the user about the recordings finish this function comes to take place. But before showing the notification
+     * we need to make sure if the trip is really done and this function was not called accidentally. This is done by checking
+     * for the finishedrecordings array. Then it extracts service information about the trip he was recording and finally showing
+     * the notification with these information.
+     */
     private void sendNotification() {
         if (finishedRecordings == null || finishedRecordings.size() <= 0) {
             return;
@@ -387,16 +464,29 @@ public class TripRecordingService extends Service implements LocationListener {
         notificationManager.notify(2, notification);
     }
 
+    /**
+     * This function allows starting the questionnaire with the currently recording trip.
+     */
     private void startQuestionaire() {
         Questionnaire q = new Questionnaire(this.getApplicationContext(), currentlyRecordingTrip);
         q.setRecordingData(new ArrayList<>(locations));
         q.startForPastConnection();
     }
 
+    /**
+     * Getter for the list of currently recorded location data.
+     * @return
+     */
     public ArrayList<CustomLocation> getLocations() {
         return locations;
     }
 
+    /**
+     * This function adds a new connection to the recording list. As a user cannot be at two places at the same time this
+     * function also checks if the trips overlap in their time where they take place. Only when they dont it will be added!
+     * @param connection the connection which should be inserted into the array
+     * @return true if successful, false if not.
+     */
     public boolean addConnection(Connection connection) {
         try {
             long now = Calendar.getInstance().getTimeInMillis();
@@ -431,19 +521,20 @@ public class TripRecordingService extends Service implements LocationListener {
         return true;
     }
 
-
+    /**
+     * adds optional request string to the request.
+     * @param request
+     */
     public void addRequestString(String request) {
 
     }
 
+    /**
+     * Inserts the given Android-Location-Class-Instance into the collected locations array by converting it into a
+     * Instance of the CustomLocation-Class.
+     * @param location Location which should be inserted.
+     */
     private void update(Location location) {
-        /*
-        SharedPreferences sharedPref = getApplicationContext().getSharedPreferences(
-                getString(R.string.preference_file_key), Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPref.edit();
-        editor.putInt("size", locations.size());
-        editor.commit();
-        */
         CustomLocation cl = new CustomLocation();
         cl.setLatitude(location.getLatitude());
         cl.setLongitude(location.getLongitude());
@@ -453,14 +544,26 @@ public class TripRecordingService extends Service implements LocationListener {
         locations.add(cl);
     }
 
+    /**
+     * getter for the recordingqueue of connections
+     * @return
+     */
     public static List<Connection> getRecordingQueue() {
         return recordingQueue;
     }
 
+    /**
+     * getter for the list of recordings that are done
+     * @return
+     */
     public static List<FinishedRecording> getFinishedRecordings() {
         return finishedRecordings;
     }
 
+    /**
+     * Entity Class for a FinishedRecording. This contains the connection itself and the recordingData as array of Custom
+     * Location class.
+     */
     public class FinishedRecording {
         private Connection connection;
         private ArrayList<CustomLocation> recordingData;
@@ -482,6 +585,9 @@ public class TripRecordingService extends Service implements LocationListener {
         }
     }
 
+    /**
+     * Binder for the GPS
+     */
     public class GpsBinder extends Binder {
         public TripRecordingService getService() {
             return TripRecordingService.this;

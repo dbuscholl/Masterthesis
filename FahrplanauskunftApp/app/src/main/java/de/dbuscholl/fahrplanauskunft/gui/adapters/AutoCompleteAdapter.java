@@ -17,28 +17,50 @@ import de.dbuscholl.fahrplanauskunft.network.Client;
 import de.dbuscholl.fahrplanauskunft.network.xml.LocationAutocompleteRequest;
 import de.dbuscholl.fahrplanauskunft.network.entities.Station;
 
+/**
+ * The Adapter which is used to map Autocomplete Items from the Result of the Request to the Items themselves.
+ */
 public class AutoCompleteAdapter extends ArrayAdapter<String> implements Filterable {
 
     ArrayList<Station> stations;
     Context context;
 
 
+    /**
+     * Initializes the Autocomplete Adapter
+     * @param context Application Context
+     * @param textViewResourceId Resource-ID of textfield for which the Adapter should be used.
+     */
     public AutoCompleteAdapter(Context context, int textViewResourceId) {
         super(context, textViewResourceId);
         this.context = context;
         stations = new ArrayList<>();
     }
 
+    /**
+     *
+     * @return the number of stations which will be displayed for autocompletion
+     */
     @Override
     public int getCount() {
         return stations.size();
     }
 
+    /**
+     * Used by System when inflating
+     * @param index items position inside autocompletion
+     * @return the items value for a given index
+     */
     @Override
     public String getItem(int index) {
         return stations.get(index).toString();
     }
 
+    /**
+     * this fires the actual requests. As soon as a char was entered in the textfield it downloads the station results
+     * from the trias interface and inserts them here via getItem() Method.
+     * @return
+     */
     @Override
     public Filter getFilter() {
 
@@ -77,10 +99,18 @@ public class AutoCompleteAdapter extends ArrayAdapter<String> implements Filtera
 
     }
 
+    /**
+     *
+     * @return ArrayList of Station objects which were found for autocompletion
+     */
     public ArrayList<Station> getStations() {
         return stations;
     }
 
+    /**
+     * Async task to download the Station items from TRIAS-Interface. This is instanciated by the outer class when
+     * the user enters a char inside the textfield.
+     */
     private class DownloadStations extends AsyncTask<String, Void, ArrayList<Station>> {
 
 

@@ -129,6 +129,7 @@ public class PrognosisCalculatorServlet extends HttpServlet implements Calculati
         ArrayList<PrognosisFactor> calculatedFactors = new ArrayList<>();
         ArrayList<PrognosisFactor> askedFactors = new ArrayList<>();
 
+        // Split factory into two array: asked factors and calculated factors
         for (PrognosisFactor f : factory) {
             if (f.getType().toString().trim().toLowerCase().contains("questionnaire")) {
                 if (f.getType() == PrognosisFactor.PrognosisFactorType.QUESTIONNAIRE_DELAY) {
@@ -141,7 +142,6 @@ public class PrognosisCalculatorServlet extends HttpServlet implements Calculati
             }
         }
 
-        // TODO: Split factory into two array: asked factors and calculated factors
 
         ArrayList<Trip> legs = connection.getLegs();
 
@@ -154,12 +154,14 @@ public class PrognosisCalculatorServlet extends HttpServlet implements Calculati
             int delayAlighting = 0;
             ArrayList<Integer> delaysException = new ArrayList<>();
             double exceptionPropability = 0;
+            double weights = 0;
 
             for (PrognosisFactor f : calculatedFactors) {
                 ArrayList<PrognosisCalculationItem> items = f.getResult().getItems();
 
                 if (i < items.size()) {
                     PrognosisCalculationItem item = items.get(i);
+                    weights += f.getWeight();
                     delayBoarding += item.getDelayBoardingRegular() * f.getWeight();
                     delayAlighting += item.getDelayAlightingRegular() * f.getWeight();
                     if (item.getDelayException() > 0) {
@@ -178,10 +180,10 @@ public class PrognosisCalculatorServlet extends HttpServlet implements Calculati
                 }
             }
 
-            delayAlighting = delayAlighting / factory.size();
-            delayBoarding = delayBoarding / factory.size();
+            delayAlighting = delayAlighting / (int) weights;
+            delayBoarding = delayBoarding / (int) weights;
             int delayException = (int) MathToolbox.mean(delaysException);
-            exceptionPropability = exceptionPropability / factory.size();
+            exceptionPropability = exceptionPropability / (int) weights;
 
             if (console) {
                 logger.info("-----------------------------------------------------------------");
@@ -197,6 +199,7 @@ public class PrognosisCalculatorServlet extends HttpServlet implements Calculati
             prognosis.put("delayException", delayException);
             prognosis.put("exceptionPropability", exceptionPropability);
 
+            // calculating factors of questionnaire
             for (PrognosisFactor f : askedFactors) {
                 ArrayList<PrognosisCalculationItem> items = f.getResult().getItems();
                 if (i < items.size()) {

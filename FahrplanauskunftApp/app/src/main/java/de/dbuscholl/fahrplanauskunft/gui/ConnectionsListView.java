@@ -18,22 +18,40 @@ import de.dbuscholl.fahrplanauskunft.network.entities.Service;
 import de.dbuscholl.fahrplanauskunft.network.entities.StopPoint;
 import de.dbuscholl.fahrplanauskunft.network.entities.Trip;
 
+/**
+ * This is the listview for the TripDetailActivity where all information about a single connection is being visualized.
+ * As there is only one connection visualized at the time there is no adapter neccessary.
+ */
 public class ConnectionsListView extends LinearLayout {
     private Context context;
     private int stdFontsize = 14;
     private int bigFontsize = 18;
     private ArrayList<PrognosisCalculationResult> prognosis;
 
+    /**
+     * Constructor...
+     * @param context
+     */
     public ConnectionsListView(Context context) {
         super(context);
         this.context = context;
         setOrientation(LinearLayout.VERTICAL);
     }
 
+    /**
+     * Setting the prognosis item for the connection.
+     * @param prognosis
+     */
     public void setPrognosis(ArrayList<PrognosisCalculationResult> prognosis) {
         this.prognosis = prognosis;
     }
 
+    /**
+     * this function is the container of building the layout. It is separated into timed and interchange triplegs which
+     * are visualized in own functions. This is being checked for every trip.
+     * @param connection connection which should be visualized
+     * @return the view containing the full connection visualized
+     */
     public ConnectionsListView build(Connection connection) {
         ArrayList<Trip> legs = connection.getLegs();
         for (int i = 0; i < legs.size(); i++) {
@@ -62,6 +80,12 @@ public class ConnectionsListView extends LinearLayout {
         return this;
     }
 
+    /**
+     * This builds the layout for interchange triplegs. As they don't have intermediates it is only needed to display
+     * start and destination in combination with the interchange time and type. This also sets right colors and sizes.
+     * @param trip
+     * @return
+     */
     private LinearLayout getInterchangeTripLayout(Trip trip) {
         LinearLayout interchangeLayout = new LinearLayout(context);
         interchangeLayout.setOrientation(LinearLayout.VERTICAL);
@@ -111,6 +135,14 @@ public class ConnectionsListView extends LinearLayout {
         return interchangeLayout;
     }
 
+    /**
+     * This creates the full layout for a trip leg. They contain a header displaying service information like linenumber
+     * and name and the intermediates. The header and the footer also contain the prognosis information. This function
+     * sets also the right colors and sizes.
+     * @param trip
+     * @param prognosis
+     * @return
+     */
     private LinearLayout getTimedTripLayout(Trip trip, PrognosisCalculationItem prognosis) {
         LinearLayout tripLayout = new LinearLayout(context);
         tripLayout.setOrientation(LinearLayout.VERTICAL);
@@ -153,6 +185,12 @@ public class ConnectionsListView extends LinearLayout {
         return tripLayout;
     }
 
+    /**
+     * Creating a layout for the stoppoint and its information. A Stop Point has the parameters stopname and time and delay.
+     * This function also sets colors and sizes. For the delay late differs from punctual.
+     * @param stop
+     * @return
+     */
     private LinearLayout getStopPointLayout(StopPoint stop) {
         LinearLayout boarding = new LinearLayout(context);
         boarding.setOrientation(LinearLayout.HORIZONTAL);
@@ -212,6 +250,10 @@ public class ConnectionsListView extends LinearLayout {
         return boarding;
     }
 
+    /**
+     * This function returns a divider layout to keep stops apart from each other.
+     * @return
+     */
     public View getDivider() {
         View v = new View(context);
         v.setLayoutParams(new LinearLayout.LayoutParams(
@@ -223,6 +265,10 @@ public class ConnectionsListView extends LinearLayout {
         return v;
     }
 
+    /**
+     * Get a strong divider layout to keep Triplegs apart from each other.
+     * @return
+     */
     public View getStrongDivider() {
         View v = new View(context);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 7);
@@ -233,6 +279,11 @@ public class ConnectionsListView extends LinearLayout {
         return v;
     }
 
+    /**
+     * Visualizes prognosis information. As their layout is pretty simple there is nothing much to say.
+     * @param text
+     * @return
+     */
     public TextView getPrognosis(String text) {
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         params.setMargins(0, 12, 0, 12);

@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>JAVA</ID>
+  <OriginalElement>common.network.Trip</OriginalElement>
+  <nodes>
+    <node x="3216.0" y="2397.0">common.network.Connection</node>
+    <node x="502.0" y="2953.0">common.network.Answer</node>
+    <node x="1272.0" y="3290.0">servlets.NetworkToolbox</node>
+    <node x="2609.0" y="454.0">common.gtfs.TripStop.Type</node>
+    <node x="1308.0" y="2496.0">servlets.PrognosisCalculatorServlet</node>
+    <node x="1640.0" y="507.0">common.prognosis.FactorAskedInterchange</node>
+    <node x="498.0" y="2397.0">common.network.Trip</node>
+    <node x="2730.0" y="2953.0">utilities.MathToolbox</node>
+    <node x="0.0" y="0.0">org.json.JSONObject</node>
+    <node x="3088.0" y="2953.0">database.DataSource</node>
+    <node x="3328.0" y="2953.0">common.prognosis.PrognosisCalculationItem</node>
+    <node x="2493.0" y="2397.0">database.SQLFormatTools</node>
+    <node x="1231.75" y="0.0">common.prognosis.PrognosisFactor</node>
+    <node x="0.0" y="2953.0">common.gtfs.ScheduledTrip</node>
+    <node x="375.0" y="3290.0">servlets.UserRecordingServlet</node>
+    <node x="1052.0" y="3290.0">common.gtfs.OccurringService</node>
+    <node x="627.0" y="519.0">common.prognosis.PrognosisFactor.PronosisFactorCalculationModel</node>
+    <node x="1166.0" y="2953.0">common.network.CustomLocation</node>
+    <node x="0.0" y="3290.0">servlets.InitServlet</node>
+    <node x="2270.0" y="2953.0">database.Settings</node>
+    <node x="420.0" y="453.0">common.prognosis.PrognosisFactor.PrognosisFactorType</node>
+    <node x="658.5" y="2762.0">common.network.Trip.TripType</node>
+    <node x="964.0" y="2517.0">common.prognosis.PrognosisCalculator</node>
+    <node x="2790.0" y="2397.0">common.network.Service</node>
+    <node x="2881.0" y="0.0">common.network.StopPoint</node>
+    <node x="16.0" y="2214.0">org.json.JSONObject.Null</node>
+    <node x="1536.0" y="2953.0">utilities.Chronometer</node>
+    <node x="1407.0" y="507.0">common.prognosis.FactorAskedDelay</node>
+    <node x="750.0" y="3290.0">common.prognosis.PrognosisCalculationResult</node>
+    <node x="2454.0" y="0.0">common.gtfs.TripStop</node>
+    <node x="1727.0" y="2628.0">database.PrognosisDatabase.PrognosisItem</node>
+    <node x="1904.0" y="452.0">common.prognosis.FactorTrias</node>
+    <node x="1161.0" y="507.0">common.prognosis.FactorUserRecording</node>
+    <node x="1155.5" y="2397.0">common.prognosis.CalculationCompletedEvent</node>
+    <node x="1718.0" y="3290.0">database.UserDataDatabase</node>
+    <node x="2428.0" y="2953.0">common.network.ApiRequester</node>
+    <node x="198.0" y="2247.5">servlets.ErrorResponse</node>
+    <node x="0.0" y="2397.0">database.GTFS</node>
+    <node x="2196.0" y="507.0">common.prognosis.FactorAsked</node>
+    <node x="901.0" y="507.0">common.prognosis.FactorGoogleDirections</node>
+    <node x="2007.0" y="2397.0">common.gtfs.Delay</node>
+    <node x="749.0" y="2953.0">database.procedures.UserRecordingImporter</node>
+    <node x="1745.0" y="2953.0">common.network.UserRecordingData</node>
+    <node x="1683.0" y="2397.0">database.PrognosisDatabase</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="common.prognosis.FactorTrias" target="common.prognosis.PrognosisFactor">
+      <point x="0.0" y="-113.5" />
+      <point x="2040.0" y="412.0" />
+      <point x="1495.0" y="412.0" />
+      <point x="101.25" y="191.0" />
+    </edge>
+    <edge source="common.prognosis.FactorAskedInterchange" target="common.prognosis.PrognosisFactor">
+      <point x="0.0" y="-58.5" />
+      <point x="1762.0" y="422.0" />
+      <point x="1454.5" y="422.0" />
+      <point x="60.75" y="191.0" />
+    </edge>
+    <edge source="servlets.PrognosisCalculatorServlet" target="common.prognosis.CalculationCompletedEvent">
+      <point x="0.0" y="-135.0" />
+      <point x="1473.0" y="2471.0" />
+      <point x="1371.5" y="2471.0" />
+      <point x="72.0" y="24.5" />
+    </edge>
+    <edge source="common.prognosis.FactorGoogleDirections" target="common.prognosis.PrognosisFactor">
+      <point x="0.0" y="-58.5" />
+      <point x="1021.0" y="422.0" />
+      <point x="1333.0" y="422.0" />
+      <point x="-60.75" y="191.0" />
+    </edge>
+    <edge source="database.PrognosisDatabase.PrognosisItem" target="database.PrognosisDatabase">
+      <point x="0.0" y="-58.0" />
+      <point x="0.0" y="90.5" />
+    </edge>
+    <edge source="common.prognosis.FactorAsked" target="common.prognosis.PrognosisFactor">
+      <point x="0.0" y="-58.5" />
+      <point x="2302.5" y="402.0" />
+      <point x="1535.5" y="402.0" />
+      <point x="141.75" y="191.0" />
+    </edge>
+    <edge source="common.prognosis.FactorAskedDelay" target="common.prognosis.PrognosisFactor">
+      <point x="0.0" y="-58.5" />
+      <point x="1513.5" y="432.0" />
+      <point x="1414.0" y="432.0" />
+      <point x="20.25" y="191.0" />
+    </edge>
+    <edge source="common.prognosis.FactorUserRecording" target="common.prognosis.PrognosisFactor">
+      <point x="0.0" y="-58.5" />
+      <point x="1274.0" y="432.0" />
+      <point x="1373.5" y="432.0" />
+      <point x="-20.25" y="191.0" />
+    </edge>
+    <edge source="common.prognosis.PrognosisFactor.PronosisFactorCalculationModel" target="common.prognosis.PrognosisFactor">
+      <point x="0.0" y="-46.5" />
+      <point x="754.0" y="412.0" />
+      <point x="1292.5" y="412.0" />
+      <point x="-101.25" y="191.0" />
+    </edge>
+    <edge source="org.json.JSONObject.Null" target="org.json.JSONObject">
+      <point x="0.0" y="-69.0" />
+      <point x="97.0" y="2189.0" />
+      <point x="93.75" y="2189.0" />
+      <point x="-93.75" y="1082.0" />
+    </edge>
+    <edge source="common.prognosis.PrognosisCalculator" target="common.prognosis.CalculationCompletedEvent">
+      <point x="0.0" y="-114.0" />
+      <point x="1126.0" y="2471.0" />
+      <point x="1227.5" y="2471.0" />
+      <point x="-72.0" y="24.5" />
+    </edge>
+    <edge source="common.prognosis.PrognosisFactor.PrognosisFactorType" target="common.prognosis.PrognosisFactor">
+      <point x="0.0" y="-112.5" />
+      <point x="513.5" y="402.0" />
+      <point x="1252.0" y="402.0" />
+      <point x="-141.75" y="191.0" />
+    </edge>
+    <edge source="servlets.ErrorResponse" target="org.json.JSONObject">
+      <point x="0.0" y="-35.5" />
+      <point x="278.0" y="2189.0" />
+      <point x="281.25" y="2189.0" />
+      <point x="93.75" y="1082.0" />
+    </edge>
+    <edge source="common.network.Trip.TripType" target="common.network.Trip">
+      <point x="0.0" y="-46.5" />
+      <point x="0.0" y="157.5" />
+    </edge>
+    <edge source="common.gtfs.TripStop.Type" target="common.gtfs.TripStop">
+      <point x="0.0" y="-35.5" />
+      <point x="0.0" y="202.0" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic Group" zoom="0.773972602739726" x="1960.0353982300885" y="345.0" />
+  <SelectedNodes />
+  <Categories>
+    <Category>Fields</Category>
+    <Category>Constructors</Category>
+    <Category>Methods</Category>
+    <Category>Properties</Category>
+    <Category>Inner Classes</Category>
+  </Categories>
+  <SCOPE>All</SCOPE>
+  <VISIBILITY>private</VISIBILITY>
+</Diagram>
+

@@ -4,9 +4,13 @@ import android.graphics.Color;
 
 import org.jdom2.Namespace;
 
+/**
+ * This simple class contains lots of attributes which can be configured by developers to adjust the app to their whishes.
+ * Although it is not completed to outsource all neccessary attributes you can still use a lot of them already.
+ */
 public class Constants {
     /*
-    ----------------------------------------STIRNG VALUES-------------------------------------------
+    ----------------------------------------STRING VALUES-------------------------------------------
      */
     public static final String ERRORMSG_TRIAS_NOREFS = "Name and Ref of Start is null";
     public static final String ERRORMSG_GPS_NOPERMISSION = "Bitte Zugriff auf GPS erlauben!";
@@ -43,4 +47,5 @@ public class Constants {
     public static final String URL_USERDATA_IMPORTER = "http://busbilder.net:8080/prognosiscalculator/import";
     public static final String URL_TRIASAPI = "http://efastatic.vvs.de/kleinanfrager/trias";
 
+    // TODO: Insert attributes about time values e.g. tracking repetition time or timeouts
 }

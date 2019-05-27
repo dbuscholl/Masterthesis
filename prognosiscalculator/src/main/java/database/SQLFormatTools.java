@@ -141,4 +141,10 @@ public class SQLFormatTools {
         datesdf.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
         return datesdf.format(parse);
     }
+
+    public static long getTriasDifference(String startTime, String endTime) {
+        Date start = parseTriasTime(startTime);
+        Date end = parseTriasTime(endTime);
+        return end.getTime() - start.getTime();
+    }
 }
