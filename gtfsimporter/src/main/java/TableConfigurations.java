@@ -2,12 +2,25 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
+/**
+ * This huge class is some kind of controller which stores all information about GTFS and it's table strcuture. It holds
+ * two maps. One with the table names which can be accessed by filename -> columnname : datatype and the other which holds
+ * table columns that are optional. See GTFS-Specs to find out more about the tablenames, datatypes and optionals.
+ */
 public class TableConfigurations {
     private static final HashMap<String, HashMap<String, String>> tableMap = new HashMap<>();
     private static final ArrayList<String> optionals = new ArrayList<>();
 
+    /**
+     * empty constructor private because you shuld not create instances of this class because everything is static here.
+     */
     private TableConfigurations(){}
 
+    /**
+     * returns the columnnames : datatypes map which can be accessed by filename -> columnname : datatype. If array wasn't
+     * initialized yet it does that automatically
+     * @return the columnnames : datatypes map
+     */
     public static HashMap<String, HashMap<String, String>> getMap() {
         if(tableMap.isEmpty()) {
             initializeTableMap();
@@ -15,6 +28,10 @@ public class TableConfigurations {
         return tableMap;
     }
 
+    /**
+     * returns the optional columns list containing all columnnames which are not required to have a value.
+     * @return the optional columns list
+     */
     public static ArrayList<String> getOptionals() {
         if(optionals.size() == 0) {
             initializeOptionals();
@@ -22,6 +39,10 @@ public class TableConfigurations {
         return optionals;
     }
 
+    /**
+     * assigns the values into the map because there is no "short" initializer for arraylist. I could have used normal arrays
+     * though.
+     */
     private static void initializeTableMap() {
         tableMap.put("agency.txt", new HashMap<>());
         tableMap.put("stops.txt", new HashMap<>());
@@ -148,6 +169,9 @@ public class TableConfigurations {
         tableMap.get("feed_info.txt").put("feed_contact_url","varchar(255)");
     }
 
+    /**
+     * iniitalizes the optional columns list because there are no short initalizers for arraylists.
+     */
     public static void initializeOptionals() {
         optionals.add("calendar_dates.txt");
         optionals.add("fare_attributes.txt");

@@ -13,6 +13,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.ResourceBundle;
 
+/**
+ * <p>This is the main view of the Application. It's contents are the textfields where the user can enter alls information
+ * about the database and select a file to be imported via filepath chooser. It also contains a start button which triggers
+ * all the magic.</p>
+ * <p>The initalization method assigns all listeners to the important viwes. These are the filechooser which only should
+ * search for textfiles and the start button which starts all the majesty. After click the programm reads out all the
+ * typed in values from the textfields and sets them into the configuration class. Then the importer is starting and
+ * doing work. After that, the window has a listener for that, it shows a success dialog or a error dialog corresponding
+ * to the outcome of the import.</p>
+ */
 public class StartupWindowController implements Initializable {
     private static File selectedFile = null;
 
