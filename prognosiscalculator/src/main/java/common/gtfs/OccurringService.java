@@ -2,21 +2,21 @@ package common.gtfs;
 
 /**
  * This class is used to determine wheter a trip is scheduled for a specific date or not. This class is usually provided
- * by the database.
+ * by the database. If this service id is given by a trip then it occurs!
  */
 public class OccurringService {
     private String service_id;
 
     /**
      * This class is used to determine wheter a trip is scheduled for a specific date or not. This class is usually provided
-     * by the database.
+     * by the database. If this service id is given by a trip then it occurs!
      */
     public OccurringService(){
     }
 
     /**
      * This class is used to determine wheter a trip is scheduled for a specific date or not. This class is usually provided
-     * by the database.
+     * by the database. If this service id is given by a trip then it occurs!
      * @param service_id the service id which is targeted
      */
     public OccurringService(String service_id) {

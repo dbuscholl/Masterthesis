@@ -9,17 +9,29 @@ import utilities.MathToolbox;
 
 import java.util.ArrayList;
 
+/**
+ * This class works analog to {@link FactorTrias} but uses other delay data. The delays come from userrecordings which
+ * were measured by the android app.However the calculation works similar to {@link FactorTrias} but without differentiating
+ * between OPTIMISTIC, NEUTRAL or PESSIMISTIC calculation method. It uses the median for all types.
+ */
 public class FactorUserRecording extends PrognosisFactor {
     private Logger logger = Logger.getLogger(this.getClass());
 
     private ArrayList<String> currentTripIds = new ArrayList<>();
 
-
+    /**
+     * constructor
+     * @param connection the connection for which the prognosis should be calculated
+     */
     public FactorUserRecording(Connection connection) {
         super(connection);
         type = PrognosisFactorType.USERRECORDING_EVERYDAY;
     }
 
+    /**
+     * First the function gets the GTFS Trip IDs. Then it retrieves all delays which were measured for it. At last it
+     * calculates the median of the data and returns it's results.
+     */
     @Override
     protected void execute() {
         try {
@@ -39,10 +51,10 @@ public class FactorUserRecording extends PrognosisFactor {
                 }
 
                 standardCalculation(delays);
-                notifyExecutionFinished(this);
-
-                return;
             }
+            notifyExecutionFinished(this);
+
+            return;
         } catch (Exception e) {
             logger.error(type + ": " + e.getMessage(), e);
             notifyExecutionFinished(null);

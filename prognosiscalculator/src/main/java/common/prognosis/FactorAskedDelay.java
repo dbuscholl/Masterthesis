@@ -8,16 +8,29 @@ import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
 
+/**
+ * <p>This class takes care of the delays which were measured by the questionnaire and are subjective </p>
+ * <p>The calculation is pretty simple in this case. First the class obtains the gtfs trip id for the trip leg if not
+ * done by other factors already. Then it gets all delays from the database which were measured by questionnaire. At last
+ * this class uses the standard calciulation which is described in {@link PrognosisFactor}.</p>
+ */
 public class FactorAskedDelay extends PrognosisFactor {
-    Logger logger = Logger.getLogger(this.getClass().getName()
-    );
+    Logger logger = Logger.getLogger(this.getClass().getName());
     private ArrayList<String> currentTripIds = new ArrayList<>();
 
-
+    /**
+     * constructor
+     * @param connection enter the connection for which you want this factor to calculate the delay
+     */
     public FactorAskedDelay(Connection connection) {
         super(connection);
     }
 
+    /**
+     * The calculation is pretty simple in this case. First the class obtains the gtfs trip id for the trip leg if not
+     * done by other factors already. Then it gets all delays from the database which were measured by questionnaire. At last
+     * this class uses the standard calciulation which is described in {@link PrognosisFactor}.
+     */
     @Override
     protected void execute() {
         try {
@@ -43,10 +56,10 @@ public class FactorAskedDelay extends PrognosisFactor {
 
                 standardCalculation(delays);
 
-                notifyExecutionFinished(this);
-                return;
-
             }
+            notifyExecutionFinished(this);
+            return;
+
         } catch (Exception e) {
             logger.error(type + ": " + e.getMessage(), e);
         }

@@ -6,6 +6,10 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
+/**
+ * entity class representing trip information. A trip contains a service which provides non changing information like linenumber,
+ * departure and arrival stops which are own classes containing more information.
+ */
 public class Trip {
     private Service service;
     private StopPoint boarding;
@@ -16,17 +20,35 @@ public class Trip {
     private String interchangeType;
     private String GTFSTripId;
 
+    /**
+     * empty constructor
+     */
     public Trip() {
     }
 
+    /**
+     * parameterized constructor
+     * @param service provides non changing information like linenumber
+     * @param boarding stop class of boarding
+     * @param alighting stop class of alighting
+     * @param intermediates list of all stops occuring during the trip. Interchanges dont have intermediates
+     * @param legId position inside a connection
+     * @param type type of trip can be timed or interchange
+     */
     public Trip(Service service, StopPoint boarding, StopPoint alighting, ArrayList<StopPoint> intermediates, int legId, TripType type) {
         this.service = service;
         this.boarding = boarding;
         this.alighting = alighting;
         this.intermediates = intermediates;
         this.legId = legId;
+        this.type = type;
     }
 
+    /**
+     * Instantiates a Trip Object from a JSON Object. Filling in all Attributes from it. This is useful for http-requests
+     * as their payload is encoded with json
+     * @param json
+     */
     public Trip(JSONObject json) {
         try {
             legId = json.has("legId") ? json.getInt("legId") : -1;
@@ -56,6 +78,10 @@ public class Trip {
         }
     }
 
+    /**
+     * creates a json object from the class instance
+     * @return a json object from the class instance
+     */
     public JSONObject toJSON() {
         JSONObject trip = new JSONObject();
         try {
@@ -102,6 +128,10 @@ public class Trip {
         }
     }
 
+    /**
+     * creates a json string representation of this class instance
+     * @return a json string representation of this class instance
+     */
     @Override
     public String toString() {
         JSONObject json = toJSON();
@@ -113,70 +143,139 @@ public class Trip {
         }
     }
 
+    /**
+     * getter
+     * @return the type of interchange when the leg is an interchange e.g. walking driving
+     */
     public String getInterchangeType() {
         return interchangeType;
     }
 
+    /**
+     * setter
+     * @param interchangeType the type of interchange when the leg is an interchange e.g. walking driving
+     */
     public void setInterchangeType(String interchangeType) {
         this.interchangeType = interchangeType;
     }
 
+    /**
+     * getter
+     * @return type of trip can be timed or interchange
+     */
     public TripType getType() {
         return type;
     }
 
+    /**
+     * setter
+     * @param type type of trip can be timed or interchange
+     */
     public void setType(TripType type) {
         this.type = type;
     }
 
+    /**
+     * getter
+     * @return service providing non changing information like linenumber
+     */
     public Service getService() {
         return service;
     }
 
+    /**
+     * setter
+     * @param service service providing non changing information like linenumber
+     */
     public void setService(Service service) {
         this.service = service;
     }
 
+    /**
+     * getter
+     * @return stop class of boarding
+     */
     public StopPoint getBoarding() {
         return boarding;
     }
 
+    /**
+     * setter
+     * @param boarding stop class of boarding
+     */
     public void setBoarding(StopPoint boarding) {
         this.boarding = boarding;
     }
 
+    /**
+     * getter
+     * @return stop class of alighting
+     */
     public StopPoint getAlighting() {
         return alighting;
     }
 
+    /**
+     * setter
+     * @param alighting stop class of alighting
+     */
     public void setAlighting(StopPoint alighting) {
         this.alighting = alighting;
     }
 
+    /**
+     * getter
+     * @return list of all stops occuring during the trip. Interchanges dont have intermediates
+     */
     public ArrayList<StopPoint> getIntermediates() {
         return intermediates;
     }
 
+    /**
+     * setter
+     * @param intermediates list of all stops occuring during the trip. Interchanges dont have intermediates
+     */
     public void setIntermediates(ArrayList<StopPoint> intermediates) {
         this.intermediates = intermediates;
     }
 
+    /**
+     * setter
+     * @param legId  position inside a connection
+     */
     public void setLegId(int legId) {
         this.legId = legId;
     }
 
+    /**
+     * getter
+     * @return position inside a connection
+     */
     public int getLegId() {
         return legId;
     }
 
+    /**
+     * getter
+     * @return the gtfs trip id corresponding to the TRIAS trip
+     */
     public String getGTFSTripId() {
         return GTFSTripId;
     }
 
+    /**
+     * setter
+     * @param GTFSTripId the gtfs trip id corresponding to the TRIAS trip
+     */
     public void setGTFSTripId(String GTFSTripId) {
         this.GTFSTripId = GTFSTripId;
     }
 
+    /**
+     * Type of trips which can occur are:<br> TIMED: The standard trip leg. <br>INTERCHANGE: user has to switch vehicle<br>
+     *     CONTINUOUS: user can stay in vehicle although service change.
+     *
+     */
     public enum TripType {
         TIMED, INTERCHANGE, CONTINUOUS;
     }

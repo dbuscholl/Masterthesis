@@ -12,6 +12,10 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * This simple class is kind of an http client which targets the Google Directions API in this case. Other targets are
+ * not implemented atm.
+ */
 public class ApiRequester {
     private static String urlString = "https://maps.googleapis.com/maps/api/directions/json?";
     private static final String API_KEY = "AIzaSyC00tX3To7l7oMrQX2u4mgN3LM2tLZQIt0";
@@ -25,6 +29,13 @@ public class ApiRequester {
         System.out.println((double) travelTime/60);
     }
 
+    /**
+     * returns the amount of travel time in seconds from the google api
+     * @param origin
+     * @param destination
+     * @param via
+     * @return
+     */
     public static int getTravelTime(String origin, String destination, String via) {
         try {
             String json = sendRequest(origin, destination, via);

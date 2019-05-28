@@ -290,6 +290,11 @@ public class TripStop {
         }
     }
 
+    /**
+     * returns a readable string "visualization" for the stop which is like: ID: name | TT: -> arrivaltime, departuretime
+     * -> | ET: -> arrivalrealtime, departurerealtime -> | type
+     * @return ID: name | TT: -> arrivaltime, departuretime -> | ET: -> arrivalrealtime, departurerealtime -> | type
+     */
     @Override
     public String toString() {
         StringBuffer s = new StringBuffer();

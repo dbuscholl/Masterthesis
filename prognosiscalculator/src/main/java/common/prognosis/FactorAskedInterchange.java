@@ -8,14 +8,29 @@ import utilities.MathToolbox;
 
 import java.util.ArrayList;
 
+/**
+ * <p>This class is used to predict if the user will reach the next vehicle or not, in other words successfully interchange.</p>
+ * <p>The calculation is also pretty simple. At first this class gets the gtfs trip ids if this wasn't done by an other
+ * factor before. Then it retrieves all values which indicate if users reached the interchange or not in the past. At last
+ * it calculates the mean and checks if the result is bigger than the threshold which can be set via class attribute.</p>
+ */
 public class FactorAskedInterchange extends PrognosisFactor {
     Logger logger = Logger.getLogger(this.getClass().getName());
     private static final double THRESHOLD = 0.7;
 
+    /**
+     * constructor
+     * @param connection set the connection for which you want to calculate the prognosis
+     */
     public FactorAskedInterchange(Connection connection) {
         super(connection);
     }
 
+    /**
+     *The calculation is also pretty simple. At first this class gets the gtfs trip ids if this wasn't done by an other
+     * factor before. Then it retrieves all values which indicate if users reached the interchange or not in the past. At last
+     * it calculates the mean and checks if the result is bigger than the threshold which can be set via class attribute
+     */
     @Override
     protected void execute() {
         try {
