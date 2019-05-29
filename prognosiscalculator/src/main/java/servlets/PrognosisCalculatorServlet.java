@@ -26,6 +26,10 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * This servlet runs the actual prognosis calculation after extracting and parsing the json request body. It then returns
+ * the result of calculation.
+ */
 @WebServlet(name = "PrognosisCalculatorServlet")
 public class PrognosisCalculatorServlet extends HttpServlet implements CalculationCompletedEvent {
     final Lock lock = new ReentrantLock();
@@ -34,6 +38,13 @@ public class PrognosisCalculatorServlet extends HttpServlet implements Calculati
     private PrognosisCalculator prognosisCalculator = null;
     private Connection connection = null;
 
+    /**
+     * do nothing, use post...
+     * @param request
+     * @param response
+     * @throws ServletException
+     * @throws IOException
+     */
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         Chronometer chronometer = new Chronometer();
         chronometer.addNow();
@@ -42,6 +53,15 @@ public class PrognosisCalculatorServlet extends HttpServlet implements Calculati
         logger.info("Execution done in " + ((double) chronometer.getLastDifferece() / 1000) + "s");
     }
 
+    /**
+     * First we read out and parse the json request body. Then we check if there is already a calculation running for this
+     * request parameters. If not we insert a blank and start the big and great prognosis calculator. When he is done
+     * with it's calculation magic we return the response to the client, the console and the database.
+     * @param request request with json body
+     * @param response response
+     * @throws ServletException
+     * @throws IOException
+     */
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         try {
             JSONObject jsonObject = NetworkToolbox.readJSONObjectFromRequestBody(request);
@@ -89,6 +109,14 @@ public class PrognosisCalculatorServlet extends HttpServlet implements Calculati
         }
     }
 
+    /**
+     * checks if there is already a blank inside the database and prints corresponding error responses if so. if calculation
+     * was completed and is less than 24 hours past, then we simply return the old response without recalculating.
+     * @param response the response to write out the errors
+     * @return true if already existing, false if not
+     * @throws SQLException
+     * @throws IOException
+     */
     private boolean checkAlreadyExisting(HttpServletResponse response) throws SQLException, IOException {
         ArrayList<JSONObject> existingJsons = new ArrayList<>();
         for (Trip t : connection.getLegs()) {
@@ -124,6 +152,11 @@ public class PrognosisCalculatorServlet extends HttpServlet implements Calculati
         return false;
     }
 
+    /**
+     * creates a full output for a calculation result
+     * @param console specify whether to <b>also</b> output to console by setting this to true. False will not
+     * @return a json array containing the results of the prognosis calculation.
+     */
     private JSONArray createOutput(boolean console) {
         ArrayList<PrognosisFactor> factory = prognosisCalculator.getFactory();
         ArrayList<PrognosisFactor> calculatedFactors = new ArrayList<>();
@@ -240,16 +273,15 @@ public class PrognosisCalculatorServlet extends HttpServlet implements Calculati
         return output;
     }
 
+    /**
+     * implementation of the calculation completed event which is fire, when all calculation of the factory is done.
+     * @param factor
+     */
     @Override
     public void onCalculationComplete(PrognosisFactor factor) {
         lock.lock();
         System.out.println("Singal fired");
         data.signal();
         lock.unlock();
-    }
-
-    private void printPrognosis(String out, HttpServletResponse response) throws IOException {
-        response.getWriter().print(out);
-        response.getWriter().close();
     }
 }

@@ -10,7 +10,20 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
+/**
+ * This is an additional database class providing operation which have to do with prognosis data. <b>Note: With the next
+ * update some functions from {@link GTFS} will be added here for semantic reasons.</b>
+ */
 public class PrognosisDatabase {
+
+    /**
+     * this function inserts a placeholder into the prognosis table to indicate a running calculation
+     * @param tripId trip ID from gtfs for which the prognosis is calculated
+     * @param operatingDay operatingDayRef parameter from TRIAS for which the prognosis is calculated
+     * @param journeyRef journeyRef parameter which is kind of an ID from TRIAS for which the prognosis is calculated
+     * @return true if the blank was inserted successful, false if not
+     * @throws SQLException when something goes wrong during database operations
+     */
     public static boolean insertBlank(String tripId, String operatingDay, String journeyRef) throws SQLException {
         Connection c = DataSource.getConnection();
 
@@ -26,6 +39,13 @@ public class PrognosisDatabase {
         return execute;
     }
 
+    /**
+     * gets a blank back as {@link PrognosisItem} which is already inserted into the database.
+     * @param operatingDay operatingDayRef parameter from TRIAS for which the prognosis is calculated
+     * @param journeyRef journeyRef parameter which is kind of an ID from TRIAS for which the prognosis is calculated
+     * @return blank reference as prognosis item
+     * @throws SQLException when something goes wrong during database operations
+     */
     public static PrognosisItem getBlank(String operatingDay, String journeyRef) throws SQLException {
         PrognosisItem item = new PrognosisItem();
         Connection c = DataSource.getConnection();
@@ -48,6 +68,14 @@ public class PrognosisDatabase {
         return item;
     }
 
+    /**
+     * updates the database with new prognosis data. There has to be a blank inserted in the database with the same
+     * operatingDayRef and journeyRef before.
+     * @param legs a list of legs containing the prognosis with
+     * @param output
+     * @return
+     * @throws SQLException
+     */
     public static boolean update(ArrayList<Trip> legs, JSONArray output) throws SQLException {
         for (int i = 0; i < legs.size(); i++) {
             Trip t = legs.get(i);
@@ -75,6 +103,13 @@ public class PrognosisDatabase {
         return true;
     }
 
+    /**
+     * removes a blank from the prognosis database table
+     * @param operatingDay operatingDayRef parameter from TRIAS for which the prognosis should be removed
+     * @param journeyRef journeyRef parameter which is kind of an ID from TRIAS for which the prognosis should be removed
+     * @return true if removing was successful, false if not
+     * @throws SQLException when something goes wrong during a database operation
+     */
     public static boolean removeEntry(String operatingDay, String journeyRef) throws SQLException {
         Connection c = DataSource.getConnection();
 
@@ -89,6 +124,10 @@ public class PrognosisDatabase {
         return affected > 0;
     }
 
+    /**
+     * this function creates the table with its structure where all answers collected by the questionnaire are stored
+     * @throws SQLException  when something goes wrong during a database operation
+     */
     public static void createUserAnswersTable() throws SQLException {
         Connection c = DataSource.getConnection();
         PreparedStatement s = c.prepareStatement("CREATE TABLE IF NOT EXISTS `user_answers` (" +
@@ -107,6 +146,10 @@ public class PrognosisDatabase {
         c.close();
     }
 
+    /**
+     * this function creates the table with its structure where all delay data recorded by the user is stored
+     * @throws SQLException when something goes wrong during a database operation
+     */
     public static void createUserRecordingsTable() throws SQLException {
         Connection c = DataSource.getConnection();
         PreparedStatement s = c.prepareStatement("CREATE TABLE IF NOT EXISTS `user_recordings` (" +
@@ -122,6 +165,10 @@ public class PrognosisDatabase {
         c.close();
     }
 
+    /**
+     * this function creates the table with its structure where all completed prognosis calculations are stored
+     * @throws SQLException when something goes wrong during a database operation
+     */
     public static void createPrognosisTable() throws SQLException {
         Connection c = DataSource.getConnection();
         PreparedStatement s = c.prepareStatement("CREATE TABLE IF NOT EXISTS `prognosis` (" +
@@ -137,31 +184,58 @@ public class PrognosisDatabase {
         c.close();
     }
 
+    /**
+     * Prognosis Item entity class containing the json of calculation and the timestamp when it was created. This is
+     * important for caching
+     */
     public static class PrognosisItem {
         private long timestamp;
         private String json;
 
+        /**
+         * empty constructor
+         */
         public PrognosisItem() {
         }
 
+        /**
+         * parameterized constructor
+         * @param timestamp timestamp when the prognosis was calculated
+         * @param json the json encoded result of the calculation
+         */
         public PrognosisItem(long timestamp, String json) {
             this.timestamp = timestamp;
             this.json = json;
         }
 
-
+        /**
+         * getter
+         * @return timestamp when the prognosis was calculated
+         */
         public long getTimestamp() {
             return timestamp;
         }
 
+        /**
+         * setter
+         * @param timestamp timestamp when the prognosis was calculated
+         */
         public void setTimestamp(long timestamp) {
             this.timestamp = timestamp;
         }
 
+        /**
+         * getter
+         * @return the json encoded result of the calculation
+         */
         public String getJson() {
             return json;
         }
 
+        /**
+         * setter
+         * @param json the json encoded result of the calculation
+         */
         public void setJson(String json) {
             this.json = json;
         }

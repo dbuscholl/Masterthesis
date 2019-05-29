@@ -13,9 +13,20 @@ import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.*;
 
+/**
+ * This class is the main entry point for this application. The main method is executed on start of the programm. At
+ * first the config file is read. All of the attributes stored there are hold in static attributes of the {@link Settings} class.
+ * Then it starts both repeating threads: the {@link RecorderProcess} and the {@link Processes.WorkerManager}.
+ */
 public class Main {
     private static Chronometer chronometer = new Chronometer();
 
+    /**
+     * At first the config file is read. All of the attributes stored there are hold in static attributes of the
+     * {@link Settings} class. Then it starts both repeating threads: the {@link RecorderProcess} and the
+     * {@link Processes.WorkerManager}.
+     * @param args cmd args
+     */
     public static void main(String[] args) {
         Logger log = Logger.getLogger(Main.class);
 
@@ -48,6 +59,10 @@ public class Main {
 
     }
 
+    /**
+     * this function reads out the config file and puts its contents inside the {@link Settings} class. As the config
+     * file might change during the time this method is public and can be called from anywhere to reload the file.
+     */
     public static void readConfig() {
         Properties prop = new Properties();
         InputStream input = null;

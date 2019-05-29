@@ -11,14 +11,32 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-
+/**
+ * This servlet is the entry point of the user data importer and returns if that was successful and how long th eimport
+ * took
+ */
 public class UserRecordingServlet extends HttpServlet {
     private PrintWriter out;
 
+    /**
+     * redirect to get
+     * @param request
+     * @param response
+     * @throws ServletException
+     * @throws IOException
+     */
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         doGet(request,response);
     }
 
+    /**
+     * first read and parse the json string and then initialize the {@link UserRecordingImporter} which does the rest. This
+     * servlet only returns the execution time when everything is done.
+     * @param request request to be parsed and of which the data should be imported
+     * @param response response.
+     * @throws ServletException
+     * @throws IOException
+     */
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         out = response.getWriter();
 

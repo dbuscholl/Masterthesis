@@ -135,6 +135,11 @@ public class SQLFormatTools {
         }
     }
 
+    /**
+     * creates a date string for the gtfs database which is "yyyy-MM-dd" pattern
+     * @param date the date which should be formatted
+     * @return the yyyy-MM-dd formatted string
+     */
     public static String makeDateForGtfs(String date) {
         SimpleDateFormat datesdf = new SimpleDateFormat(datePattern);
         Date parse = parseTriasTime(date);
@@ -142,6 +147,12 @@ public class SQLFormatTools {
         return datesdf.format(parse);
     }
 
+    /**
+     * calculates the timedifference in milliseconds between to given TRIAS UTC Timestrings
+     * @param startTime the first time which should be calculated
+     * @param endTime the second time which should be calculated
+     * @return endTime minus startTime difference in milliseconds. This can therefore also be negative!
+     */
     public static long getTriasDifference(String startTime, String endTime) {
         Date start = parseTriasTime(startTime);
         Date end = parseTriasTime(endTime);

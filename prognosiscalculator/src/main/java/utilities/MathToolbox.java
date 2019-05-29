@@ -4,7 +4,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 
+/**
+ * This class provides some tools for calculating the prognosis and other mathematical things.
+ */
 public class MathToolbox {
+
+    /**
+     * this function measures the distance in meters between two coordinates.
+     * @param lat1 latitude of the first coordinate
+     * @param lng1 longitude of the first coordinate
+     * @param lat2 latitude of the second coordinate
+     * @param lng2 longitude of the second coordinate
+     * @return the distance between those two points in meters
+     */
     public static float meterDistanceBetween(float lat1, float lng1, float lat2, float lng2) {
         double earthRadius = 6371000; //meters
 
@@ -21,6 +33,11 @@ public class MathToolbox {
         return dist;
     }
 
+    /**
+     * calculates the mean of a list of values
+     * @param values array of which the mean should be calculated
+     * @return the mean
+     */
     public static double mean(ArrayList<Integer> values) {
         long sum = 0;
         for (int i = 0; i < values.size(); i++) {
@@ -29,6 +46,11 @@ public class MathToolbox {
         return (double) sum / values.size();
     }
 
+    /**
+     * calculates the median of a list of integers
+     * @param values array of which the median should be calculated
+     * @return the median
+     */
     public static double median(ArrayList<Integer> values) {
         Collections.sort(values);
         if (values.size() % 2 == 0) {
@@ -60,6 +82,11 @@ public class MathToolbox {
         return new int[]{maxValue, maxCount};
     }
 
+    /**
+     * casts a value to int without throwing an exception but with possible los of values
+     * @param l the long value to cast
+     * @return the casted integer
+     */
     public static int castToIntWithPossibleLoss(long l) {
         if (l < Integer.MIN_VALUE) {
             return Integer.MIN_VALUE;

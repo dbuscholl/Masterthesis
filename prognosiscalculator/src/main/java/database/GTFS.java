@@ -15,13 +15,31 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.TimeZone;
 
+/**
+ * This class gives you various of database operation functions which have to do with gtfs manipulation. It's first use case
+ * is to read out lots of things from the database. It's second is to update and insert data for prognosis calculation.
+ * <br><b>Note: Some function will be extracted into the class {@link PrognosisDatabase} for semantic reasons in the next
+ * update of this class</b>
+ */
 public class GTFS {
 
+    /**
+     * gets the first found trip id for a given TRIAS Trip Instance
+     * @param trip the trip for which the gtfs id should be found from the database
+     * @return the first found trip id from the gtfs database
+     * @throws SQLException when something goes wrong during database accessing
+     */
     public static String getGTFSTripId(Trip trip) throws SQLException {
         ArrayList<String> tripIds = getGTFSTripIds(trip);
         return tripIds.size() > 0 ? tripIds.get(0) : null;
     }
 
+    /**
+     * gets a list of gtfs trip ids matching the given TRIAS trip instance
+     * @param trip the trip for which the gtfs id should be found from the database
+     * @return a list of gtfs trip ids as string which matched to the trip provided as parameter
+     * @throws SQLException  when something goes wrong during database accessing
+     */
     public static ArrayList<String> getGTFSTripIds(Trip trip) throws SQLException {
         Connection c = DataSource.getConnection();
         ArrayList<String> tripIds = new ArrayList<>();
@@ -66,6 +84,15 @@ public class GTFS {
         return tripIds;
     }
 
+    /**
+     * gets a list of trip ids for all trips which occur at a given stop point at it's time which is specified inside the
+     * class as attribute. This might also contain trip services which travel the wrong direction because they can accidentally
+     * be also there at the same time.
+     * @param stop stop point at which all trip ids should be found which occur there
+     * @param arrival true if you want to use arrival time from the stop point, false to use the departure time
+     * @return a list of trip ids which matches the stop point it's departure / arrival time.
+     * @throws SQLException when something goes wrong during database accessing
+     */
     public static ArrayList<String> getGTFSTripIds(StopPoint stop, boolean arrival) throws SQLException {
         Connection c = DataSource.getConnection();
         boolean hasRef = stop.getRef() != null && !stop.getRef().equals("");
@@ -99,6 +126,17 @@ public class GTFS {
         return tripIds;
     }
 
+    /**
+     * gets a list of tripIds from the database for a stopPoint in combination with a service. This means this function
+     * returns all IDs which occur at the stop, travel the direction of the given service and optionally at the given time.
+     * @param stop stop Point for which the IDs should be found
+     * @param service the service for which the IDs should be found indicating the travel direction
+     * @param everything true if the departure time and date should be ignored and every trip ID of all trips at this point
+     *                   with the same destination should be retrieved, false if focus on the departure time and date
+     *                   provided by the stoppoint
+     * @return a list of trip IDs matching the given parameters
+     * @throws SQLException  when something goes wrong during database accessing
+     */
     public static ArrayList<String> getGTFSTripIds(StopPoint stop, Service service, boolean everything) throws SQLException {
         Connection c = DataSource.getConnection();
         ArrayList<String> tripIds = new ArrayList<>();
@@ -135,6 +173,14 @@ public class GTFS {
         return tripIds;
     }
 
+    /**
+     * This function extracts all occuring tripIDs from a result sets resp. removes all tripIDs from the result set which
+     * don't occus
+     * @param ignoringServices the list of services which are retrieved from a seperate function.
+     * @param rs the result set of which the IDs should be extracted from
+     * @return a list of TripIDs matching the given parameters
+     * @throws SQLException when something goes wrong during database accessing
+     */
     private static ArrayList<String> getTripIds(ArrayList<String> ignoringServices, ResultSet rs) throws SQLException {
         ArrayList<String> tripIds = new ArrayList<>();
 
@@ -148,6 +194,13 @@ public class GTFS {
         return tripIds;
     }
 
+    /**
+     * checks wheter a service id matches theh stack of services IDs
+     * @param serviceId provided by the trip / service this ID should be checked inside the stack
+     * @param stack this usually contains a list of service IDs which take place / occur at a given date. This is the stack
+     *              in which the function searches for the given Service ID
+     * @return true if the service occurs, false if service should be ignored
+     */
     private static boolean isOccuringService(String serviceId, ArrayList<String> stack) {
         if (stack.contains(serviceId)) {
             return true;
@@ -155,6 +208,12 @@ public class GTFS {
         return false;
     }
 
+    /**
+     * Inserts into an array of stopPoints the geolocation information for all entries and returns itself back again.
+     * @param stops the array which should be manipulated by including the geolocation data.
+     * @return the list of stopPoints which was given as parameter and is now updated
+     * @throws SQLException when something goes wrong during database operations
+     */
     public static ArrayList<StopPoint> getLocationDataForStopList(ArrayList<StopPoint> stops) throws SQLException {
         ArrayList<String> stopnames = getStopNamesAsList(stops);
         String queryinsert = getParameterListFromArray(stopnames);
@@ -191,7 +250,16 @@ public class GTFS {
         return stops;
     }
 
-    public static void addStopSequencesForConnection(common.network.Connection connection) throws SQLException {
+    /**
+     * Inserts all Stop Sequences of the gtfs trip inside the TRIAS connection as they differ from each otehr as trias
+     * counts the stops from the origin of the users trip and gtfs from the first stop of the vehicles trip. The given connection
+     * will be updated and the same returnd
+     * @param connection the connection inside which the stop sequences of gtfs should be inserted into
+     * @throws SQLException  when something goes wrong during database operations
+     * @return the connection inside which the stop sequences of gtfs should be inserted into and which was given in as
+     * parameter
+     */
+    public static common.network.Connection addStopSequencesForConnection(common.network.Connection connection) throws SQLException {
         for (Trip t : connection.getLegs()) {
             String tripId = t.getGTFSTripId();
             if (tripId == null) {
@@ -210,8 +278,15 @@ public class GTFS {
             s.close();
             c.close();
         }
+        return connection;
     }
 
+    /**
+     * creates a map containing stop name as key and sequence as value to easy access them
+     * @param rs the resultset of which the map should be build
+     * @return a hashmap containing the stopname as key and the stopsequence as value.
+     * @throws SQLException when something goes wrong during database operations
+     */
     private static HashMap<String, Integer> buildSequenceMap(ResultSet rs) throws SQLException {
         HashMap<String, Integer> sequenceMap = new HashMap<>();
         while (rs.next()) {
@@ -220,6 +295,11 @@ public class GTFS {
         return sequenceMap;
     }
 
+    /**
+     * fills in all stop sequences for the trips stops. The trip given in as parameter is updated-
+     * @param sequenceMap the sequence map with which the trip should be updated
+     * @param t the trip whose stops should be updated
+     */
     private static void fillStops(HashMap<String, Integer> sequenceMap, Trip t) {
         fillStop(sequenceMap, t.getBoarding());
         for (StopPoint s : t.getIntermediates()) {
@@ -228,20 +308,45 @@ public class GTFS {
         fillStop(sequenceMap, t.getAlighting());
     }
 
+    /**
+     * Inserts a stopsequence into a stoppoint from a given sequenceMap
+     * @param sequenceMap the map containing stop name as key and sequence as value from which the stop should get its
+     *                    sequence from
+     * @param stop the stop to update
+     */
     private static void fillStop(HashMap<String, Integer> sequenceMap, StopPoint stop) {
         if (sequenceMap.containsKey(stop.getName())) {
             stop.setStopSequence(sequenceMap.get(stop.getName()));
         }
     }
 
+    /**
+     * returns a list of delays which were recorded by the user with the android app based on the trip Ids provided
+     * @param ids the ids for which the delays are to be found
+     * @return a list of userdelays matching the given Trip IDs
+     * @throws SQLException when something goes wrong during database operations
+     */
     public static ArrayList<Delay> getUserDelaysForIds(ArrayList<String> ids) throws SQLException {
         return getDelaysForIds(ids, true);
     }
 
+    /**
+     * returns a list of delays which were recorded by the TRIAS recorder based on the trip Ids provided
+     * @param ids the ids for which the delays are to be found
+     * @return a list of delays matching the given Trip IDs
+     * @throws SQLException when something goes wrong during database operations
+     */
     public static ArrayList<Delay> getDelaysForIds(ArrayList<String> ids) throws SQLException {
         return getDelaysForIds(ids, false);
     }
 
+    /**
+     * returns a list of delays based on the trip Ids provided
+     * @param ids the ids for which the delays are to be found
+     * @param userDelays true if delays recorded by user shouzld be retrieved, false if it should based on trias delays
+     * @return a list of (user)delays matching the given Trip IDs
+     * @throws SQLException when something goes wrong during database operations
+     */
     private static ArrayList<Delay> getDelaysForIds(ArrayList<String> ids, boolean userDelays) throws SQLException {
         ArrayList<Delay> delays = new ArrayList<>();
         String table = userDelays ? "user_recordings" : "delays";
@@ -292,7 +397,7 @@ public class GTFS {
      * Query the database for all ServiceIds which should be ignored.
      *
      * @return List of IgnorService items, so if a TripStop contains a serviceId which is in this list, it can be removed
-     * @throws SQLException
+     * @throws SQLException when something goes wrong during database operations
      */
     public static ArrayList<String> getOccurringServiceIds() throws SQLException {
         return getOccurringServiceIds(null);
@@ -324,6 +429,13 @@ public class GTFS {
         return fullTrip;
     }
 
+    /**
+     * returns for the given parameters all values of interchanges. 0 if they werent successful, 1 if they were.
+     * @param fromTripId the tripID from which the user interchanged
+     * @param toTripId the tripID to which the user interchanged
+     * @return a list of values indicating a successful interchange.
+     * @throws SQLException when something goes wrong during database operations
+     */
     public static ArrayList<Integer> getInterchangeValues(String fromTripId, String toTripId) throws SQLException {
         ArrayList<Integer> values = new ArrayList<>();
 
@@ -344,6 +456,13 @@ public class GTFS {
         return values;
     }
 
+    /**
+     * returns answer value for given tripIDs and type as list.
+     * @param ids the Trip IDs for which the answers are to be found
+     * @param type the type of question for which the answer stands for
+     * @return a list of numbers representing the answers of the given question for a given trip ID
+     * @throws SQLException when something goes wrong during database operations
+     */
     public static ArrayList<Integer> getAnswerValues(ArrayList<String> ids, PrognosisFactor.PrognosisFactorType type) throws SQLException {
         ArrayList<Integer> values = new ArrayList<>();
         String questionmarks = getParameterListFromArray(ids);
@@ -384,7 +503,7 @@ public class GTFS {
      *
      * @param date the date as String with pattern <i>yyyy-MM-dd</i>. If wrong formatted it simply uses the date of now
      * @return List of IgnorService items, so if a TripStop contains a serviceId which is in this list, it can be removed
-     * @throws SQLException
+     * @throws SQLException when something goes wrong during database operations
      */
     public static ArrayList<String> getOccurringServiceIds(String date) throws SQLException {
         SimpleDateFormat datesdf = new SimpleDateFormat(SQLFormatTools.datePattern);
@@ -419,6 +538,11 @@ public class GTFS {
         return occurringServices;
     }
 
+    /**
+     * returns all stopnames as a list of string from a list of {@link StopPoint} Objects
+     * @param stops a list of {@link StopPoint} objects from which the list of string names should be build
+     * @return a list of stopnames as string.
+     */
     private static ArrayList<String> getStopNamesAsList(ArrayList<StopPoint> stops) {
         ArrayList<String> stopnames = new ArrayList<>();
 
@@ -429,6 +553,13 @@ public class GTFS {
         return stopnames;
     }
 
+    /**
+     * Insert your array and get a string back which contains lots of question marks seperated by comma. There are as
+     * many question marks as there are entries in the list. Useful for prepared statements. E.g. "?,?,?,?,?,?"
+     * @param list the list which should be parsed to question marks string
+     * @param <T> any type? you can insert any arraylist.
+     * @return a string of question marks separated by comma with as many question marks as entries of the array list
+     */
     private static <T> String getParameterListFromArray(ArrayList<T> list) {
         StringBuilder s = new StringBuilder();
 
@@ -439,6 +570,12 @@ public class GTFS {
         return s.deleteCharAt(s.length() - 1).toString();
     }
 
+    /**
+     * removes all boarding ids from the parameters array which don't travel to the same destination as the trip provided
+     * @param boardingIds the IDs to check if they travel the same direction
+     * @param t the trip as reference for the destination station
+     * @throws SQLException when something goes wrong during a database operation
+     */
     public static void removeTripIdsOfWrongDirection(ArrayList<String> boardingIds, Trip t) throws SQLException {
         ArrayList<String> toRemove = new ArrayList<>();
 

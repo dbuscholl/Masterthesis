@@ -482,14 +482,28 @@ public class TripWorker {
         return delays;
     }
 
+    /**
+     * printing the gtfs tour to a readable string
+     * @return a readable representation of the full gtfs trip
+     */
     public String printGtfsTour() {
         return printTour(gtfsStops);
     }
 
+    /**
+     * printing the trias tour to a readable string
+     * @return a readable representation of the full trias trip
+     */
     public String printTriasTour() {
         return printTour(triasStops);
     }
 
+    /**
+     * This function creates a complete readable string out of either a trias tour or a gtfs tour. Importing is, that the
+     * TripStop class is used.
+     * @param tour a list of tripstops representing the tour with all intermediates.
+     * @return a readable representation of the full trip
+     */
     public String printTour(ArrayList<TripStop> tour) {
         StringBuffer s = new StringBuffer();
         for (TripStop t : tour) {
@@ -498,6 +512,12 @@ public class TripWorker {
         return s.toString();
     }
 
+    /**
+     * This function creates a completet readable string out of the trip info which is provided by GTFS. This contains
+     * information about non changing attributes such as linenumber and destination.
+     * @param tripInfo the TripInfo object which should be visualized
+     * @return a readable representation of the full trip.
+     */
     public String printTripInfo(ScheduledTrip tripInfo) {
         return getFriendlyName() + " (S: " + tripInfo.getService_id() + ", T: " + tripInfo.getTrip_id() + ")";
     }

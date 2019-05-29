@@ -22,6 +22,9 @@ public class WorkerManager {
     private List<TripWorker> workers;
     private Chronometer chronometer;
 
+    /**
+     * This constructor assigns a new Timer and creates a new list of workers.
+     */
     public WorkerManager() {
         timer = new Timer();
         workers = Collections.synchronizedList(new ArrayList<>());
@@ -102,6 +105,9 @@ public class WorkerManager {
         timer.schedule(task, 0, 10000);
     }
 
+    /**
+     * This function stops the process
+     */
     public void stop() {
         timer.cancel();
     }
@@ -124,6 +130,10 @@ public class WorkerManager {
         log.info("We have " + this.workers.size() + " trips to record now");
     }
 
+    /**
+     * getter
+     * @return the workers which are currently watching trias trips
+     */
     public List<TripWorker> getWorkers() {
         return workers;
     }

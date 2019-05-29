@@ -11,6 +11,12 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 
+/**
+ * This is the class "template" from which all factors must inherit to work properly. It defines several neccessary attributes
+ * such as the connection for which the prognosis should be calculated, the CalculationModel, prognosis type or a flag which
+ * indicates execution state. All factors must call notifyExecutionFinished with this or null as attribute whether they were
+ * successful or not.
+ */
 public abstract class PrognosisFactor extends Thread {
     protected Connection connection;
     protected double weight = 1;
@@ -23,20 +29,34 @@ public abstract class PrognosisFactor extends Thread {
     private CalculationCompletedEvent calculationCompletedEvent;
     private boolean doneExecuting = false;
 
+    /**
+     * constructor
+     * @param connection the connection for which the prognosis should be calculated
+     */
     public PrognosisFactor(Connection connection) {
         super();
         this.connection = connection;
         result.setConnection(connection);
     }
 
+    /**
+     * the main entry point when the calculator is startet via Thread.run()
+     */
     @Override
     public void run() {
         chronometer.addNow();
         execute();
     }
 
+    /**
+     * This method must be implemented by all factors. They define how they calculate their prognosis here. You can use
+     * standardCalculation() for median and mean for delays depending on CalculationModel.
+     */
     protected abstract void execute();
 
+    /**
+     * This enum contains all FactorTypes which can be implemented at the moment. Add your type here or create own.
+     */
     public enum PrognosisFactorType {
         TRIASRECORDING_SAMEDAY,
         TRIASRECORDING_EVERYDAY,
@@ -49,6 +69,9 @@ public abstract class PrognosisFactor extends Thread {
         GOOGLE_CURRENT_TRAFFIC;
     }
 
+    /**
+     * This enum defines all the existing CalculationModels which are OPTIMISTIC, NEUTRAL and PESSIMISTIC
+     */
     public enum PronosisFactorCalculationModel {
         OPTIMISTIC,
         NEUTRAL,
@@ -56,16 +79,23 @@ public abstract class PrognosisFactor extends Thread {
     }
 
 
+    /**
+     * this function sets neccessary attributes to the factor after calculation and calls the callback if one was set.
+     * @param factor
+     */
     protected void notifyExecutionFinished(PrognosisFactor factor) {
         chronometer.addNow();
         executionTime = chronometer.getLastDifferece();
         doneExecuting = true;
-        this.result = result;
         if(calculationCompletedEvent != null) {
             calculationCompletedEvent.onCalculationComplete(factor);
         }
     }
 
+    /**
+     * getter
+     * @return true if the factor is done with its calculation, false if still running
+     */
     public boolean isDoneExecuting() {
         return doneExecuting;
     }
@@ -78,34 +108,68 @@ public abstract class PrognosisFactor extends Thread {
         this.calculationCompletedEvent = calculationCompletedEvent;
     }
 
+    /**
+     * getter
+     * @return the result of calculation for the factor
+     */
     public PrognosisCalculationResult getResult() {
         return result;
     }
 
+    /**
+     * getter
+     * @return calculation model which was used for this factor
+     */
     public PronosisFactorCalculationModel getCalculationModel() {
         return calculationModel;
     }
 
+    /**
+     * getter
+     * @return the type of calculation which is predicted
+     */
     public PrognosisFactorType getType() {
         return type;
     }
 
+    /**
+     * setter
+     * @param type the type of calculation which is predicted
+     */
     public void setType(PrognosisFactorType type) {
         this.type = type;
     }
 
+    /**
+     * getter
+     * @return the weight for total calculation
+     */
     public double getWeight() {
         return weight;
     }
 
+    /**
+     * getter
+     * @param weight the weight for total calculation
+     */
     public void setWeight(double weight) {
         this.weight = weight;
     }
 
+    /**
+     * getter
+     * @return time in miliseconds how long the calculation took
+     */
     public long getExecutionTime() {
         return executionTime;
     }
 
+    /**
+     * standard calculation implementation for a list of delays using median for optimistic and neutral method and mean
+     * for pessimistic method.
+     * @param delays list of delays for which the calculation should be done
+     * @throws SQLException when something goes wrong during database things
+     */
     protected void standardCalculation(ArrayList<Delay> delays) throws SQLException {
         Trip t = connection.getLegs().get(currentProcessingIndex);
         ArrayList<Delay> delaysAtBoarding = Delay.getDelaysForStopPoint(t, t.getBoarding(), delays);
@@ -142,6 +206,11 @@ public abstract class PrognosisFactor extends Thread {
         result.add(resultItem);
     }
 
+    /**
+     * this function determines how much time should be used as threshold for the exception delay calculation. This is
+     * usually interchange time / 2 or 3 minutes when no interchanges are found in the connection
+     * @return amount of time in seconds which should be used as threshold
+     */
     private double getThreshholdByInterchangeTime() {
         Trip t = connection.getLegs().get(currentProcessingIndex);
 
